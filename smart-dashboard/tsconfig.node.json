@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json.schemastore.org/tsconfig",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./.cache/tsconfig.node.tsbuildinfo",
+
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM.Iterable"],
+    "module": "NodeNext",
+
+    "moduleResolution": "NodeNext",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+
+    "strict": true,
+    "noUnusedLocals": true,
+    "exactOptionalPropertyTypes": true,
+
+    "outDir": "./dist/node",
+    "rootDir": ".",
+    "sourceMap": true,
+    "inlineSources": true,
+
+    "types": ["node"],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@config/*": ["config/*"]
+    }
+  },
+  "include": ["vite.config.ts", "scripts/**/*.ts", "**/vite-env.d.ts"],
+  "exclude": ["node_modules", "dist", "**/__tests__", "**/*.spec.ts"]
+}

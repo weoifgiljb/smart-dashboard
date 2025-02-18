@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "lib": ["es2022", "dom"],
+    "types": ["cypress", "mocha", "chai", "vitest/globals"],
+    "baseUrl": "../node_modules",
+    "paths": {
+      "*": ["*"],
+      "cypress": ["./node_modules/cypress"],
+      "mocha": ["./node_modules/mocha"],
+      "chai": ["./node_modules/chai"],
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["**/*.ts", "cypress/**/*.ts", "cypress/types/**/*.d.ts"]
+}

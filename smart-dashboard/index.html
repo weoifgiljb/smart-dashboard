@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#2196F3" />
+    <meta
+      name="description"
+      content="智能仪表盘 - 集成任务管理、时间追踪、天气显示和数据可视化的综合仪表盘解决方案"
+    />
+
+    <!-- 社交媒体元数据 -->
+    <meta property="og:title" content="智能仪表盘" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/src/assets/og-image.png" />
+
+    <!-- 字体和图标 -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <!-- PWA配置 -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/src/assets/icon-192.png" />
+
+    <title>智能仪表盘 | Smart Dashboard</title>
+    <script type="module" src="/src/main.tsx"></script>
+  </head>
+  <body
+    class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300 font-['Inter']"
+  >
+    <div id="root">
+      <!-- 主应用入口 -->
+    </div>
+    <div class="watermark">开发模式 v0.1.0</div>
+    <style>
+      .watermark {
+        position: fixed;
+        bottom: 0.5rem; /* bottom-2 */
+        right: 0.5rem; /* right-2 */
+        color: rgba(156, 163, 175, 0.2); /* text-gray-400/20 */
+        font-size: 0.75rem; /* text-xs */
+        line-height: 1rem;
+        user-select: none;
+        font-family: monospace;
+        z-index: -1;
+      }
+
+      .dark .watermark {
+        color: rgba(75, 85, 99, 0.3); /* dark:text-gray-600/30 */
+      }
+    </style>
+  </body>
+</html>

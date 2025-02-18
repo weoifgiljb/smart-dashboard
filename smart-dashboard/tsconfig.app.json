@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./node_modules/.cache/tsconfig.app.tsbuildinfo",
+
+    /* 目标环境 */
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+
+    /* 模块配置 */
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+
+    /* 类型检查 */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    /* React 配置 */
+    "jsx": "react-jsx",
+
+    /* 路径映射 */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@assets/*": ["src/assets/*"]
+    },
+
+    /* 源码输出 */
+    "sourceMap": true,
+    "declaration": true, // 必须为 true
+    "declarationDir": "./dist/types", // 新增声明文件输出目录
+
+    /* 类型声明 */
+    "types": ["vite/client"],
+
+    /* 实验性功能 */
+    "useDefineForClassFields": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "index.html",
+    "vite.config.ts",
+    "src/vite-env.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist/**/*",
+    "**/__tests__/**",
+    "**/*.spec.ts",
+    "**/*.cy.ts",
+    "**/*.stories.tsx"
+  ]
+}
