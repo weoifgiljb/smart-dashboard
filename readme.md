@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-基于 React + TypeScript 构建的智能仪表盘系统，集成了任务管理、效率工具和实时数据展示功能。使用 Vite 构建，包含完整的测试覆盖和 CI/CD 流水线。
+这里是 Shikisuki , 是用 deepseek + cursor 基于 React + TypeScript 构建的智能仪表盘系统，集成了任务管理、效率工具和实时数据展示功能。使用 Vite 构建，包含完整的测试覆盖和 CI/CD 流水线。
 
 ![项目截图]<!-- 此处可以补充截图路径 -->
 
@@ -132,4 +132,4 @@ npm run cypress:open
 
 ## 许可
 
-[MIT](LICENSE) © 2025 Your Name
+[MIT](LICENSE) © 2025 ShikiSuki
