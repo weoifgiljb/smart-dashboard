@@ -3,11 +3,15 @@ import React from "react";
 import { Outlet } from "react-router-dom";
 import Navigation from "./Navigation";
 import LoadingOverlay from "./LoadingOverlay";
-import ErrorBoundary from "./ErrorBoundary";
+import ErrorBoundary, { type ErrorBoundaryProps } from "./ErrorBoundary";
 
-export default function Layout() {
+interface LayoutProps {
+  children: React.ReactNode;
+}
+
+export default function Layout({ children }: LayoutProps) {
   return (
-    <ErrorBoundary>
+    <ErrorBoundary fallback={null}>
       <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
         {/* 导航栏 - 现在可以正确接收className */}
         <Navigation className="sticky top-0 z-50 shadow-sm" />

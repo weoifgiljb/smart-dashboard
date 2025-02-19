@@ -1,6 +1,10 @@
 import React from "react";
 
-export default function LoadingOverlay() {
+interface LoadingOverlayProps {
+  progress?: number;
+}
+
+export default function LoadingOverlay({ progress }: LoadingOverlayProps) {
   return (
     <div className="fixed inset-0 z-50 bg-white dark:bg-gray-800 bg-opacity-90 flex items-center justify-center">
       {/* 旋转加载图标 */}

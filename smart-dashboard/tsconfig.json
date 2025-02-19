@@ -1,12 +1,13 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "../tsconfig.json",
   "compilerOptions": {
     "incremental": true,
     "composite": true,
     "target": "ES2022",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "module": "ESNext", // 改为 ESNext 适配 Vite
-    "moduleResolution": "Bundler", // 适配现代打包工具
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "strict": true,
     "jsx": "react-jsx",
     "sourceMap": true,
@@ -17,26 +18,23 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "baseUrl": ".",
+    "baseUrl": "..",
     "paths": {
       "@/*": ["./src/*"],
-      "@components/*": ["./src/components/*"],
-      "@hooks/*": ["./src/hooks/*"]
+      "components/*": ["../src/components/*"]
     },
     "types": ["vite/client", "node", "react", "react-dom"],
-    "skipLibCheck": true,
-    "typeRoots": ["./node_modules/@types", "./types"]
+    "typeRoots": ["../node_modules/@types", "../types"],
+    "skipLibCheck": true
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
     "vite.config.ts",
-    "src/vite-env.d.ts",
-    "src/**/*" // 确保包含类型声明文件
+    "../src/**/*.tsx",
+    "../src/**/*.ts",
+    "../env.d.ts",
+    "../types/**/*.d.ts"
   ],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ]
+  "exclude": ["node_modules", "dist", "**/*.test.ts"]
 }

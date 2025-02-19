@@ -1,5 +1,5 @@
 {
-  "$schema": "https://json.schemastore.org/tsconfig",
+  "$schema": "../tsconfig.schema.json",
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "composite": true,
@@ -8,7 +8,7 @@
 
     /* 目标环境 */
     "target": "ES2022",
-    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"], // 保持版本统一
 
     /* 模块配置 */
     "module": "ESNext",
@@ -28,13 +28,15 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@assets/*": ["src/assets/*"]
+      "@assets/*": ["src/assets/*"],
+      "@components/*": ["src/components/*"]
     },
 
     /* 源码输出 */
     "sourceMap": true,
-    "declaration": true, // 必须为 true
-    "declarationDir": "./dist/types", // 新增声明文件输出目录
+    "declaration": true,
+    "declarationDir": "./dist/types",
+    "emitDeclarationOnly": true,
 
     /* 类型声明 */
     "types": ["vite/client"],
