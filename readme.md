@@ -2,7 +2,11 @@
 
 ## 项目概述
 
+<<<<<<< HEAD
 基于 React 18 + TypeScript 构建的现代化智能仪表盘系统，集成了任务管理、效率工具和实时数据展示功能。采用 Vite 4 构建，具备完整的测试覆盖和自动化部署流程。项目使用最新的 Web 技术栈，提供流畅的用户体验和高效的开发效率。
+=======
+这里是 Shikisuki , 是用 deepseek + cursor 基于 React + TypeScript 构建的智能仪表盘系统，集成了任务管理、效率工具和实时数据展示功能。使用 Vite 构建，包含完整的测试覆盖和 CI/CD 流水线。
+>>>>>>> 9f65fc5387f565b42a9cd4fb4137d41fd662bc93
 
 ### 在线预览
 
@@ -168,4 +172,8 @@ npm run cypress:open
 
 ## 许可
 
+<<<<<<< HEAD
 [MIT](LICENSE) © 2025 Shiki Suki
+=======
+[MIT](LICENSE) © 2025 ShikiSuki
+>>>>>>> 9f65fc5387f565b42a9cd4fb4137d41fd662bc93
