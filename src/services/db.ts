@@ -39,12 +39,17 @@ export class DashboardDB extends Dexie {
   state!: Table<DashboardState, string>;
 
   constructor() {
-    super("SmartDashboardDB");
+    super("SmartDashboard");
 
     // 版本升级策略
+    this.version(1).stores({
+      state: "++id,theme,layout,lastUpdated",
+      tasks: "++id,title,completed,dueDate,priority",
+    });
+
     this.version(2)
       .stores({
-        tasks: "++id, title, completed, createdAt",
+        tasks: "++id,title,completed,createdAt",
         state: "++id",
       })
       .upgrade((trans) => {
@@ -65,8 +70,9 @@ export class DashboardDB extends Dexie {
 
     // 最新版本定义
     this.version(3).stores({
-      tasks: "++id, title, completed, createdAt",
-      state: "++id",
+      tasks: "++id,title,completed,createdAt,status,position",
+      state: "++id,theme,layout,lastUpdated",
+      weather: "++id,city,temperature,condition,humidity,windSpeed,lastUpdated"
     });
   }
 }

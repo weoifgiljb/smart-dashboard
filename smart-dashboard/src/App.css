@@ -1,8 +1,61 @@
+/* 移除默认样式，使用网格布局系统 */
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
   padding: 2rem;
-  text-align: center;
+  text-align: left;
+  background-color: #f5f5f5;
+}
+
+/* 网格布局容器 */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* 组件卡片样式 */
+.dashboard-card {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease-in-out;
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-2px);
+}
+
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+  #root {
+    background-color: #1a1a1a;
+  }
+
+  .dashboard-card {
+    background: #2d2d2d;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  #root {
+    padding: 1rem;
+  }
 }
 
 .logo {

@@ -1,0 +1,26 @@
+.theme-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 50;
+  padding: 0.5rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 9999px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: scale(1.1) rotate(15deg);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  .emoji-icon {
+    font-size: 1.5rem;
+    display: block;
+    transition: transform 0.3s ease;
+  }
+}

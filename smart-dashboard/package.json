@@ -50,6 +50,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^14.2.1",
     "@types/d3": "^7.4.3",
+    "@types/howler": "^2.2.12",
     "@types/lodash": "^4.17.15",
     "@types/marked": "^5.0.2",
     "@types/node": "^20.12.7",

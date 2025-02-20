@@ -1,14 +1,9 @@
-import {
-  Suspense,
-  type ReactElement,
-  type FC,
-  type PropsWithChildren,
-} from "react";
-import ErrorBoundary from "../../src/components/ErrorBoundary";
-import Layout from "../../src/components/Layout";
-import Navigation from "../../src/components/Navigation";
-import LoadingOverlay from "../../src/components/LoadingOverlay";
-import Dashboard from "../../src/components/Dashboard";
+import { Suspense, type ReactElement, type FC } from "react";
+import { Routes, Route } from "react-router-dom";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import Layout from "@/components/Layout";
+import LoadingOverlay from "@/components/LoadingOverlay";
+import Dashboard from "@/components/Dashboard";
 import "./App.css";
 
 // 错误回退组件
@@ -21,77 +16,18 @@ const ErrorFallback: FC<ErrorFallbackProps> = ({
   error,
   resetErrorBoundary,
 }) => (
-  <div
-    role="alert"
-    style={{
-      padding: "2rem",
-      backgroundColor: "#ffeef0",
-      borderRadius: "8px",
-      maxWidth: "600px",
-      margin: "2rem auto",
-    }}
-  >
-    <h2 style={{ color: "#ff4d4f" }}>应用异常</h2>
-    <pre
-      style={{
-        whiteSpace: "pre-wrap",
-        backgroundColor: "#fff",
-        padding: "1rem",
-        borderRadius: "4px",
-        margin: "1rem 0",
-      }}
-    >
+  <div className="p-8 bg-red-50 dark:bg-red-900 rounded-lg max-w-2xl mx-auto my-8" role="alert">
+    <h2 className="text-red-600 dark:text-red-200 text-xl font-semibold">应用异常</h2>
+    <pre className="mt-4 p-4 bg-white dark:bg-red-800 rounded whitespace-pre-wrap">
       {error.message}
     </pre>
     <button
       onClick={resetErrorBoundary}
-      style={{
-        padding: "0.5rem 1rem",
-        backgroundColor: "#1890ff",
-        color: "white",
-        border: "none",
-        borderRadius: "4px",
-        cursor: "pointer",
-      }}
+      className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
     >
       重新加载
     </button>
   </div>
-);
-
-// 应用布局
-const AppLayout: FC<PropsWithChildren> = ({ children }) => (
-  <Layout>
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "240px 1fr",
-        minHeight: "100vh",
-      }}
-    >
-      <aside
-        style={{
-          backgroundColor: "#001529",
-          padding: "1rem",
-          position: "sticky",
-          top: 0,
-          height: "100vh",
-        }}
-      >
-        <Navigation />
-      </aside>
-
-      <main
-        style={{
-          padding: "2rem",
-          overflow: "auto",
-          maxHeight: "100vh",
-        }}
-      >
-        {children}
-      </main>
-    </div>
-  </Layout>
 );
 
 // 应用根组件
@@ -105,12 +41,13 @@ const App: FC = (): ReactElement => (
     }
   >
     <Suspense fallback={<LoadingOverlay />}>
-      <AppLayout>
-        <Dashboard />
-      </AppLayout>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+        </Routes>
+      </Layout>
     </Suspense>
   </ErrorBoundary>
 );
 
-App.displayName = "SmartDashboardApp";
 export default App;

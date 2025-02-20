@@ -1,0 +1,161 @@
+.pomodoro-timer {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(219, 234, 254, 0.95), rgba(191, 219, 254, 0.95));
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  .dark & {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
+    border-color: rgba(255, 255, 255, 0.05);
+  }
+
+  &__status {
+    margin-bottom: 1rem;
+    text-align: center;
+
+    &-badge {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      
+      &--work {
+        background-color: rgba(219, 234, 254, 0.9);
+        color: rgb(30, 64, 175);
+
+        .dark & {
+          background-color: rgba(30, 58, 138, 0.9);
+          color: rgb(191, 219, 254);
+        }
+      }
+
+      &--break {
+        background-color: rgba(187, 247, 208, 0.9);
+        color: rgb(21, 128, 61);
+
+        .dark & {
+          background-color: rgba(20, 83, 45, 0.9);
+          color: rgb(187, 247, 208);
+        }
+      }
+    }
+
+    &-cycles {
+      margin-left: 0.5rem;
+      font-size: 0.875rem;
+      color: rgb(75, 85, 99);
+
+      .dark & {
+        color: rgb(209, 213, 219);
+      }
+    }
+  }
+
+  &__display {
+    position: relative;
+    width: 12rem;
+    height: 12rem;
+    margin: 0 auto;
+
+    &-ring {
+      transform: rotate(-90deg);
+
+      &-background {
+        color: rgb(229, 231, 235);
+
+        .dark & {
+          color: rgb(75, 85, 99);
+        }
+      }
+
+      &-progress {
+        color: rgb(59, 130, 246);
+        transition: stroke-dashoffset 1s ease;
+
+        .dark & {
+          color: rgb(96, 165, 250);
+        }
+      }
+    }
+
+    &-time {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+
+      &-text {
+        font-size: 2.25rem;
+        font-weight: 700;
+        color: rgb(31, 41, 55);
+
+        .dark & {
+          color: rgb(255, 255, 255);
+        }
+      }
+    }
+  }
+
+  &__controls {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+
+    &-button {
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      outline: none;
+
+      &:focus {
+        box-shadow: 0 0 0 2px rgb(59, 130, 246), 0 0 0 4px rgb(255, 255, 255);
+
+        .dark & {
+          box-shadow: 0 0 0 2px rgb(96, 165, 250), 0 0 0 4px rgb(31, 41, 55);
+        }
+      }
+
+      &--primary {
+        background-color: rgb(59, 130, 246);
+        color: white;
+
+        &:hover {
+          background-color: rgb(37, 99, 235);
+        }
+
+        .dark & {
+          background-color: rgb(37, 99, 235);
+
+          &:hover {
+            background-color: rgb(29, 78, 216);
+          }
+        }
+      }
+
+      &--secondary {
+        background-color: rgb(229, 231, 235);
+        color: rgb(55, 65, 81);
+
+        &:hover {
+          background-color: rgb(209, 213, 219);
+        }
+
+        .dark & {
+          background-color: rgb(75, 85, 99);
+          color: rgb(229, 231, 235);
+
+          &:hover {
+            background-color: rgb(55, 65, 81);
+          }
+        }
+      }
+    }
+  }
+}

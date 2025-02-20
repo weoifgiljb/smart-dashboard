@@ -1,6 +1,5 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "extends": "../tsconfig.json",
   "compilerOptions": {
     "incremental": true,
     "composite": true,
@@ -11,30 +10,21 @@
     "strict": true,
     "jsx": "react-jsx",
     "sourceMap": true,
+    "inlineSources": true,
+    "sourceRoot": "",
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "baseUrl": "..",
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "components/*": ["../src/components/*"]
-    },
-    "types": ["vite/client", "node", "react", "react-dom"],
-    "typeRoots": ["../node_modules/@types", "../types"],
-    "skipLibCheck": true
+      "@/*": ["src/*"],
+      "@components/*": ["src/components/*"],
+      "@services/*": ["src/services/*"],
+      "@types/*": ["src/types/*"]
+    }
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "vite.config.ts",
-    "../src/**/*.tsx",
-    "../src/**/*.ts",
-    "../env.d.ts",
-    "../types/**/*.d.ts"
-  ],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
 }

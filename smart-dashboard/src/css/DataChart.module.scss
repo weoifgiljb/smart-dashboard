@@ -1,0 +1,40 @@
+.chartContainer {
+  position: relative;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(
+    to right bottom,
+    rgba(255, 255, 255, 0.95),
+    rgba(255, 255, 255, 0.8)
+  );
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  :global(.dark) & {
+    background: linear-gradient(
+      to right bottom,
+      rgba(30, 41, 59, 0.95),
+      rgba(30, 41, 59, 0.8)
+    );
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2),
+      0 2px 4px -1px rgba(0, 0, 0, 0.1);
+
+    &:hover {
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2),
+        0 4px 6px -2px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  canvas {
+    max-width: 100%;
+    height: auto !important;
+  }
+}
