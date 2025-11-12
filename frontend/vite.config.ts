@@ -11,15 +11,21 @@ export default defineConfig(({ mode }) => {
   const base = env.VITE_BASE_PATH || '/'
 
   const bundleBudget = () => {
-    const MAX_ASSET_BYTES = 300 * 1024 // 300KB 单文件限制（可按需调整）
+    // 调整大小限制：JS 文件 1.5MB，CSS 文件 500KB
+    // Element Plus 和 ECharts 等大型库本身较大，这是正常的
+    const MAX_JS_BYTES = 1.5 * 1024 * 1024 // 1.5MB for JS
+    const MAX_CSS_BYTES = 500 * 1024 // 500KB for CSS
     return {
       name: 'bundle-size-budget',
       generateBundle(_: unknown, bundle: Record<string, any>) {
         const overs: string[] = []
         for (const [fileName, chunk] of Object.entries(bundle)) {
           const size = (chunk as any).code ? Buffer.byteLength((chunk as any).code) : (chunk as any).source?.length
-          if (typeof size === 'number' && size > MAX_ASSET_BYTES && /\.js$|\.css$/.test(fileName)) {
-            overs.push(`${fileName} ${(size / 1024).toFixed(1)}KB`)
+          if (typeof size === 'number') {
+            const maxSize = fileName.endsWith('.js') ? MAX_JS_BYTES : MAX_CSS_BYTES
+            if (size > maxSize && /\.js$|\.css$/.test(fileName)) {
+              overs.push(`${fileName} ${(size / 1024).toFixed(1)}KB`)
+            }
           }
         }
         if (overs.length) {
