@@ -151,7 +151,8 @@ const loadStats = async () => {
 
 const loadWeekly = async () => {
   try {
-    const list: any[] = await getPomodoroHistory()
+    const result: any = await getPomodoroHistory()
+    const list: any[] = Array.isArray(result) ? result : (result?.content || result?.data || [])
     const days: Date[] = []
     const today = new Date()
     for (let i = 6; i >= 0; i--) {
@@ -195,7 +196,8 @@ const loadWeekly = async () => {
 
 const loadFluctuation = async () => {
   try {
-    const list: any[] = await getPomodoroHistory()
+    const result: any = await getPomodoroHistory()
+    const list: any[] = Array.isArray(result) ? result : (result?.content || result?.data || [])
     const latest = (list || []).slice(0, 30) // 后端按开始时间倒序
     const workPoints: any[] = []
     const breakPoints: any[] = []

@@ -17,7 +17,7 @@ import { computed } from 'vue'
 
 type Variant = 'primary' | 'secondary' | 'danger' | 'success' | 'warning' | 'info' | 'text'
 
-const props = withDefaults(defineProps<{
+withDefaults(defineProps<{
   variant?: Variant
   type?: string
   plain?: boolean

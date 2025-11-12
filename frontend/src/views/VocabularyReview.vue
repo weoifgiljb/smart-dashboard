@@ -569,18 +569,22 @@ const initQueue = async () => {
   try {
     // 如果有指定ids，直接获取所有单词
     if (ids.length > 0) {
-      base = await getWords()
+      const result: any = await getWords()
+      base = Array.isArray(result) ? result : (result?.content || result?.data || [])
     } else {
       // 没有指定ids，优先获取今日需背
-      base = await getTodayWords()
+      const todayResult: any = await getTodayWords()
+      base = Array.isArray(todayResult) ? todayResult : (todayResult?.content || todayResult?.data || [])
       if (!base || base.length === 0) {
-        base = await getWords()
+        const allResult: any = await getWords()
+        base = Array.isArray(allResult) ? allResult : (allResult?.content || allResult?.data || [])
       }
     }
   } catch (error) {
     console.error('获取单词失败:', error)
     try {
-      base = await getWords()
+      const result: any = await getWords()
+      base = Array.isArray(result) ? result : (result?.content || result?.data || [])
     } catch (e) {
       console.error('获取所有单词也失败:', e)
       base = []

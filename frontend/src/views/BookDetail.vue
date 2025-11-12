@@ -101,8 +101,9 @@ const resolveBook = async () => {
     if (byId) Object.assign(book, byId)
   } catch {
     try {
-      const all: any[] = await getBooks()
-      const found = all.find((b) => String(b.id) === String(route.params.id))
+      const all: any = await getBooks()
+      const allArray = Array.isArray(all) ? all : (all?.content || all?.data || [])
+      const found = allArray.find((b: any) => String(b.id) === String(route.params.id))
       if (found) Object.assign(book, found)
     } catch {
       // 保持静默，页面给出空态

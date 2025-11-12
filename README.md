@@ -140,10 +140,51 @@ spring:
 ```
 
 
-## 七、参考与延伸
+## 七、GitHub Pages 部署（前端展示）
+
+本项目已配置 GitHub Actions 工作流，可以自动将前端部署到 GitHub Pages。
+
+### 1）首次设置
+
+1. **启用 GitHub Pages**：
+   - 进入 GitHub 仓库的 `Settings` > `Pages`
+   - 在 `Source` 中选择 `GitHub Actions`
+
+2. **配置生产环境 API 地址**（如果后端部署在其他域名）：
+   - 进入 `Settings` > `Secrets and variables` > `Actions`
+   - 点击 `New repository secret`
+   - Name: `VITE_API_BASE`
+   - Value: 你的后端 API 地址（例如：`https://your-api-domain.com/api`）
+
+### 2）自动部署
+
+- 当代码推送到 `main` 分支时，GitHub Actions 会自动：
+  1. 构建前端项目
+  2. 部署到 GitHub Pages
+
+- 部署完成后，可以通过以下地址访问：
+  - `https://你的用户名.github.io/仓库名/`
+  - 如果仓库名是 `username.github.io`，则访问：`https://你的用户名.github.io/`
+
+### 3）注意事项
+
+- **GitHub Pages 只能托管静态文件**，后端 API 需要单独部署（如 Heroku、Railway、Vercel 等）
+- 确保后端 API 支持 **CORS**，允许来自 GitHub Pages 域名的请求
+- 如果使用自定义域名，需要在仓库设置中配置，并更新 DNS 记录
+- 详细配置说明请查看 `.github/workflows/README.md`
+
+### 4）手动触发部署
+
+如果需要手动触发部署，可以：
+- 进入 GitHub 仓库的 `Actions` 标签页
+- 选择 `Deploy to GitHub Pages` 工作流
+- 点击 `Run workflow`
+
+## 八、参考与延伸
 
 - 功能使用与说明：见《用户手册.md》
 - 历史记录与技术沉淀：见《工作日志.md》
+- 环境变量配置：见 `frontend/ENV.md`
 
 
 ## 附：Ollama 本地启动与配置（可选，用于本地大模型）
