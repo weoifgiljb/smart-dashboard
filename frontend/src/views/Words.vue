@@ -170,11 +170,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Star } from '@element-plus/icons-vue'
-import { getWords, addWord, deleteWord, reviewWord, getTodayWords, importWords, updateWordStatus, getBooks, importDefaultWords } from '@/api/words'
+import { getWords, addWord, deleteWord, getTodayWords, importWords, updateWordStatus, getBooks, importDefaultWords } from '@/api/words'
 import BaseChart from '@/components/charts/BaseChart.vue'
 import { generateWordImage } from '@/api/ai'
 import { getState as getSm2State } from '@/utils/sm2'

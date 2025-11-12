@@ -377,7 +377,7 @@ const renderMarkdown = (text: string) => {
     .replace(/'/g, '&#039;')
 
   // 代码块（必须在行内代码之前处理）
-  html = html.replace(/```([\s\S]*?)```/g, (match, code) => {
+  html = html.replace(/```([\s\S]*?)```/g, (_match: string, code: string) => {
     return `<pre><code>${code.trim()}</code></pre>`
   })
 
@@ -480,7 +480,7 @@ const exportChat = () => {
   content += `导出时间: ${new Date().toLocaleString('zh-CN')}\n\n`
   content += '---\n\n'
 
-  messages.value.forEach((msg, index) => {
+  messages.value.forEach((msg, _index) => {
     const role = msg.type === 'user' ? '👤 用户' : '🤖 AI助手'
     const time = formatTime(msg.time)
     content += `## ${role} (${time})\n\n${msg.content}\n\n`

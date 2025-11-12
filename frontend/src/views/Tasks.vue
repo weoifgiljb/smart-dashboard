@@ -311,7 +311,7 @@ const status = ref(store.filters.status || '');
 const priority = ref(store.filters.priority || '');
 const tab = ref<'table'|'kanban'|'gantt'|'stats'>('table');
 
-const { data, refetch, isFetching } = useTasksQuery({ q: q.value, status: status.value, priority: priority.value } as any)
+const { data, refetch } = useTasksQuery({ q: q.value, status: status.value, priority: priority.value } as any)
 const tasks = computed(() => (data.value as any[]) || []);
 const refreshTick = ref(0);
 const statusChartKey = computed(() => `status-${refreshTick.value}`);

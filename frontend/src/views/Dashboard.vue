@@ -102,7 +102,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { Calendar, Reading, Timer } from '@element-plus/icons-vue'
 import { getDashboardStats, getTodayTasks, getRecentActivities } from '@/api/dashboard'
 import { getCheckInHistory, getCheckInHistoryWithHeatValue } from '@/api/checkin'
@@ -161,7 +161,7 @@ onMounted(async () => {
       getCheckInHistory({ page: 0, size: 400 }),
       getCheckInHistoryWithHeatValue(),
       getCalendarData({ start: toKey(start), end: toKey(today) }),
-      getPomodoroHistory({}),
+      getPomodoroHistory(),
       getWords(),
       getTodayWords()
     ])
@@ -175,11 +175,13 @@ onMounted(async () => {
     } catch {}
     recentActivities.value = activitiesData
     buildHeatValueOption(historyWithHeat, calAgg)
-    buildPomodoroOption(pomodoros)
-    buildWordsOption(words)
-    // 定义口径为“当前词库总单词数”，与 Words 列表保持一致，避免把“掌握(done)”口径误当成已学
+    const pomodorosArray = Array.isArray(pomodoros) ? pomodoros : (pomodoros?.content || pomodoros?.data || [])
+    const wordsArray = Array.isArray(words) ? words : (words?.content || words?.data || [])
+    buildPomodoroOption(pomodorosArray)
+    buildWordsOption(wordsArray)
+    // 定义口径为"当前词库总单词数"，与 Words 列表保持一致，避免把"掌握(done)"口径误当成已学
     try {
-      const totalWords = Array.isArray(words) ? (words as any[]).length : 0
+      const totalWords = wordsArray.length
       stats.value.wordCount = totalWords
     } catch {}
     // 兜底修正：基于前端数据计算 streak、总天数、今日/总番茄
@@ -200,11 +202,12 @@ onMounted(async () => {
       }
       let streak = 0
       if (anchor) {
-        while (dateSet.has(getKey(anchor))) {
+        let currentAnchor: Date | null = anchor
+        while (currentAnchor && dateSet.has(getKey(currentAnchor))) {
           streak++
-          const prev = new Date(anchor)
-          prev.setDate(anchor.getDate() - 1)
-          anchor = prev
+          const prev: Date = new Date(currentAnchor)
+          prev.setDate(currentAnchor.getDate() - 1)
+          currentAnchor = prev
         }
       }
       if (!Number.isFinite(stats.value.checkInDays) || stats.value.checkInDays < streak) {
@@ -215,13 +218,13 @@ onMounted(async () => {
         stats.value.totalDays = total
       }
       // 番茄统计
-      const totalPomodoros = Array.isArray(pomodoros) ? pomodoros.length : 0
+      const totalPomodoros = pomodorosArray.length
       if (!Number.isFinite(stats.value.pomodoroCount) || stats.value.pomodoroCount < totalPomodoros) {
         stats.value.pomodoroCount = totalPomodoros
       }
       // 今日番茄数量（以 startTime 当天计）
       const todayKey = getDateKey(new Date())
-      const todayPomodoros = (pomodoros || []).filter((p: any) => {
+      const todayPomodoros = pomodorosArray.filter((p: any) => {
         const d = toDate(p?.startTime)
         return d ? getDateKey(d) === todayKey : false
       }).length
