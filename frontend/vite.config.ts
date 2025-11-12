@@ -5,6 +5,10 @@ import { resolve } from 'path'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const backendPort = env.VITE_BACKEND_PORT || '8080'
+  // GitHub Pages base 路径配置
+  // 如果仓库名是 username.github.io，则 base 为 '/'
+  // 如果仓库名是其他名称，则 base 为 '/仓库名/'
+  const base = env.VITE_BASE_PATH || '/'
 
   const bundleBudget = () => {
     const MAX_ASSET_BYTES = 300 * 1024 // 300KB 单文件限制（可按需调整）
@@ -26,6 +30,7 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
+    base,
     plugins: [vue(), bundleBudget()],
     resolve: {
       alias: {

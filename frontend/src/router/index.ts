@@ -79,8 +79,11 @@ const routes = [
   }
 ]
 
+// 获取 base 路径，用于 GitHub Pages 部署
+const base = import.meta.env.BASE_URL || '/'
+
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(base),
   routes,
   scrollBehavior(_to, _from, savedPosition) {
     if (savedPosition) {
