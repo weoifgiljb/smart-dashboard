@@ -1,0 +1,7 @@
+dist/
+node_modules/
+*.config.cjs
+*.config.js
+vite-env.d.ts
+
+
