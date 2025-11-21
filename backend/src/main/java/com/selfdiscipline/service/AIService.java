@@ -6,6 +6,7 @@ import com.selfdiscipline.model.Chat;
 import com.selfdiscipline.model.User;
 import com.selfdiscipline.repository.ChatRepository;
 import com.selfdiscipline.repository.UserRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -100,16 +101,34 @@ public class AIService {
 			answer = "抱歉，AI服务暂时不可用，请稍后重试。";
 		}
 
-		// 保存对话记录
-		Chat chat = new Chat();
-		chat.setUserId(user.getId());
-		chat.setQuestion(question);
-		chat.setAnswer(answer);
-		chatRepository.save(chat);
-
 		Map<String, String> result = new HashMap<>();
 		result.put("answer", answer);
 		return result;
+	}
+
+	public List<Double> generateEmbeddings(String text) {
+		try {
+			Map<String, Object> body = new HashMap<>();
+			body.put("model", ollamaConfig.getModel());
+			body.put("prompt", text);
+
+			String response = webClient.post()
+					.uri(ollamaConfig.getBaseUrl() + "/api/embeddings")
+					.header("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+					.bodyValue(body)
+					.retrieve()
+					.bodyToMono(String.class)
+					.block();
+
+			JsonNode node = objectMapper.readTree(response);
+			JsonNode embeddingNode = node.path("embedding");
+			if (embeddingNode.isArray()) {
+				return objectMapper.convertValue(embeddingNode, new TypeReference<List<Double>>() {});
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return List.of();
 	}
 
 	public List<Chat> getHistory(String username) {

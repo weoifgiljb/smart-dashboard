@@ -29,6 +29,7 @@ public class DiaryService {
             dbDiary.setContent(diary.getContent());
             dbDiary.setMood(diary.getMood());
             dbDiary.setTags(diary.getTags());
+            dbDiary.setImageUrl(diary.getImageUrl());
             dbDiary.setUpdatedAt(LocalDateTime.now());
             return diaryRepository.save(dbDiary);
         } else {

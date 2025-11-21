@@ -26,6 +26,8 @@ public class Diary {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    private String imageUrl;
+
     public Diary() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = this.createdAt;
@@ -95,5 +97,13 @@ public class Diary {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 }
