@@ -102,7 +102,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { Calendar, Reading, Timer } from '@element-plus/icons-vue'
 import { getDashboardStats, getTodayTasks, getRecentActivities } from '@/api/dashboard'
 import { getCheckInHistory, getCheckInHistoryWithHeatValue } from '@/api/checkin'
@@ -161,7 +161,7 @@ onMounted(async () => {
       getCheckInHistory({ page: 0, size: 400 }),
       getCheckInHistoryWithHeatValue(),
       getCalendarData({ start: toKey(start), end: toKey(today) }),
-      getPomodoroHistory({}),
+      getPomodoroHistory(),
       getWords(),
       getTodayWords()
     ])
@@ -200,11 +200,12 @@ onMounted(async () => {
       }
       let streak = 0
       if (anchor) {
-        while (dateSet.has(getKey(anchor))) {
+        let currentAnchor = anchor
+        while (dateSet.has(getKey(currentAnchor))) {
           streak++
-          const prev = new Date(anchor)
-          prev.setDate(anchor.getDate() - 1)
-          anchor = prev
+          const prev = new Date(currentAnchor)
+          prev.setDate(currentAnchor.getDate() - 1)
+          currentAnchor = prev
         }
       }
       if (!Number.isFinite(stats.value.checkInDays) || stats.value.checkInDays < streak) {
