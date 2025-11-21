@@ -1,53 +1,100 @@
 :root {
-  /* Colors */
-  --app-bg: #f5f5f5;
-  --app-text: #303133;
-  --primary: #409eff;
-  --success: #67c23a;
-  --warning: #e6a23c;
-  --danger: #f56c6c;
+  /* Colors - Green/Blue Youthful Theme */
+  --primary: #10b981; /* Emerald 500 */
+  --primary-hover: #059669; /* Emerald 600 */
+  --primary-light: #d1fae5; /* Emerald 100 */
+  --primary-fade: rgba(16, 185, 129, 0.1);
+  
+  --secondary: #3b82f6; /* Blue 500 */
+  --secondary-hover: #2563eb; /* Blue 600 */
+  --secondary-light: #dbeafe; /* Blue 100 */
+
+  --accent: #f59e0b; /* Amber 500 - for highlights */
+  --accent-light: #fef3c7; /* Amber 100 */
+
+  /* Backgrounds */
+  --app-bg: #f0fdf4; /* Very light green tint for freshness */
+  --card-bg: #ffffff;
+  --sidebar-bg: #ffffff;
+  --header-bg: #ffffff;
+
+  /* Text */
+  --app-text: #1f2937; /* Gray 800 */
+  --text-secondary: #6b7280; /* Gray 500 */
+  --text-light: #9ca3af; /* Gray 400 */
+
+  /* Status */
+  --success: #10b981;
+  --success-light: #d1fae5;
+  --warning: #f59e0b;
+  --warning-light: #fef3c7;
+  --danger: #ef4444;
+  --danger-light: #fee2e2;
+  --info: #3b82f6;
+  --info-light: #dbeafe;
 
   /* Layout */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --shadow-sm: 0 2px 8px rgba(0,0,0,.06);
-  --shadow-md: 0 6px 18px rgba(0,0,0,.08);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px; /* More rounded for youthful look */
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-colored: 0 10px 25px -5px rgba(16, 185, 129, 0.15); /* Greenish shadow */
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+  --gradient-light: linear-gradient(135deg, #d1fae5 0%, #dbeafe 100%);
 }
 
 [data-theme="dark"] {
-  --app-bg: #0b0f14;
-  --app-text: #e5eaf3;
-  --primary: #5cadff;
-  --success: #7ed957;
-  --warning: #f2c97d;
-  --danger: #ff7c7c;
+  --app-bg: #111827;
+  --card-bg: #1f2937;
+  --sidebar-bg: #1f2937;
+  --header-bg: #1f2937;
+  
+  --app-text: #f9fafb;
+  --text-secondary: #d1d5db;
+  --text-light: #9ca3af;
+
+  --primary: #34d399; /* Emerald 400 */
+  --primary-hover: #10b981;
+  --primary-light: rgba(52, 211, 153, 0.1);
+  
+  --secondary: #60a5fa; /* Blue 400 */
+  
+  --shadow-colored: 0 10px 25px -5px rgba(52, 211, 153, 0.15);
 }
 
 /* High contrast mode */
 [data-theme="hc"] {
   --app-bg: #000;
   --app-text: #fff;
-  --primary: #00ffff;
+  --primary: #00ff00;
   --success: #00ff00;
   --warning: #ffff00;
   --danger: #ff0000;
+  --card-bg: #000;
+  --sidebar-bg: #000;
 }
 
 html, body, #app {
   background: var(--app-bg);
   color: var(--app-text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
+/* Global Element Plus Overrides for the Theme */
 :root {
-  --bg: #f5f5f5;
-  --fg: #1f2328;
-  --muted: #606266;
-  --primary: #409eff;
-  --success: #67c23a;
-  --warning: #e6a23c;
-  --danger: #f56c6c;
-  --card-bg: #ffffff;
+  --el-color-primary: var(--primary);
+  --el-color-success: var(--success);
+  --el-color-warning: var(--warning);
+  --el-color-danger: var(--danger);
+  --el-color-info: var(--info);
+  --el-border-radius-base: var(--radius-sm);
+}
   --border: #e4e7ed;
 }
 

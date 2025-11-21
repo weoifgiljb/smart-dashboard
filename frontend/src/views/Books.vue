@@ -26,6 +26,7 @@
             <el-option label="评分最高" value="rating" />
             <el-option label="最热" value="hot" />
             <el-option label="最新" value="new" />
+            <el-option label="随机发现" value="random" />
           </el-select>
 
           <el-button-group>
@@ -55,48 +56,47 @@
         <div class="empty-icon">📚</div>
         <p>暂无书籍推荐</p>
       </div>
-      <VirtualList v-else :items="books" :itemHeight="300" height="calc(100vh - 320px)">
-        <template #default="{ item }">
-          <div class="book-virtual-item">
-            <el-card :body-style="{ padding: '0px' }" class="book-card" @mouseenter="hoveredId = item.id" @mouseleave="hoveredId = null">
-              <div class="book-cover-wrapper">
-                <img :src="item.cover || fallbackCover" class="book-cover" loading="lazy" @error="onImgError($event)" />
-                <div class="overlay" v-if="hoveredId === item.id">
-                  <el-button type="primary" text @click="goDetail(item)">查看详情</el-button>
-                </div>
+      <div v-else class="books-masonry">
+        <div v-for="item in books" :key="item.id" class="book-masonry-item">
+          <el-card :body-style="{ padding: '0px' }" class="book-card" @mouseenter="hoveredId = item.id" @mouseleave="hoveredId = null">
+            <div class="book-cover-wrapper">
+              <img :src="item.cover || fallbackCover" class="book-cover" loading="lazy" @error="onImgError($event)" />
+              <div class="overlay" v-if="hoveredId === item.id">
+                <el-button type="primary" text @click="goDetail(item)">查看详情</el-button>
               </div>
-              <div class="book-info">
-                <h4 class="book-title" :title="item.title">{{ item.title }}</h4>
-                <p class="book-author">{{ item.author || '未知作者' }}</p>
-                <p class="book-description">{{ item.description }}</p>
-                <div class="book-stats">
-                  <el-rate v-model="item.rating" disabled show-score size="small" />
-                </div>
-                <div class="book-actions">
-                  <el-button
-                    size="small"
-                    :type="isFavorited(item.id) ? 'danger' : 'default'"
-                    @click.stop="toggleFavorite(item)"
-                  >
-                    <el-icon><Star /></el-icon>
-                    {{ isFavorited(item.id) ? '已收藏' : '收藏' }}
-                  </el-button>
-                  <el-button
-                    size="small"
-                    type="primary"
-                    plain
-                    @click.stop="handleGenBookImage(item)"
-                    :loading="generatingId === item.id"
-                  >
-                    <el-icon><Picture /></el-icon>
-                    AI配图
-                  </el-button>
-                </div>
+            </div>
+            <div class="book-info">
+              <h4 class="book-title" :title="item.title">{{ item.title }}</h4>
+              <p class="book-author">{{ item.author || '未知作者' }}</p>
+              <p class="book-description">{{ item.description }}</p>
+              <div class="book-stats">
+                <el-rate v-model="item.rating" disabled show-score size="small" />
               </div>
-            </el-card>
-          </div>
-        </template>
-      </VirtualList>
+              <div class="book-actions">
+                <el-button
+                  size="small"
+                  :type="isFavorited(item.id) ? 'danger' : 'default'"
+                  @click.stop="toggleFavorite(item)"
+                >
+                  <el-icon><Star /></el-icon>
+                  {{ isFavorited(item.id) ? '已收藏' : '收藏' }}
+                </el-button>
+                <el-button
+                  size="small"
+                  type="primary"
+                  plain
+                  @click.stop="handleGenBookImage(item)"
+                  :loading="generatingId === item.id"
+                >
+                  <el-icon><Picture /></el-icon>
+                  AI配图
+                </el-button>
+              </div>
+            </div>
+          </el-card>
+        </div>
+      </div>
+
     </el-card>
 
     <!-- 分页 -->
@@ -118,7 +118,6 @@ import { ElMessage } from 'element-plus'
 import { getBooks, searchBooks } from '@/api/books'
 import { generateBookImage } from '@/api/ai'
 import { useRouter } from 'vue-router'
-import VirtualList from '@/components/virtual/VirtualList.vue'
 import { Loading, Search, Refresh, Star, Picture } from '@element-plus/icons-vue'
 
 // 基础数据
@@ -130,7 +129,7 @@ const fallbackCover = '/no-cover.svg'
 
 // 新增数据
 const searchKeyword = ref<string>('')
-const sortBy = ref<string>('rating')
+const sortBy = ref<string>('random') // 默认使用随机发现模式，让用户看到新内容
 const showOnlyFavorited = ref<boolean>(false)
 const hoveredId = ref<string | null>(null)
 const generatingId = ref<string | null>(null)
@@ -175,13 +174,40 @@ const loadBooks = async () => {
       books.value = []
     }
     
-    // 清理占位图
+    // 清理占位图和修复数据错位
     books.value = books.value.map((b: any) => {
-      const cover: string = b?.cover || ''
-      if (cover.startsWith('https://via.placeholder.com') || cover.startsWith('http://via.placeholder.com')) {
-        return { ...b, cover: '' }
+      let title = b.title
+      let author = b.author
+      let category = b.category
+      let cover = b.cover
+
+      // 修复导入数据可能出现的字段错位
+      // 如果标题看起来像图片文件名
+      if (title && (title.endsWith('.jpg') || title.endsWith('.png'))) {
+        // 尝试从分类中恢复标题，如果分类看起来像标题
+        if (category && category.length > 20 && !category.includes('Calendar')) {
+          title = category
+        } else if (b.description && b.description.startsWith('From Book32 dataset - ')) {
+          // 从描述中提取
+          title = b.description.replace('From Book32 dataset - ', '')
+        }
       }
-      return b
+
+      // 如果作者看起来像URL
+      if (author && (author.startsWith('http') || author.includes('.jpg'))) {
+        // 这其实是封面图
+        if (!cover || !cover.startsWith('http')) {
+          cover = author
+        }
+        author = 'Unknown'
+      }
+      
+      // 封面图降级处理
+      if (!cover || cover.startsWith('https://via.placeholder.com') || cover.startsWith('http://via.placeholder.com')) {
+        cover = ''
+      }
+
+      return { ...b, title, author, cover }
     })
   } catch (error: any) {
     ElMessage.error(error.response?.data?.message || '获取书籍失败')
@@ -331,15 +357,11 @@ const onImgError = (e: Event) => {
 }
 
 /* 书籍卡片 */
-.book-virtual-item {
-  padding: 0 10px 10px 10px;
-}
-
 .book-card {
-  margin-bottom: 20px;
   cursor: pointer;
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
   overflow: hidden;
+  height: 100%; /* 确保卡片填满容器 */
 }
 
 .book-card:hover {
@@ -504,6 +526,39 @@ const onImgError = (e: Event) => {
 /* 光标指针 */
 .cursor-pointer {
   cursor: pointer;
+}
+
+/* 瀑布流布局 */
+.books-masonry {
+  column-count: 4;
+  column-gap: 20px;
+  padding: 10px 0;
+}
+
+.book-masonry-item {
+  break-inside: avoid;
+  margin-bottom: 20px;
+  /* 修复 Chrome 渲染 bug */
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+@media (max-width: 1400px) {
+  .books-masonry {
+    column-count: 3;
+  }
+}
+
+@media (max-width: 992px) {
+  .books-masonry {
+    column-count: 2;
+  }
+}
+
+@media (max-width: 600px) {
+  .books-masonry {
+    column-count: 1;
+  }
 }
 </style>
 

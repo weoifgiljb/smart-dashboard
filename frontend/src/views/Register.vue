@@ -101,7 +101,7 @@ const handleRegister = async () => {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);
 }
 
 .register-card {

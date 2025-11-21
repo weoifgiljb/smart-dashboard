@@ -594,32 +594,32 @@ refresh();
 .stats-overview {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .stat-card {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px;
-  border-radius: 12px;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
   transition: all 0.3s;
   cursor: pointer;
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-2px);
 }
 
 .stat-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
+  font-size: 20px;
   flex-shrink: 0;
 }
 
@@ -645,19 +645,42 @@ refresh();
 
 .stat-info {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .stat-value {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   color: #303133;
   line-height: 1;
-  margin-bottom: 8px;
+  margin-bottom: 0;
 }
 
 .stat-label {
-  font-size: 14px;
+  font-size: 13px;
   color: #909399;
+  margin-top: 2px;
+}
+
+/* 横向布局变体：当空间足够时，或者用户希望更紧凑时 */
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.stat-info {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-direction: row; /* 改为横向排列 */
 }
 
 /* 图表网格 */
@@ -733,12 +756,14 @@ refresh();
 
 /* 响应式 */
 @media (max-width: 1400px) {
-  .stats-overview {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
   .charts-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 992px) {
+  .stats-overview {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 

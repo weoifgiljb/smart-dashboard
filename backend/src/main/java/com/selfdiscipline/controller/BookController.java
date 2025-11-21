@@ -36,6 +36,15 @@ public class BookController {
     }
 
     /**
+     * 获取随机推荐书籍（发现模式）
+     */
+    @GetMapping("/random")
+    public ResponseEntity<List<Book>> getRandomBooks(@RequestParam(defaultValue = "10") int limit) {
+        List<Book> books = bookService.getRandomBooks(limit);
+        return ResponseEntity.ok(books);
+    }
+
+    /**
      * 获取所有推荐书籍（不分页，兼容旧接口）
      */
     @GetMapping("/all")
@@ -71,12 +80,3 @@ public class BookController {
         return book.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 }
-
-
-
-
-
-
-
-
-

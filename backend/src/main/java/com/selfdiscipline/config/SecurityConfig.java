@@ -65,6 +65,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/books/import").permitAll() // Allow book import without auth for convenience
+                .requestMatchers("/books/random").permitAll() // Allow random books without auth
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

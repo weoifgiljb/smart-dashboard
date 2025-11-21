@@ -298,8 +298,8 @@ const buildHeatValueOption = (historyWithHeat: any[], calAgg: Record<string, any
             type: 'linear',
             x: 0, y: 0, x2: 0, y2: 1,
             colorStops: [
-              { offset: 0, color: '#409eff' },
-              { offset: 1, color: 'rgba(64,158,255,0.2)' }
+              { offset: 0, color: '#10b981' },
+              { offset: 1, color: 'rgba(16, 185, 129, 0.2)' }
             ]
           }
         }
@@ -338,9 +338,9 @@ const buildPomodoroOption = (pomodoros: any[]) => {
         data: values,
         type: 'line',
         smooth: true,
-        areaStyle: { color: 'rgba(64,158,255,0.15)' },
-        lineStyle: { color: '#409eff' },
-        itemStyle: { color: '#409eff' }
+        areaStyle: { color: 'rgba(59, 130, 246, 0.15)' },
+        lineStyle: { color: '#3b82f6' },
+        itemStyle: { color: '#3b82f6' }
       }
     ],
     tooltip: { trigger: 'axis' }
@@ -371,7 +371,7 @@ const buildWordsOption = (words: any[]) => {
         data: values,
         type: 'bar',
         barWidth: '60%',
-        itemStyle: { color: '#67c23a' }
+        itemStyle: { color: '#10b981' }
       }
     ],
     tooltip: { trigger: 'axis' }
@@ -391,13 +391,13 @@ const buildWordsOption = (words: any[]) => {
 .stat-value {
   font-size: 32px;
   font-weight: bold;
-  color: #409eff;
+  color: var(--primary);
   margin-bottom: 10px;
 }
 
 .stat-label {
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .tasks-list {
@@ -408,7 +408,7 @@ const buildWordsOption = (words: any[]) => {
   display: flex;
   align-items: center;
   padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
 .task-item:last-child {
@@ -418,12 +418,13 @@ const buildWordsOption = (words: any[]) => {
 .task-item .el-icon {
   margin-right: 10px;
   font-size: 18px;
-  color: #409eff;
+  color: var(--secondary);
 }
 
 .task-item span {
   flex: 1;
   font-size: 14px;
+  color: var(--app-text);
 }
 
 .task-item.completed {
@@ -439,7 +440,7 @@ const buildWordsOption = (words: any[]) => {
   display: flex;
   align-items: flex-start;
   padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
 .activity-item:last-child {
@@ -458,18 +459,18 @@ const buildWordsOption = (words: any[]) => {
 }
 
 .activity-icon.checkin {
-  background-color: #e8f5e9;
-  color: #67c23a;
+  background-color: var(--success-light);
+  color: var(--success);
 }
 
 .activity-icon.pomodoro {
-  background-color: #fff3e0;
-  color: #e6a23c;
+  background-color: var(--warning-light);
+  color: var(--warning);
 }
 
 .activity-icon.word {
-  background-color: #e3f2fd;
-  color: #409eff;
+  background-color: var(--info-light);
+  color: var(--info);
 }
 
 .activity-content {
@@ -478,13 +479,13 @@ const buildWordsOption = (words: any[]) => {
 
 .activity-title {
   font-size: 14px;
-  color: #333;
+  color: var(--app-text);
   margin-bottom: 4px;
 }
 
 .activity-time {
   font-size: 12px;
-  color: #999;
+  color: var(--text-light);
 }
 </style>
 

@@ -25,7 +25,11 @@
             <el-statistic title="总打卡天数" :value="totalDays" />
           </el-col>
           <el-col :xs="8" :sm="6" :md="4">
-            <el-statistic title="年度热力图" :value="yearHeatmapAvailable ? '已生成' : '加载中'" />
+            <el-statistic title="年度热力图">
+              <template #formatter>
+                <span>{{ yearHeatmapAvailable ? '已生成' : '加载中' }}</span>
+              </template>
+            </el-statistic>
           </el-col>
         </el-row>
       </div>

@@ -89,26 +89,64 @@ const onImgError = (e: Event) => {
   target.src = fallbackCover
 }
 
-const resolveBook = async () => {
-  const stateBook: any = (history.state && (history.state as any).book) || null
-  if (stateBook) {
-    Object.assign(book, stateBook)
-    return
-  }
-  // Fallback：若刷新后无 state，优先从详情接口获取；失败再从列表兜底
-  try {
-    const byId: any = await getBookById(String(route.params.id))
-    if (byId) Object.assign(book, byId)
-  } catch {
-    try {
-      const all: any[] = await getBooks()
-      const found = all.find((b) => String(b.id) === String(route.params.id))
-      if (found) Object.assign(book, found)
-    } catch {
-      // 保持静默，页面给出空态
+    const resolveBook = async () => {
+      const stateBook: any = (history.state && (history.state as any).book) || null
+      let targetBook = stateBook
+
+      // Fallback：若刷新后无 state，优先从详情接口获取
+      if (!targetBook) {
+        try {
+          const byId: any = await getBookById(String(route.params.id))
+          if (byId) targetBook = byId
+        } catch {
+          // 失败再尝试从列表兜底（兼容旧逻辑）
+          try {
+            const all: any = await getBooks(0, 100, 'random') // 尝试获取一些书
+            // 注意：这里可能找不到，仅作为最后的尝试
+            if (Array.isArray(all)) {
+               const found = all.find((b:any) => String(b.id) === String(route.params.id))
+               if (found) targetBook = found
+            }
+          } catch {
+            // 保持静默
+          }
+        }
+      }
+
+      if (targetBook) {
+        // 修复数据错位逻辑 (同 Books.vue)
+        let title = targetBook.title
+        let author = targetBook.author
+        let category = targetBook.category
+        let cover = targetBook.cover
+        const desc = targetBook.description
+
+        // 1. 修复标题
+        if (title && (title.endsWith('.jpg') || title.endsWith('.png'))) {
+          if (category && category.length > 20 && !category.includes('Calendar')) {
+            title = category
+          } else if (desc && desc.startsWith('From Book32 dataset - ')) {
+            title = desc.replace('From Book32 dataset - ', '')
+          }
+        }
+
+        // 2. 修复作者/封面
+        if (author && (author.startsWith('http') || author.includes('.jpg'))) {
+          if (!cover || !cover.startsWith('http')) {
+            cover = author
+          }
+          author = 'Unknown'
+        }
+
+        // 3. 封面图兜底
+        if (!cover || cover.startsWith('https://via.placeholder.com') || cover.startsWith('http://via.placeholder.com')) {
+          cover = ''
+        }
+
+        // 更新响应式对象
+        Object.assign(book, { ...targetBook, title, author, cover })
+      }
     }
-  }
-}
 
 const searchGithub = async (query: string) => {
   if (!query) return
