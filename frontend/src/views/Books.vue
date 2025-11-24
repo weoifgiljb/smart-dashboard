@@ -152,6 +152,44 @@ onMounted(async () => {
   await loadBooks()
 })
 
+// 数据清洗与修复逻辑
+const processBooksData = (rawBooks: any[]) => {
+  return rawBooks.map((b: any) => {
+    let title = b.title
+    let author = b.author
+    let category = b.category
+    let cover = b.cover
+
+    // 修复导入数据可能出现的字段错位
+    // 如果标题看起来像图片文件名
+    if (title && (title.endsWith('.jpg') || title.endsWith('.png'))) {
+      // 尝试从分类中恢复标题，如果分类看起来像标题
+      if (category && category.length > 20 && !category.includes('Calendar')) {
+        title = category
+      } else if (b.description && b.description.startsWith('From Book32 dataset - ')) {
+        // 从描述中提取
+        title = b.description.replace('From Book32 dataset - ', '')
+      }
+    }
+
+    // 如果作者看起来像URL
+    if (author && (author.startsWith('http') || author.includes('.jpg'))) {
+      // 这其实是封面图
+      if (!cover || !cover.startsWith('http')) {
+        cover = author
+      }
+      author = 'Unknown'
+    }
+    
+    // 封面图降级处理
+    if (!cover || cover.startsWith('https://via.placeholder.com') || cover.startsWith('http://via.placeholder.com')) {
+      cover = ''
+    }
+
+    return { ...b, title, author, cover }
+  })
+}
+
 // 加载书籍
 const loadBooks = async () => {
   try {
@@ -175,40 +213,7 @@ const loadBooks = async () => {
     }
     
     // 清理占位图和修复数据错位
-    books.value = books.value.map((b: any) => {
-      let title = b.title
-      let author = b.author
-      let category = b.category
-      let cover = b.cover
-
-      // 修复导入数据可能出现的字段错位
-      // 如果标题看起来像图片文件名
-      if (title && (title.endsWith('.jpg') || title.endsWith('.png'))) {
-        // 尝试从分类中恢复标题，如果分类看起来像标题
-        if (category && category.length > 20 && !category.includes('Calendar')) {
-          title = category
-        } else if (b.description && b.description.startsWith('From Book32 dataset - ')) {
-          // 从描述中提取
-          title = b.description.replace('From Book32 dataset - ', '')
-        }
-      }
-
-      // 如果作者看起来像URL
-      if (author && (author.startsWith('http') || author.includes('.jpg'))) {
-        // 这其实是封面图
-        if (!cover || !cover.startsWith('http')) {
-          cover = author
-        }
-        author = 'Unknown'
-      }
-      
-      // 封面图降级处理
-      if (!cover || cover.startsWith('https://via.placeholder.com') || cover.startsWith('http://via.placeholder.com')) {
-        cover = ''
-      }
-
-      return { ...b, title, author, cover }
-    })
+    books.value = processBooksData(books.value)
   } catch (error: any) {
     ElMessage.error(error.response?.data?.message || '获取书籍失败')
   } finally {
@@ -227,7 +232,8 @@ const handleSearch = async () => {
   try {
     searching.value = true
     const data: any = await searchBooks(searchKeyword.value)
-    books.value = Array.isArray(data) ? data : []
+    const rawList = Array.isArray(data) ? data : []
+    books.value = processBooksData(rawList)
     total.value = books.value.length
     currentPage.value = 1
     ElMessage.success(`找到 ${books.value.length} 本书籍`)

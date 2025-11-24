@@ -6,6 +6,7 @@ export interface Diary {
   content: string
   mood?: string
   tags?: string[]
+  imageUrl?: string
   diaryDate: string // YYYY-MM-DD
   createdAt?: string
   updatedAt?: string
@@ -21,4 +22,16 @@ export const saveDiary = (diary: Diary) => {
 
 export const deleteDiary = (id: string) => {
   return request.delete(`/diaries/${id}`)
+}
+
+export const exportPdf = () => {
+  return request.get('/diaries/export/pdf', { responseType: 'blob' })
+}
+
+export const exportWord = () => {
+  return request.get('/diaries/export/word', { responseType: 'blob' })
+}
+
+export const matchMeme = (content: string) => {
+  return request.post<string>('/diaries/match-meme', { content })
 }

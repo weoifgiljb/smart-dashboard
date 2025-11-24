@@ -1,5 +1,16 @@
 <template>
   <div class="dashboard">
+    <div class="filter-bar" style="margin-bottom: 20px; display: flex; justify-content: flex-end;">
+      <el-date-picker
+        v-model="dateRange"
+        type="daterange"
+        range-separator="至"
+        start-placeholder="开始日期"
+        end-placeholder="结束日期"
+        :shortcuts="shortcuts"
+        size="default"
+      />
+    </div>
     <el-row :gutter="20">
       <el-col :span="6">
         <el-card>
@@ -44,13 +55,13 @@
       <el-col :span="8">
         <el-card>
           <template #header>近7天番茄完成数</template>
-          <BaseChart :option="pomodoroOption" height="200px" />
+          <BaseChart :option="pomodoroOption" height="200px" @chart-click="(p) => handleChartClick('pomodoro', p)" />
         </el-card>
       </el-col>
       <el-col :span="8">
         <el-card>
           <template #header>近7天单词新增</template>
-          <BaseChart :option="wordsOption" height="200px" />
+          <BaseChart :option="wordsOption" height="200px" @chart-click="(p) => handleChartClick('word', p)" />
         </el-card>
       </el-col>
     </el-row>
@@ -98,11 +109,36 @@
         </el-card>
       </el-col>
     </el-row>
+
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="600px">
+      <el-table :data="dialogData" style="width: 100%" v-if="dialogType === 'pomodoro'">
+        <el-table-column prop="startTime" label="开始时间" width="180">
+          <template #default="{ row }">
+            {{ row.startTime ? new Date(row.startTime).toLocaleString() : '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="duration" label="时长(分钟)" width="100">
+          <template #default="{ row }">
+            {{ Math.floor((row.duration || 0) / 60) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="tag" label="标签" />
+      </el-table>
+      <el-table :data="dialogData" style="width: 100%" v-else>
+        <el-table-column prop="word" label="单词" width="180" />
+        <el-table-column prop="meaning" label="释义" />
+        <el-table-column prop="createTime" label="添加时间" width="180">
+          <template #default="{ row }">
+            {{ row.createTime ? new Date(row.createTime).toLocaleString() : '-' }}
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { Calendar, Reading, Timer } from '@element-plus/icons-vue'
 import { getDashboardStats, getTodayTasks, getRecentActivities } from '@/api/dashboard'
 import { getCheckInHistory, getCheckInHistoryWithHeatValue } from '@/api/checkin'
@@ -129,6 +165,20 @@ const recentActivities = ref<any[]>([])
 const heatValueOption = ref<any>({})
 const pomodoroOption = ref<any>({})
 const wordsOption = ref<any>({})
+
+const dateRange = ref<[Date, Date] | null>(null)
+const rawPomodoros = ref<any[]>([])
+const rawWords = ref<any[]>([])
+const dialogVisible = ref(false)
+const dialogTitle = ref('')
+const dialogData = ref<any[]>([])
+const dialogType = ref<'pomodoro' | 'word'>('pomodoro')
+
+const shortcuts = [
+  { text: '最近一周', value: () => { const end = new Date(); const start = new Date(); start.setTime(start.getTime() - 3600 * 1000 * 24 * 7); return [start, end] } },
+  { text: '最近一个月', value: () => { const end = new Date(); const start = new Date(); start.setTime(start.getTime() - 3600 * 1000 * 24 * 30); return [start, end] } },
+  { text: '最近三个月', value: () => { const end = new Date(); const start = new Date(); start.setTime(start.getTime() - 3600 * 1000 * 24 * 90); return [start, end] } },
+]
 
 // 兼容后端时间戳（秒/毫秒）与字符串
 const toDate = (val: any): Date | null => {
@@ -165,6 +215,10 @@ onMounted(async () => {
       getWords(),
       getTodayWords()
     ])
+    
+    rawPomodoros.value = pomodoros || []
+    rawWords.value = words || []
+
     stats.value = statsData
     todayTasks.value = tasksData
     // 兜底修正：以“今日需背接口”的数量为准，避免服务端旧版本导致统计失真
@@ -175,8 +229,16 @@ onMounted(async () => {
     } catch {}
     recentActivities.value = activitiesData
     buildHeatValueOption(historyWithHeat, calAgg)
-    buildPomodoroOption(pomodoros)
-    buildWordsOption(words)
+    
+    // 初始化日期范围为最近7天
+    const rangeEnd = new Date()
+    const rangeStart = new Date()
+    rangeStart.setDate(rangeEnd.getDate() - 6)
+    dateRange.value = [rangeStart, rangeEnd]
+    
+    // 初始构建图表
+    updateCharts()
+
     // 定义口径为“当前词库总单词数”，与 Words 列表保持一致，避免把“掌握(done)”口径误当成已学
     try {
       const totalWords = Array.isArray(words) ? (words as any[]).length : 0
@@ -268,6 +330,62 @@ const lastNDays = (n: number) => {
   return arr
 }
 
+const getDaysArray = (start: Date, end: Date) => {
+  const arr = []
+  for(let dt=new Date(start); dt<=end; dt.setDate(dt.getDate()+1)){
+      arr.push(new Date(dt));
+  }
+  return arr;
+}
+
+const updateCharts = () => {
+  if (!dateRange.value) return
+  const [start, end] = dateRange.value
+  
+  const filteredPomodoros = rawPomodoros.value.filter(p => {
+    const d = toDate(p?.startTime)
+    return d && d >= start && d <= end
+  })
+  
+  const filteredWords = rawWords.value.filter(w => {
+    const d = toDate(w?.createTime)
+    return d && d >= start && d <= end
+  })
+  
+  buildPomodoroOption(filteredPomodoros, start, end)
+  buildWordsOption(filteredWords, start, end)
+}
+
+watch(dateRange, () => {
+  updateCharts()
+})
+
+const handleChartClick = (type: 'pomodoro' | 'word', params: any) => {
+  if (!dateRange.value) return
+  const days = getDaysArray(dateRange.value[0], dateRange.value[1])
+  const date = days[params.dataIndex]
+  if (!date) return
+  
+  const key = getDateKey(date)
+  
+  if (type === 'pomodoro') {
+    dialogData.value = rawPomodoros.value.filter(p => {
+      const d = toDate(p?.startTime)
+      return d && getDateKey(d) === key
+    })
+    dialogTitle.value = `${key} 番茄钟记录`
+  } else {
+    dialogData.value = rawWords.value.filter(w => {
+      const d = toDate(w?.createTime)
+      return d && getDateKey(d) === key
+    })
+    dialogTitle.value = `${key} 新增单词`
+  }
+  
+  dialogType.value = type
+  dialogVisible.value = true
+}
+
 const buildHeatValueOption = (historyWithHeat: any[], calAgg: Record<string, any>) => {
   const days = lastNDays(30)
   const map = new Map<string, number>()
@@ -316,8 +434,8 @@ const buildHeatValueOption = (historyWithHeat: any[], calAgg: Record<string, any
   }
 }
 
-const buildPomodoroOption = (pomodoros: any[]) => {
-  const days = lastNDays(7)
+const buildPomodoroOption = (pomodoros: any[], start?: Date, end?: Date) => {
+  const days = (start && end) ? getDaysArray(start, end) : lastNDays(7)
   const map = new Map<string, number>()
   days.forEach(d => map.set(getDateKey(d), 0))
   ;(pomodoros || []).forEach((p: any) => {
@@ -348,8 +466,8 @@ const buildPomodoroOption = (pomodoros: any[]) => {
   }
 }
 
-const buildWordsOption = (words: any[]) => {
-  const days = lastNDays(7)
+const buildWordsOption = (words: any[], start?: Date, end?: Date) => {
+  const days = (start && end) ? getDaysArray(start, end) : lastNDays(7)
   const mapAdd = new Map<string, number>()
   days.forEach(d => mapAdd.set(getDateKey(d), 0))
   ;(words || []).forEach((w: any) => {

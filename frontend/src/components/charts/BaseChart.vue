@@ -12,6 +12,8 @@ interface Props {
   autoresize?: boolean
 }
 
+const emit = defineEmits(['chart-click'])
+
 const props = defineProps<Props>()
 const elRef = ref<HTMLElement | null>(null)
 let chart: echarts.ECharts | null = null
@@ -30,6 +32,11 @@ const initChart = () => {
   if (props.option) {
     chart.setOption(props.option)
   }
+  
+  chart.on('click', (params) => {
+    emit('chart-click', params)
+  })
+
   // 初始化后做一次异步 resize，避免在 display:none 场景下尺寸为 0
   requestAnimationFrame(() => handleResize())
   setTimeout(() => handleResize(), 120)

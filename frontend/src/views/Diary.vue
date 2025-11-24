@@ -6,10 +6,14 @@
           <h2>我的日记</h2>
           <span class="subtitle">记录生活，反思成长</span>
         </div>
-        <el-button type="primary" @click="openDialog()">
-          <el-icon><EditPen /></el-icon>
-          写日记
-        </el-button>
+        <div class="actions">
+          <el-button @click="handleExportPdf">导出 PDF</el-button>
+          <el-button @click="handleExportWord">导出 Word</el-button>
+          <el-button type="primary" @click="openDialog()">
+            <el-icon><EditPen /></el-icon>
+            写日记
+          </el-button>
+        </div>
       </div>
     </el-card>
 
@@ -42,6 +46,14 @@
               </div>
             </div>
             <div class="diary-content" v-html="formatContent(diary.content)"></div>
+            <div class="diary-image" v-if="diary.imageUrl" style="margin-top: 10px;">
+              <el-image 
+                :src="diary.imageUrl" 
+                fit="contain" 
+                style="max-height: 200px; border-radius: 8px;"
+                :preview-src-list="[diary.imageUrl]"
+              />
+            </div>
             <div class="diary-tags" v-if="diary.tags && diary.tags.length">
               <el-tag v-for="tag in diary.tags" :key="tag" size="small" class="tag-item"># {{ tag }}</el-tag>
             </div>
@@ -81,12 +93,40 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="内容">
-          <el-input
-            v-model="form.content"
-            type="textarea"
-            :rows="8"
-            placeholder="今天发生了什么？有什么感悟？"
-          />
+          <div style="border: 1px solid var(--el-border-color); border-radius: 4px; overflow: hidden; width: 100%;">
+            <VueMonacoEditor
+              v-model:value="form.content"
+              theme="vs"
+              :options="{
+                minimap: { enabled: false },
+                automaticLayout: true,
+                wordWrap: 'on',
+                fontSize: 14,
+                lineNumbers: 'off',
+                renderLineHighlight: 'none',
+                scrollBeyondLastLine: false
+              }"
+              language="markdown"
+              height="400px"
+            />
+          </div>
+          <div style="margin-top: 10px;">
+            <el-button size="small" @click="handleMatchMeme" :loading="matchingMeme">
+              <el-icon><Picture /></el-icon> {{ form.imageUrl ? '重新配图' : '智能配图 (RAG)' }}
+            </el-button>
+            <div v-if="form.imageUrl" style="margin-top: 10px; position: relative; display: inline-block;">
+              <el-image :src="form.imageUrl" style="max-height: 150px; border-radius: 4px;" />
+              <el-button 
+                type="danger" 
+                circle 
+                size="small" 
+                style="position: absolute; top: -5px; right: -5px;"
+                @click="form.imageUrl = ''"
+              >
+                <el-icon><Close /></el-icon>
+              </el-button>
+            </div>
+          </div>
         </el-form-item>
         <el-form-item label="标签">
            <el-select
@@ -118,11 +158,14 @@
 <script setup lang="ts">
 import { ref, onMounted, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { EditPen } from '@element-plus/icons-vue'
-import { getDiaries, saveDiary, deleteDiary, type Diary } from '@/api/diary'
+import { EditPen, Picture, Close } from '@element-plus/icons-vue'
+import { getDiaries, saveDiary, deleteDiary, exportPdf, exportWord, matchMeme, type Diary } from '@/api/diary'
+import { VueMonacoEditor } from '@guolao/vue-monaco-editor'
+import { marked } from 'marked'
 
 const loading = ref(false)
 const saving = ref(false)
+const matchingMeme = ref(false)
 const diaries = ref<Diary[]>([])
 const dialogVisible = ref(false)
 const editingDiary = ref<Partial<Diary>>({})
@@ -131,7 +174,8 @@ const form = reactive<Diary>({
   diaryDate: '',
   content: '',
   mood: 'neutral',
-  tags: []
+  tags: [],
+  imageUrl: ''
 })
 
 const moodOptions = [
@@ -158,7 +202,11 @@ const formatTime = (timeStr: string) => {
 
 const formatContent = (content: string) => {
   if (!content) return ''
-  return content.replace(/\n/g, '<br>')
+  try {
+    return marked.parse(content) as string
+  } catch (e) {
+    return content
+  }
 }
 
 const loadData = async () => {
@@ -181,7 +229,8 @@ const openDialog = (diary?: Diary) => {
       diaryDate: diary.diaryDate,
       content: diary.content,
       mood: diary.mood || 'neutral',
-      tags: diary.tags || []
+      tags: diary.tags || [],
+      imageUrl: diary.imageUrl || ''
     })
   } else {
     editingDiary.value = {}
@@ -195,7 +244,8 @@ const openDialog = (diary?: Diary) => {
       diaryDate: `${y}-${m}-${d}`,
       content: '',
       mood: 'neutral',
-      tags: []
+      tags: [],
+      imageUrl: ''
     })
   }
   dialogVisible.value = true
@@ -231,6 +281,53 @@ const handleDelete = (diary: Diary) => {
       loadData()
     }
   })
+}
+
+const handleExportPdf = async () => {
+  try {
+    const res: any = await exportPdf()
+    const blob = new Blob([res], { type: 'application/pdf' })
+    const link = document.createElement('a')
+    link.href = window.URL.createObjectURL(blob)
+    link.download = 'diaries.pdf'
+    link.click()
+  } catch (e) {
+    ElMessage.error('导出 PDF 失败')
+  }
+}
+
+const handleExportWord = async () => {
+  try {
+    const res: any = await exportWord()
+    const blob = new Blob([res], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
+    const link = document.createElement('a')
+    link.href = window.URL.createObjectURL(blob)
+    link.download = 'diaries.docx'
+    link.click()
+  } catch (e) {
+    ElMessage.error('导出 Word 失败')
+  }
+}
+
+const handleMatchMeme = async () => {
+  if (!form.content.trim()) {
+    ElMessage.warning('请先填写日记内容')
+    return
+  }
+  try {
+    matchingMeme.value = true
+    const res: any = await matchMeme(form.content)
+    if (res) {
+      form.imageUrl = res
+      ElMessage.success('智能配图成功')
+    } else {
+      ElMessage.warning('未找到合适的配图')
+    }
+  } catch (e) {
+    ElMessage.error('智能配图失败')
+  } finally {
+    matchingMeme.value = false
+  }
 }
 
 onMounted(() => {
@@ -297,7 +394,49 @@ onMounted(() => {
   font-size: 15px;
   line-height: 1.6;
   color: var(--app-text);
-  white-space: pre-wrap;
+  /* white-space: pre-wrap; Removed to let markdown handle spacing */
+}
+
+.diary-content :deep(p) {
+  margin: 0.5em 0;
+}
+
+.diary-content :deep(h1),
+.diary-content :deep(h2),
+.diary-content :deep(h3) {
+  margin: 0.8em 0 0.4em;
+  font-weight: 600;
+}
+
+.diary-content :deep(ul),
+.diary-content :deep(ol) {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.diary-content :deep(blockquote) {
+  margin: 0.5em 0;
+  padding-left: 1em;
+  border-left: 4px solid var(--el-border-color);
+  color: var(--text-secondary);
+}
+
+.diary-content :deep(code) {
+  background-color: var(--el-fill-color-light);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+.diary-content :deep(pre) {
+  background-color: var(--el-fill-color-light);
+  padding: 1em;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.diary-image {
+  margin-top: 10px;
 }
 
 .diary-tags {
@@ -308,5 +447,10 @@ onMounted(() => {
 
 .tag-item {
   border-radius: 12px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
 }
 </style>
