@@ -36,43 +36,43 @@
 
 ```mermaid
 graph TD
-    Client[客户端 (Browser)]
+    Client["客户端 (Browser)"]
     
-    subgraph Frontend [前端 (Vue 3 + TypeScript)]
-        View[页面视图 (Views)]
-        Store[状态管理 (Pinia)]
-        API[API 请求层 (Axios)]
+    subgraph Frontend ["前端 (Vue 3 + TypeScript)"]
+        View["页面视图 (Views)"]
+        Store["状态管理 (Pinia)"]
+        API["API 请求层 (Axios)"]
     end
     
-    subgraph Backend [后端 (Spring Boot 3)]
-        Web[Web 层 (Controller)]
-        Biz[业务层 (Service)]
-        Auth[认证授权 (Security/JWT)]
-        DataLayer[数据层 (Repository)]
+    subgraph Backend ["后端 (Spring Boot 3)"]
+        Web["Web 层 (Controller)"]
+        Biz["业务层 (Service)"]
+        Auth["认证授权 (Security/JWT)"]
+        DataLayer["数据层 (Repository)"]
     end
     
-    subgraph Database [数据存储]
-        Mongo[(MongoDB)]
+    subgraph Database ["数据存储"]
+        Mongo[("MongoDB")]
     end
     
-    subgraph AI_Services [AI 服务]
-        LocalAI[本地模型 (Ollama)]
-        CloudAI[云端模型 (通义千问)]
+    subgraph AI_Services ["AI 服务"]
+        LocalAI["本地模型 (Ollama)"]
+        CloudAI["云端模型 (通义千问)"]
     end
 
-    Client -->|HTTP/HTTPS| View
+    Client -->|"HTTP/HTTPS"| View
     View --> Store
     Store --> API
-    API -->|RESTful API| Web
+    API -->|"RESTful API"| Web
     
     Web --> Auth
     Web --> Biz
     
-    Biz -->|读写| DataLayer
+    Biz -->|"读写"| DataLayer
     DataLayer --> Mongo
     
-    Biz -->|AI 对话/RAG| LocalAI
-    LocalAI -.->|服务不可用| CloudAI
+    Biz -->|"AI 对话/RAG"| LocalAI
+    LocalAI -.->|"服务不可用"| CloudAI
 ```
 
 ## 一、系统要求
