@@ -16,14 +16,3 @@ export const getCheckInHistory = (params: any) => {
 export const getCheckInHistoryWithHeatValue = () => {
   return request.get('/checkin/history-with-heatvalue')
 }
-
-
-
-
-
-
-
-
-
-
-

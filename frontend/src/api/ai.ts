@@ -19,7 +19,7 @@ export const generateWordImage = (wordId: string) => {
 // 流式聊天（优先使用，后端不支持时由调用方回退到 sendChatMessage）
 export async function streamChatMessage(
   question: string,
-  onChunk: (text: string) => void
+  onChunk: (text: string) => void,
 ): Promise<void> {
   const apiBase = (import.meta as any).env?.VITE_API_BASE || '/api'
   const token = localStorage.getItem('token') || ''
@@ -28,15 +28,16 @@ export async function streamChatMessage(
     headers: {
       'Content-Type': 'application/json',
       Accept: 'text/event-stream, text/plain, */*',
-      ...(token ? { Authorization: `Bearer ${token}` } : {})
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify({ question })
+    body: JSON.stringify({ question }),
   })
   if (!res.ok || !res.body) {
     throw new Error('流式接口不可用')
   }
   const reader = res.body.getReader()
   const decoder = new TextDecoder()
+  // eslint-disable-next-line no-constant-condition
   while (true) {
     const { done, value } = await reader.read()
     if (done) break
@@ -44,11 +45,3 @@ export async function streamChatMessage(
     onChunk(chunk)
   }
 }
-
-
-
-
-
-
-
-

@@ -9,7 +9,7 @@
   >
     <slot />
   </el-button>
-  </template>
+</template>
 
 <script setup lang="ts">
 import { ElButton } from 'element-plus'
@@ -25,7 +25,4 @@ defineProps<{
 defineEmits<{ (e: 'click', evt: MouseEvent): void }>()
 </script>
 
-<style scoped>
-</style>
-
-
+<style scoped></style>

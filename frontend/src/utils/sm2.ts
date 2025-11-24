@@ -72,9 +72,10 @@ export function applyReview(id: string, isCorrect: boolean): SM2State {
     current.repetitions = 0
     current.interval = 1
   }
-  current.easeFactor = Math.max(1.3, current.easeFactor + (0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02)))
+  current.easeFactor = Math.max(
+    1.3,
+    current.easeFactor + (0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02)),
+  )
   setState(id, current)
   return current
 }
-
-

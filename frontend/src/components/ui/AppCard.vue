@@ -7,14 +7,17 @@
     </template>
     <slot />
   </el-card>
-  </template>
+</template>
 
 <script setup lang="ts">
-const props = withDefaults(defineProps<{
-  bodyPadding?: string
-}>(), {
-  bodyPadding: '20px'
-})
+withDefaults(
+  defineProps<{
+    bodyPadding?: string
+  }>(),
+  {
+    bodyPadding: '20px',
+  },
+)
 </script>
 
 <style scoped>
@@ -44,5 +47,3 @@ const props = withDefaults(defineProps<{
   padding: 16px 20px;
 }
 </style>
-
-

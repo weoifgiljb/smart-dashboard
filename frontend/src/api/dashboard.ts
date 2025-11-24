@@ -11,6 +11,3 @@ export const getTodayTasks = () => {
 export const getRecentActivities = () => {
   return request.get('/dashboard/recent-activities')
 }
-
-
-

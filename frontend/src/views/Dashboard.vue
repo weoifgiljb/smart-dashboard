@@ -1,6 +1,6 @@
 <template>
   <div class="dashboard">
-    <div class="filter-bar" style="margin-bottom: 20px; display: flex; justify-content: flex-end;">
+    <div class="filter-bar" style="margin-bottom: 20px; display: flex; justify-content: flex-end">
       <el-date-picker
         v-model="dateRange"
         type="daterange"
@@ -55,13 +55,21 @@
       <el-col :span="8">
         <el-card>
           <template #header>近7天番茄完成数</template>
-          <BaseChart :option="pomodoroOption" height="200px" @chart-click="(p) => handleChartClick('pomodoro', p)" />
+          <BaseChart
+            :option="pomodoroOption"
+            height="200px"
+            @chart-click="(p) => handleChartClick('pomodoro', p)"
+          />
         </el-card>
       </el-col>
       <el-col :span="8">
         <el-card>
           <template #header>近7天单词新增</template>
-          <BaseChart :option="wordsOption" height="200px" @chart-click="(p) => handleChartClick('word', p)" />
+          <BaseChart
+            :option="wordsOption"
+            height="200px"
+            @chart-click="(p) => handleChartClick('word', p)"
+          />
         </el-card>
       </el-col>
     </el-row>
@@ -92,7 +100,7 @@
       <el-col :span="12">
         <el-card>
           <template #header>最近活动</template>
-          <div class="activities-list" v-if="recentActivities.length > 0">
+          <div v-if="recentActivities.length > 0" class="activities-list">
             <div v-for="(activity, index) in recentActivities" :key="index" class="activity-item">
               <div class="activity-icon" :class="activity.type">
                 <el-icon v-if="activity.type === 'checkin'"><Calendar /></el-icon>
@@ -111,7 +119,7 @@
     </el-row>
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="600px">
-      <el-table :data="dialogData" style="width: 100%" v-if="dialogType === 'pomodoro'">
+      <el-table v-if="dialogType === 'pomodoro'" :data="dialogData" style="width: 100%">
         <el-table-column prop="startTime" label="开始时间" width="180">
           <template #default="{ row }">
             {{ row.startTime ? new Date(row.startTime).toLocaleString() : '-' }}
@@ -124,7 +132,7 @@
         </el-table-column>
         <el-table-column prop="tag" label="标签" />
       </el-table>
-      <el-table :data="dialogData" style="width: 100%" v-else>
+      <el-table v-else :data="dialogData" style="width: 100%">
         <el-table-column prop="word" label="单词" width="180" />
         <el-table-column prop="meaning" label="释义" />
         <el-table-column prop="createTime" label="添加时间" width="180">
@@ -151,13 +159,13 @@ const stats = ref({
   checkInDays: 0,
   wordCount: 0,
   pomodoroCount: 0,
-  totalDays: 0
+  totalDays: 0,
 })
 
 const todayTasks = ref({
   hasCheckedIn: false,
   todayWordCount: 0,
-  todayPomodoroCount: 0
+  todayPomodoroCount: 0,
 })
 
 const recentActivities = ref<any[]>([])
@@ -175,9 +183,33 @@ const dialogData = ref<any[]>([])
 const dialogType = ref<'pomodoro' | 'word'>('pomodoro')
 
 const shortcuts = [
-  { text: '最近一周', value: () => { const end = new Date(); const start = new Date(); start.setTime(start.getTime() - 3600 * 1000 * 24 * 7); return [start, end] } },
-  { text: '最近一个月', value: () => { const end = new Date(); const start = new Date(); start.setTime(start.getTime() - 3600 * 1000 * 24 * 30); return [start, end] } },
-  { text: '最近三个月', value: () => { const end = new Date(); const start = new Date(); start.setTime(start.getTime() - 3600 * 1000 * 24 * 90); return [start, end] } },
+  {
+    text: '最近一周',
+    value: () => {
+      const end = new Date()
+      const start = new Date()
+      start.setTime(start.getTime() - 3600 * 1000 * 24 * 7)
+      return [start, end]
+    },
+  },
+  {
+    text: '最近一个月',
+    value: () => {
+      const end = new Date()
+      const start = new Date()
+      start.setTime(start.getTime() - 3600 * 1000 * 24 * 30)
+      return [start, end]
+    },
+  },
+  {
+    text: '最近三个月',
+    value: () => {
+      const end = new Date()
+      const start = new Date()
+      start.setTime(start.getTime() - 3600 * 1000 * 24 * 90)
+      return [start, end]
+    },
+  },
 ]
 
 // 兼容后端时间戳（秒/毫秒）与字符串
@@ -204,7 +236,17 @@ onMounted(async () => {
       const day = String(d.getDate()).padStart(2, '0')
       return `${y}-${m}-${day}`
     }
-    const [statsData, tasksData, activitiesData, checkins, historyWithHeat, calAgg, pomodoros, words, todayWords]: any[] = await Promise.all([
+    const [
+      statsData,
+      tasksData,
+      activitiesData,
+      checkins,
+      historyWithHeat,
+      calAgg,
+      pomodoros,
+      words,
+      todayWords,
+    ]: any[] = await Promise.all([
       getDashboardStats(),
       getTodayTasks(),
       getRecentActivities(),
@@ -213,9 +255,9 @@ onMounted(async () => {
       getCalendarData({ start: toKey(start), end: toKey(today) }),
       getPomodoroHistory(),
       getWords(),
-      getTodayWords()
+      getTodayWords(),
     ])
-    
+
     rawPomodoros.value = pomodoros || []
     rawWords.value = words || []
 
@@ -226,16 +268,18 @@ onMounted(async () => {
       if (Array.isArray(todayWords)) {
         todayTasks.value.todayWordCount = todayWords.length
       }
-    } catch {}
+    } catch {
+      // ignore
+    }
     recentActivities.value = activitiesData
     buildHeatValueOption(historyWithHeat, calAgg)
-    
+
     // 初始化日期范围为最近7天
     const rangeEnd = new Date()
     const rangeStart = new Date()
     rangeStart.setDate(rangeEnd.getDate() - 6)
     dateRange.value = [rangeStart, rangeEnd]
-    
+
     // 初始构建图表
     updateCharts()
 
@@ -243,11 +287,15 @@ onMounted(async () => {
     try {
       const totalWords = Array.isArray(words) ? (words as any[]).length : 0
       stats.value.wordCount = totalWords
-    } catch {}
+    } catch {
+      // ignore
+    }
     // 兜底修正：基于前端数据计算 streak、总天数、今日/总番茄
     try {
       // 连续打卡天数与总天数
-      const dateSet = new Set<string>((checkins || []).map((c: any) => c?.checkInDate).filter(Boolean))
+      const dateSet = new Set<string>(
+        (checkins || []).map((c: any) => c?.checkInDate).filter(Boolean),
+      )
       // 找最近一次打卡日期作为锚点
       const today = new Date()
       const getKey = (d: Date) => getDateKey(d)
@@ -279,7 +327,10 @@ onMounted(async () => {
       }
       // 番茄统计
       const totalPomodoros = Array.isArray(pomodoros) ? pomodoros.length : 0
-      if (!Number.isFinite(stats.value.pomodoroCount) || stats.value.pomodoroCount < totalPomodoros) {
+      if (
+        !Number.isFinite(stats.value.pomodoroCount) ||
+        stats.value.pomodoroCount < totalPomodoros
+      ) {
         stats.value.pomodoroCount = totalPomodoros
       }
       // 今日番茄数量（以 startTime 当天计）
@@ -288,10 +339,15 @@ onMounted(async () => {
         const d = toDate(p?.startTime)
         return d ? getDateKey(d) === todayKey : false
       }).length
-      if (!Number.isFinite(todayTasks.value.todayPomodoroCount) || todayTasks.value.todayPomodoroCount !== todayPomodoros) {
+      if (
+        !Number.isFinite(todayTasks.value.todayPomodoroCount) ||
+        todayTasks.value.todayPomodoroCount !== todayPomodoros
+      ) {
         todayTasks.value.todayPomodoroCount = todayPomodoros
       }
-    } catch {}
+    } catch {
+      // ignore
+    }
   } catch (error) {
     console.error('获取数据失败', error)
   }
@@ -332,26 +388,26 @@ const lastNDays = (n: number) => {
 
 const getDaysArray = (start: Date, end: Date) => {
   const arr = []
-  for(let dt=new Date(start); dt<=end; dt.setDate(dt.getDate()+1)){
-      arr.push(new Date(dt));
+  for (let dt = new Date(start); dt <= end; dt.setDate(dt.getDate() + 1)) {
+    arr.push(new Date(dt))
   }
-  return arr;
+  return arr
 }
 
 const updateCharts = () => {
   if (!dateRange.value) return
   const [start, end] = dateRange.value
-  
-  const filteredPomodoros = rawPomodoros.value.filter(p => {
+
+  const filteredPomodoros = rawPomodoros.value.filter((p) => {
     const d = toDate(p?.startTime)
     return d && d >= start && d <= end
   })
-  
-  const filteredWords = rawWords.value.filter(w => {
+
+  const filteredWords = rawWords.value.filter((w) => {
     const d = toDate(w?.createTime)
     return d && d >= start && d <= end
   })
-  
+
   buildPomodoroOption(filteredPomodoros, start, end)
   buildWordsOption(filteredWords, start, end)
 }
@@ -365,23 +421,23 @@ const handleChartClick = (type: 'pomodoro' | 'word', params: any) => {
   const days = getDaysArray(dateRange.value[0], dateRange.value[1])
   const date = days[params.dataIndex]
   if (!date) return
-  
+
   const key = getDateKey(date)
-  
+
   if (type === 'pomodoro') {
-    dialogData.value = rawPomodoros.value.filter(p => {
+    dialogData.value = rawPomodoros.value.filter((p) => {
       const d = toDate(p?.startTime)
       return d && getDateKey(d) === key
     })
     dialogTitle.value = `${key} 番茄钟记录`
   } else {
-    dialogData.value = rawWords.value.filter(w => {
+    dialogData.value = rawWords.value.filter((w) => {
       const d = toDate(w?.createTime)
       return d && getDateKey(d) === key
     })
     dialogTitle.value = `${key} 新增单词`
   }
-  
+
   dialogType.value = type
   dialogVisible.value = true
 }
@@ -394,50 +450,73 @@ const buildHeatValueOption = (historyWithHeat: any[], calAgg: Record<string, any
     const val = Number(h?.heatValue) || 0
     if (key) map.set(key, Math.max(val, map.get(key) || 0))
   })
-  const labels = days.map(d => `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)
-  const values = days.map(d => {
+  const labels = days.map(
+    (d) => `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+  )
+  const values = days.map((d) => {
     const key = getDateKey(d)
     const v = map.get(key) || 0
     const day = (calAgg || {})[key] || {}
-    const fallback = 1 + (Number(day.pomodoro) || 0) * 2 + (Number(day.word) || 0) * 1 + (Number(day.task) || 0) * 3
+    const fallback =
+      1 +
+      (Number(day.pomodoro) || 0) * 2 +
+      (Number(day.word) || 0) * 1 +
+      (Number(day.task) || 0) * 3
     return Math.max(v, fallback > 0 ? fallback : 0)
   })
   const maxVal = Math.max(10, ...values)
   heatValueOption.value = {
     grid: { left: 10, right: 10, top: 10, bottom: 10, containLabel: false },
-    xAxis: { type: 'category', data: labels, axisTick: { show: false }, axisLine: { show: false }, axisLabel: { show: false } },
-    yAxis: { type: 'value', min: 0, max: maxVal, splitLine: { show: false }, axisLabel: { show: false }, axisLine: { show: false }, axisTick: { show: false } },
+    xAxis: {
+      type: 'category',
+      data: labels,
+      axisTick: { show: false },
+      axisLine: { show: false },
+      axisLabel: { show: false },
+    },
+    yAxis: {
+      type: 'value',
+      min: 0,
+      max: maxVal,
+      splitLine: { show: false },
+      axisLabel: { show: false },
+      axisLine: { show: false },
+      axisTick: { show: false },
+    },
     series: [
       {
         data: values,
         type: 'bar',
         barWidth: '60%',
-        itemStyle: { 
+        itemStyle: {
           color: {
             type: 'linear',
-            x: 0, y: 0, x2: 0, y2: 1,
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
             colorStops: [
               { offset: 0, color: '#10b981' },
-              { offset: 1, color: 'rgba(16, 185, 129, 0.2)' }
-            ]
-          }
-        }
-      }
+              { offset: 1, color: 'rgba(16, 185, 129, 0.2)' },
+            ],
+          },
+        },
+      },
     ],
     tooltip: {
       trigger: 'axis',
       formatter: (params: any) => {
         const p = params?.[0]
         return `${p.axisValue}<br/>热力值：${p.data}`
-      }
-    }
+      },
+    },
   }
 }
 
 const buildPomodoroOption = (pomodoros: any[], start?: Date, end?: Date) => {
-  const days = (start && end) ? getDaysArray(start, end) : lastNDays(7)
+  const days = start && end ? getDaysArray(start, end) : lastNDays(7)
   const map = new Map<string, number>()
-  days.forEach(d => map.set(getDateKey(d), 0))
+  days.forEach((d) => map.set(getDateKey(d), 0))
   ;(pomodoros || []).forEach((p: any) => {
     const d = toDate(p?.startTime)
     if (!d) return
@@ -446,12 +525,26 @@ const buildPomodoroOption = (pomodoros: any[], start?: Date, end?: Date) => {
       map.set(key, (map.get(key) || 0) + 1)
     }
   })
-  const labels = days.map(d => `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)
-  const values = days.map(d => map.get(getDateKey(d)) || 0)
+  const labels = days.map(
+    (d) => `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+  )
+  const values = days.map((d) => map.get(getDateKey(d)) || 0)
   pomodoroOption.value = {
     grid: { left: 10, right: 10, top: 10, bottom: 10, containLabel: false },
-    xAxis: { type: 'category', data: labels, axisTick: { show: false }, axisLine: { show: false }, axisLabel: { show: false } },
-    yAxis: { type: 'value', splitLine: { show: false }, axisLabel: { show: false }, axisLine: { show: false }, axisTick: { show: false } },
+    xAxis: {
+      type: 'category',
+      data: labels,
+      axisTick: { show: false },
+      axisLine: { show: false },
+      axisLabel: { show: false },
+    },
+    yAxis: {
+      type: 'value',
+      splitLine: { show: false },
+      axisLabel: { show: false },
+      axisLine: { show: false },
+      axisTick: { show: false },
+    },
     series: [
       {
         data: values,
@@ -459,17 +552,17 @@ const buildPomodoroOption = (pomodoros: any[], start?: Date, end?: Date) => {
         smooth: true,
         areaStyle: { color: 'rgba(59, 130, 246, 0.15)' },
         lineStyle: { color: '#3b82f6' },
-        itemStyle: { color: '#3b82f6' }
-      }
+        itemStyle: { color: '#3b82f6' },
+      },
     ],
-    tooltip: { trigger: 'axis' }
+    tooltip: { trigger: 'axis' },
   }
 }
 
 const buildWordsOption = (words: any[], start?: Date, end?: Date) => {
-  const days = (start && end) ? getDaysArray(start, end) : lastNDays(7)
+  const days = start && end ? getDaysArray(start, end) : lastNDays(7)
   const mapAdd = new Map<string, number>()
-  days.forEach(d => mapAdd.set(getDateKey(d), 0))
+  days.forEach((d) => mapAdd.set(getDateKey(d), 0))
   ;(words || []).forEach((w: any) => {
     const d = toDate(w?.createTime)
     if (d) {
@@ -479,21 +572,35 @@ const buildWordsOption = (words: any[], start?: Date, end?: Date) => {
       }
     }
   })
-  const labels = days.map(d => `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)
-  const values = days.map(d => mapAdd.get(getDateKey(d)) || 0)
+  const labels = days.map(
+    (d) => `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+  )
+  const values = days.map((d) => mapAdd.get(getDateKey(d)) || 0)
   wordsOption.value = {
     grid: { left: 10, right: 10, top: 10, bottom: 10, containLabel: false },
-    xAxis: { type: 'category', data: labels, axisTick: { show: false }, axisLine: { show: false }, axisLabel: { show: false } },
-    yAxis: { type: 'value', splitLine: { show: false }, axisLabel: { show: false }, axisLine: { show: false }, axisTick: { show: false } },
+    xAxis: {
+      type: 'category',
+      data: labels,
+      axisTick: { show: false },
+      axisLine: { show: false },
+      axisLabel: { show: false },
+    },
+    yAxis: {
+      type: 'value',
+      splitLine: { show: false },
+      axisLabel: { show: false },
+      axisLine: { show: false },
+      axisTick: { show: false },
+    },
     series: [
       {
         data: values,
         type: 'bar',
         barWidth: '60%',
-        itemStyle: { color: '#10b981' }
-      }
+        itemStyle: { color: '#10b981' },
+      },
     ],
-    tooltip: { trigger: 'axis' }
+    tooltip: { trigger: 'axis' },
   }
 }
 </script>
@@ -607,6 +714,3 @@ const buildWordsOption = (words: any[], start?: Date, end?: Date) => {
   color: var(--text-light);
 }
 </style>
-
-
-

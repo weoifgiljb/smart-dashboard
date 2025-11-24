@@ -14,5 +14,3 @@ describe('SM-2 simplified', () => {
     expect(s4.interval).toBeGreaterThan(6)
   })
 })
-
-

@@ -30,9 +30,9 @@ const queryClient = new QueryClient({
       retry: 2,
       staleTime: 10 * 1000,
       gcTime: 5 * 60 * 1000,
-      refetchOnWindowFocus: false
-    }
-  }
+      refetchOnWindowFocus: false,
+    },
+  },
 })
 app.use(VueQueryPlugin, { queryClient } as VueQueryPluginOptions)
 
@@ -41,7 +41,7 @@ const applyTheme = (theme: 'light' | 'dark') => {
   document.documentElement.setAttribute('data-theme', theme)
   localStorage.setItem('theme', theme)
 }
-const stored = (localStorage.getItem('theme') as 'light' | 'dark' | null)
+const stored = localStorage.getItem('theme') as 'light' | 'dark' | null
 if (stored) {
   applyTheme(stored)
 } else {
@@ -60,13 +60,10 @@ if (dsn) {
   Sentry.init({
     app,
     dsn,
-    integrations: [
-      Sentry.browserTracingIntegration(),
-      Sentry.replayIntegration()
-    ],
+    integrations: [Sentry.browserTracingIntegration(), Sentry.replayIntegration()],
     tracesSampleRate: 0.1,
     replaysSessionSampleRate: 0.1,
-    replaysOnErrorSampleRate: 1.0
+    replaysOnErrorSampleRate: 1.0,
   })
 }
 
@@ -90,8 +87,3 @@ if ('serviceWorker' in navigator) {
     })
   }
 }
-
-
-
-
-

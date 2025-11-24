@@ -32,7 +32,7 @@ const initChart = () => {
   if (props.option) {
     chart.setOption(props.option)
   }
-  
+
   chart.on('click', (params) => {
     emit('chart-click', params)
   })
@@ -71,13 +71,16 @@ onMounted(() => {
     }
     // 当元素从不可见变为可见时，触发一次 resize
     if ('IntersectionObserver' in window && elRef.value) {
-      io = new IntersectionObserver((entries) => {
-        entries.forEach(e => {
-          if (e.isIntersecting) {
-            handleResize()
-          }
-        })
-      }, { threshold: 0.1 })
+      io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) {
+              handleResize()
+            }
+          })
+        },
+        { threshold: 0.1 },
+      )
       io.observe(elRef.value)
     }
   }
@@ -109,15 +112,8 @@ watch(
       setTimeout(() => handleResize(), 60)
     }
   },
-  { deep: true }
+  { deep: true },
 )
 </script>
 
-<style scoped>
-</style>
-
-
-
-
-
-
+<style scoped></style>

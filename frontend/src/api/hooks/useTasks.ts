@@ -10,7 +10,10 @@ export interface TaskFilters {
 
 export function useTasksQuery(filters: TaskFilters) {
   const { q, status, priority } = toRefs(filters as any)
-  const queryKey = computed(() => ['tasks', { q: q?.value || '', status: status?.value || '', priority: priority?.value || '' }])
+  const queryKey = computed(() => [
+    'tasks',
+    { q: q?.value || '', status: status?.value || '', priority: priority?.value || '' },
+  ])
 
   const query = useQuery({
     queryKey,
@@ -18,14 +21,12 @@ export function useTasksQuery(filters: TaskFilters) {
       const res: any = await listTasks({
         q: q?.value || '',
         status: status?.value || '',
-        priority: priority?.value || ''
+        priority: priority?.value || '',
       })
       return (res as any).data || (res as any) || []
     },
-    placeholderData: keepPreviousData
+    placeholderData: keepPreviousData,
   })
 
   return query
 }
-
-

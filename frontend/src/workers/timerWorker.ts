@@ -28,5 +28,3 @@ self.onmessage = (e: MessageEvent) => {
     ;(self as any).postMessage({ type: 'tick', seconds: remaining })
   }
 }
-
-

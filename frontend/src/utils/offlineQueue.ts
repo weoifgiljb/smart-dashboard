@@ -62,7 +62,6 @@ export function initOfflineQueue(client: AxiosInstance) {
         headers: {},
         config,
       }
-      // @ts-expect-error: returning a fake fulfilled promise to short-circuit request
       return Promise.reject({ isEnqueued: true, response: fake })
     }
     return config

@@ -11,10 +11,10 @@
             @keyup.enter="handleSearch"
           >
             <template #suffix>
-              <el-icon class="is-loading" v-if="searching">
+              <el-icon v-if="searching" class="is-loading">
                 <Loading />
               </el-icon>
-              <el-icon v-else @click="handleSearch" class="cursor-pointer">
+              <el-icon v-else class="cursor-pointer" @click="handleSearch">
                 <Search />
               </el-icon>
             </template>
@@ -30,19 +30,15 @@
           </el-select>
 
           <el-button-group>
-            <el-button
-              type="primary"
-              :plain="!showOnlyFavorited"
-              @click="showOnlyFavorited = false"
-            >全部</el-button>
-            <el-button
-              type="primary"
-              :plain="showOnlyFavorited"
-              @click="showOnlyFavorited = true"
-            >收藏</el-button>
+            <el-button type="primary" :plain="!showOnlyFavorited" @click="showOnlyFavorited = false"
+              >全部</el-button
+            >
+            <el-button type="primary" :plain="showOnlyFavorited" @click="showOnlyFavorited = true"
+              >收藏</el-button
+            >
           </el-button-group>
 
-          <el-button type="primary" @click="loadBooks" :loading="loading">
+          <el-button type="primary" :loading="loading" @click="loadBooks">
             <el-icon><Refresh /></el-icon>
             刷新推荐
           </el-button>
@@ -58,10 +54,20 @@
       </div>
       <div v-else class="books-masonry">
         <div v-for="item in books" :key="item.id" class="book-masonry-item">
-          <el-card :body-style="{ padding: '0px' }" class="book-card" @mouseenter="hoveredId = item.id" @mouseleave="hoveredId = null">
+          <el-card
+            :body-style="{ padding: '0px' }"
+            class="book-card"
+            @mouseenter="hoveredId = item.id"
+            @mouseleave="hoveredId = null"
+          >
             <div class="book-cover-wrapper">
-              <img :src="item.cover || fallbackCover" class="book-cover" loading="lazy" @error="onImgError($event)" />
-              <div class="overlay" v-if="hoveredId === item.id">
+              <img
+                :src="item.cover || fallbackCover"
+                class="book-cover"
+                loading="lazy"
+                @error="onImgError($event)"
+              />
+              <div v-if="hoveredId === item.id" class="overlay">
                 <el-button type="primary" text @click="goDetail(item)">查看详情</el-button>
               </div>
             </div>
@@ -85,8 +91,8 @@
                   size="small"
                   type="primary"
                   plain
-                  @click.stop="handleGenBookImage(item)"
                   :loading="generatingId === item.id"
+                  @click.stop="handleGenBookImage(item)"
                 >
                   <el-icon><Picture /></el-icon>
                   AI配图
@@ -96,17 +102,16 @@
           </el-card>
         </div>
       </div>
-
     </el-card>
 
     <!-- 分页 -->
-    <el-card class="pagination-card" v-if="totalPages > 1">
+    <el-card v-if="totalPages > 1" class="pagination-card">
       <el-pagination
         v-model:current-page="currentPage"
         :page-size="pageSize"
         :total="total"
-        @current-change="handlePageChange"
         layout="total, prev, pager, next"
+        @current-change="handlePageChange"
       />
     </el-card>
   </div>
@@ -180,9 +185,13 @@ const processBooksData = (rawBooks: any[]) => {
       }
       author = 'Unknown'
     }
-    
+
     // 封面图降级处理
-    if (!cover || cover.startsWith('https://via.placeholder.com') || cover.startsWith('http://via.placeholder.com')) {
+    if (
+      !cover ||
+      cover.startsWith('https://via.placeholder.com') ||
+      cover.startsWith('http://via.placeholder.com')
+    ) {
       cover = ''
     }
 
@@ -197,10 +206,10 @@ const loadBooks = async () => {
     const params = {
       page: currentPage.value - 1,
       size: pageSize.value,
-      sortBy: sortBy.value
+      sortBy: sortBy.value,
     }
     const data: any = await getBooks(params.page, params.size, params.sortBy)
-    
+
     // 处理分页响应和非分页响应
     if (data.content) {
       books.value = data.content
@@ -211,7 +220,7 @@ const loadBooks = async () => {
     } else {
       books.value = []
     }
-    
+
     // 清理占位图和修复数据错位
     books.value = processBooksData(books.value)
   } catch (error: any) {
@@ -278,7 +287,7 @@ const handleGenBookImage = async (book: any) => {
     generatingId.value = book.id
     const updated: any = await generateBookImage(book.id)
     // 更新本地数据
-    const idx = books.value.findIndex(b => b.id === book.id)
+    const idx = books.value.findIndex((b) => b.id === book.id)
     if (idx >= 0) {
       books.value[idx] = { ...books.value[idx], ...updated }
     }
@@ -295,7 +304,7 @@ const goDetail = (book: any) => {
   router.push({
     name: 'BookDetail',
     params: { id: book.id || 'unknown' },
-    state: { book }
+    state: { book },
   })
 }
 
@@ -365,7 +374,9 @@ const onImgError = (e: Event) => {
 /* 书籍卡片 */
 .book-card {
   cursor: pointer;
-  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  transition:
+    transform 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
   overflow: hidden;
   height: 100%; /* 确保卡片填满容器 */
 }
@@ -567,8 +578,3 @@ const onImgError = (e: Event) => {
   }
 }
 </style>
-
-
-
-
-

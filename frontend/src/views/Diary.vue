@@ -17,11 +17,11 @@
       </div>
     </el-card>
 
-    <el-card class="diary-list-card" v-loading="loading">
+    <el-card v-loading="loading" class="diary-list-card">
       <div v-if="diaries.length === 0" class="empty-state">
         <el-empty description="还没有写过日记，开始记录第一篇吧！" />
       </div>
-      
+
       <el-timeline v-else>
         <el-timeline-item
           v-for="diary in diaries"
@@ -33,10 +33,15 @@
           <el-card class="diary-item-card" shadow="hover">
             <div class="diary-header">
               <div class="diary-meta">
-                <el-tag v-if="diary.mood" size="small" :type="getMoodType(diary.mood)" effect="plain">
+                <el-tag
+                  v-if="diary.mood"
+                  size="small"
+                  :type="getMoodType(diary.mood)"
+                  effect="plain"
+                >
                   {{ getMoodLabel(diary.mood) }}
                 </el-tag>
-                <span class="diary-time" v-if="diary.updatedAt">
+                <span v-if="diary.updatedAt" class="diary-time">
                   更新于 {{ formatTime(diary.updatedAt) }}
                 </span>
               </div>
@@ -45,17 +50,20 @@
                 <el-button type="danger" link @click="handleDelete(diary)">删除</el-button>
               </div>
             </div>
+            <!-- eslint-disable-next-line vue/no-v-html -->
             <div class="diary-content" v-html="formatContent(diary.content)"></div>
-            <div class="diary-image" v-if="diary.imageUrl" style="margin-top: 10px;">
-              <el-image 
-                :src="diary.imageUrl" 
-                fit="contain" 
-                style="max-height: 200px; border-radius: 8px;"
+            <div v-if="diary.imageUrl" class="diary-image" style="margin-top: 10px">
+              <el-image
+                :src="diary.imageUrl"
+                fit="contain"
+                style="max-height: 200px; border-radius: 8px"
                 :preview-src-list="[diary.imageUrl]"
               />
             </div>
-            <div class="diary-tags" v-if="diary.tags && diary.tags.length">
-              <el-tag v-for="tag in diary.tags" :key="tag" size="small" class="tag-item"># {{ tag }}</el-tag>
+            <div v-if="diary.tags && diary.tags.length" class="diary-tags">
+              <el-tag v-for="tag in diary.tags" :key="tag" size="small" class="tag-item"
+                ># {{ tag }}</el-tag
+              >
             </div>
           </el-card>
         </el-timeline-item>
@@ -87,13 +95,20 @@
               :label="option.value"
             >
               <el-tooltip :content="option.label" placement="top" :show-after="200">
-                <span style="font-size: 1.4em; vertical-align: middle;">{{ option.emoji }}</span>
+                <span style="font-size: 1.4em; vertical-align: middle">{{ option.emoji }}</span>
               </el-tooltip>
             </el-radio-button>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="内容">
-          <div style="border: 1px solid var(--el-border-color); border-radius: 4px; overflow: hidden; width: 100%;">
+          <div
+            style="
+              border: 1px solid var(--el-border-color);
+              border-radius: 4px;
+              overflow: hidden;
+              width: 100%;
+            "
+          >
             <VueMonacoEditor
               v-model:value="form.content"
               theme="vs"
@@ -104,23 +119,26 @@
                 fontSize: 14,
                 lineNumbers: 'off',
                 renderLineHighlight: 'none',
-                scrollBeyondLastLine: false
+                scrollBeyondLastLine: false,
               }"
               language="markdown"
               height="400px"
             />
           </div>
-          <div style="margin-top: 10px;">
-            <el-button size="small" @click="handleMatchMeme" :loading="matchingMeme">
+          <div style="margin-top: 10px">
+            <el-button size="small" :loading="matchingMeme" @click="handleMatchMeme">
               <el-icon><Picture /></el-icon> {{ form.imageUrl ? '重新配图' : '智能配图 (RAG)' }}
             </el-button>
-            <div v-if="form.imageUrl" style="margin-top: 10px; position: relative; display: inline-block;">
-              <el-image :src="form.imageUrl" style="max-height: 150px; border-radius: 4px;" />
-              <el-button 
-                type="danger" 
-                circle 
-                size="small" 
-                style="position: absolute; top: -5px; right: -5px;"
+            <div
+              v-if="form.imageUrl"
+              style="margin-top: 10px; position: relative; display: inline-block"
+            >
+              <el-image :src="form.imageUrl" style="max-height: 150px; border-radius: 4px" />
+              <el-button
+                type="danger"
+                circle
+                size="small"
+                style="position: absolute; top: -5px; right: -5px"
                 @click="form.imageUrl = ''"
               >
                 <el-icon><Close /></el-icon>
@@ -129,15 +147,15 @@
           </div>
         </el-form-item>
         <el-form-item label="标签">
-           <el-select
-              v-model="form.tags"
-              multiple
-              filterable
-              allow-create
-              default-first-option
-              placeholder="添加标签"
-              style="width: 100%"
-            >
+          <el-select
+            v-model="form.tags"
+            multiple
+            filterable
+            allow-create
+            default-first-option
+            placeholder="添加标签"
+            style="width: 100%"
+          >
             <el-option label="工作" value="工作" />
             <el-option label="学习" value="学习" />
             <el-option label="生活" value="生活" />
@@ -148,7 +166,7 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSave" :loading="saving">保存</el-button>
+          <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
         </span>
       </template>
     </el-dialog>
@@ -159,7 +177,15 @@
 import { ref, onMounted, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { EditPen, Picture, Close } from '@element-plus/icons-vue'
-import { getDiaries, saveDiary, deleteDiary, exportPdf, exportWord, matchMeme, type Diary } from '@/api/diary'
+import {
+  getDiaries,
+  saveDiary,
+  deleteDiary,
+  exportPdf,
+  exportWord,
+  matchMeme,
+  type Diary,
+} from '@/api/diary'
 import { VueMonacoEditor } from '@guolao/vue-monaco-editor'
 import { marked } from 'marked'
 
@@ -175,7 +201,7 @@ const form = reactive<Diary>({
   content: '',
   mood: 'neutral',
   tags: [],
-  imageUrl: ''
+  imageUrl: '',
 })
 
 const moodOptions = [
@@ -183,17 +209,20 @@ const moodOptions = [
   { value: 'neutral', label: '平淡', emoji: '😐', type: 'info', color: '#909399' },
   { value: 'sad', label: '难过', emoji: '😭', type: 'info', color: '#606266' },
   { value: 'energetic', label: '充满活力', emoji: '💪', type: 'warning', color: '#f59e0b' },
-  { value: 'tired', label: '疲惫', emoji: '😫', type: 'danger', color: '#ef4444' }
+  { value: 'tired', label: '疲惫', emoji: '😫', type: 'danger', color: '#ef4444' },
 ]
 
-const moodMap = moodOptions.reduce((acc, cur) => {
-  acc[cur.value] = cur
-  return acc
-}, {} as Record<string, typeof moodOptions[0]>)
+const moodMap = moodOptions.reduce(
+  (acc, cur) => {
+    acc[cur.value] = cur
+    return acc
+  },
+  {} as Record<string, (typeof moodOptions)[0]>,
+)
 
-const getMoodLabel = (mood?: string) => (mood && moodMap[mood]) ? moodMap[mood].label : '未知'
-const getMoodType = (mood?: string) => (mood && moodMap[mood]) ? moodMap[mood].type : 'info'
-const getMoodColor = (mood?: string) => (mood && moodMap[mood]) ? moodMap[mood].color : '#909399'
+const getMoodLabel = (mood?: string) => (mood && moodMap[mood] ? moodMap[mood].label : '未知')
+const getMoodType = (mood?: string) => (mood && moodMap[mood] ? moodMap[mood].type : 'info')
+const getMoodColor = (mood?: string) => (mood && moodMap[mood] ? moodMap[mood].color : '#909399')
 
 const formatTime = (timeStr: string) => {
   if (!timeStr) return ''
@@ -230,7 +259,7 @@ const openDialog = (diary?: Diary) => {
       content: diary.content,
       mood: diary.mood || 'neutral',
       tags: diary.tags || [],
-      imageUrl: diary.imageUrl || ''
+      imageUrl: diary.imageUrl || '',
     })
   } else {
     editingDiary.value = {}
@@ -238,14 +267,14 @@ const openDialog = (diary?: Diary) => {
     const y = today.getFullYear()
     const m = String(today.getMonth() + 1).padStart(2, '0')
     const d = String(today.getDate()).padStart(2, '0')
-    
+
     Object.assign(form, {
       id: undefined,
       diaryDate: `${y}-${m}-${d}`,
       content: '',
       mood: 'neutral',
       tags: [],
-      imageUrl: ''
+      imageUrl: '',
     })
   }
   dialogVisible.value = true
@@ -273,7 +302,7 @@ const handleDelete = (diary: Diary) => {
   ElMessageBox.confirm('确定要删除这篇日记吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
-    type: 'warning'
+    type: 'warning',
   }).then(async () => {
     if (diary.id) {
       await deleteDiary(diary.id)
@@ -299,7 +328,9 @@ const handleExportPdf = async () => {
 const handleExportWord = async () => {
   try {
     const res: any = await exportWord()
-    const blob = new Blob([res], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
+    const blob = new Blob([res], {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    })
     const link = document.createElement('a')
     link.href = window.URL.createObjectURL(blob)
     link.download = 'diaries.docx'

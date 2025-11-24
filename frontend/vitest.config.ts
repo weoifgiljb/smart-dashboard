@@ -8,13 +8,11 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: [],
-    include: ['src/**/*.{spec,test}.ts', 'tests/**/*.{spec,test}.ts']
+    include: ['src/**/*.{spec,test}.ts', 'tests/**/*.{spec,test}.ts'],
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src')
-    }
-  }
+      '@': resolve(__dirname, 'src'),
+    },
+  },
 })
-
-

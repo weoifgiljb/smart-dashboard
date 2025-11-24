@@ -8,12 +8,12 @@
         </div>
       </template>
       <div class="checkin-content">
-        <el-button 
-          type="primary" 
-          size="large" 
+        <el-button
+          type="primary"
+          size="large"
           :disabled="hasCheckedIn"
-          @click="handleCheckIn"
           style="margin-right: 20px"
+          @click="handleCheckIn"
         >
           {{ hasCheckedIn ? '今日已打卡' : '立即打卡' }}
         </el-button>
@@ -40,7 +40,7 @@
       <template #header>
         <div class="card-header">
           <h3>年度打卡热力图</h3>
-          <span style="font-size: 12px; color: #909399;">
+          <span style="font-size: 12px; color: #909399">
             颜色深浅代表该天的热力值：基础分1 + 番茄×2 + 单词×1 + 任务×3
           </span>
         </div>
@@ -84,7 +84,9 @@
           <div class="date-num">{{ cell.date.getDate() }}</div>
           <div class="badges">
             <span v-if="stats[cell.key]?.checkin" class="badge checkin">打卡</span>
-            <span v-if="stats[cell.key]?.pomodoro" class="badge pomodoro">{{ stats[cell.key].pomodoro }}</span>
+            <span v-if="stats[cell.key]?.pomodoro" class="badge pomodoro">{{
+              stats[cell.key].pomodoro
+            }}</span>
             <span v-if="stats[cell.key]?.word" class="badge word">{{ stats[cell.key].word }}</span>
             <span v-if="stats[cell.key]?.task" class="badge task">{{ stats[cell.key].task }}</span>
           </div>
@@ -99,27 +101,36 @@
       <div v-else>
         <template v-if="dayDetails">
           <el-descriptions title="概览" :column="2" size="small" border style="margin-bottom: 12px">
-            <el-descriptions-item label="打卡">{{ (dayDetails.checkins || []).length }}</el-descriptions-item>
-            <el-descriptions-item label="番茄">{{ (dayDetails.pomodoros || []).length }}</el-descriptions-item>
-            <el-descriptions-item label="单词">{{ (dayDetails.words || []).length }}</el-descriptions-item>
-            <el-descriptions-item label="任务">{{ (dayDetails.tasks || []).length }}</el-descriptions-item>
+            <el-descriptions-item label="打卡">{{
+              (dayDetails.checkins || []).length
+            }}</el-descriptions-item>
+            <el-descriptions-item label="番茄">{{
+              (dayDetails.pomodoros || []).length
+            }}</el-descriptions-item>
+            <el-descriptions-item label="单词">{{
+              (dayDetails.words || []).length
+            }}</el-descriptions-item>
+            <el-descriptions-item label="任务">{{
+              (dayDetails.tasks || []).length
+            }}</el-descriptions-item>
           </el-descriptions>
 
           <el-collapse>
             <el-collapse-item name="checkin" title="打卡">
               <el-empty v-if="!(dayDetails.checkins || []).length" description="无打卡" />
               <ul v-else class="list">
-                <li v-for="c in dayDetails.checkins" :key="c.id">
-                  ✅ 已打卡
-                </li>
+                <li v-for="c in dayDetails.checkins" :key="c.id">✅ 已打卡</li>
               </ul>
             </el-collapse-item>
             <el-collapse-item name="pomodoro" title="番茄钟">
               <el-empty v-if="!(dayDetails.pomodoros || []).length" description="无番茄钟" />
               <ul v-else class="list">
                 <li v-for="p in dayDetails.pomodoros" :key="p.id">
-                  <el-tag size="small" type="warning" style="margin-right: 6px">{{ p.type || 'work' }}</el-tag>
-                  {{ formatTime(p.startTime) }} - {{ formatTime(p.endTime) }}（{{ p.duration || 0 }} 分钟）
+                  <el-tag size="small" type="warning" style="margin-right: 6px">{{
+                    p.type || 'work'
+                  }}</el-tag>
+                  {{ formatTime(p.startTime) }} - {{ formatTime(p.endTime) }}（{{ p.duration || 0 }}
+                  分钟）
                 </li>
               </ul>
             </el-collapse-item>
@@ -128,7 +139,9 @@
               <ul v-else class="list">
                 <li v-for="w in dayDetails.words" :key="w.id">
                   <strong>{{ w.word }}</strong>
-                  <el-tag v-if="w.status" size="small" style="margin-left: 6px">{{ w.status }}</el-tag>
+                  <el-tag v-if="w.status" size="small" style="margin-left: 6px">{{
+                    w.status
+                  }}</el-tag>
                 </li>
               </ul>
             </el-collapse-item>
@@ -136,9 +149,13 @@
               <el-empty v-if="!(dayDetails.tasks || []).length" description="无任务" />
               <ul v-else class="list">
                 <li v-for="t in dayDetails.tasks" :key="t.id">
-                  <el-tag size="small" :type="taskStatusType(t.status)" style="margin-right: 6px">{{ t.status }}</el-tag>
+                  <el-tag size="small" :type="taskStatusType(t.status)" style="margin-right: 6px">{{
+                    t.status
+                  }}</el-tag>
                   <strong>{{ t.title }}</strong>
-                  <el-tag size="small" :type="priorityType(t.priority)" style="margin-left: 6px">{{ t.priority }}</el-tag>
+                  <el-tag size="small" :type="priorityType(t.priority)" style="margin-left: 6px">{{
+                    t.priority
+                  }}</el-tag>
                 </li>
               </ul>
             </el-collapse-item>
@@ -147,7 +164,7 @@
       </div>
     </el-drawer>
   </div>
-  </template>
+</template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
@@ -156,7 +173,10 @@ import { getCalendarData, getCalendarDay } from '@/api/calendar'
 import { checkIn, getCheckInStats } from '@/api/checkin'
 import BaseChart from '@/components/charts/BaseChart.vue'
 
-type StatsMap = Record<string, { checkin?: number; pomodoro?: number; word?: number; task?: number }>
+type StatsMap = Record<
+  string,
+  { checkin?: number; pomodoro?: number; word?: number; task?: number }
+>
 
 // 日历相关
 const today = new Date()
@@ -267,7 +287,7 @@ const loadCheckinHeatmap = async () => {
     const end = `${year}-12-31`
     const [historyResp, calendarAgg]: any[] = await Promise.all([
       getCheckInHistoryWithHeatValue(),
-      getCalendarData({ start, end })
+      getCalendarData({ start, end }),
     ])
     const historyData = historyResp?.data || historyResp || []
     const agg = calendarAgg || {}
@@ -278,8 +298,12 @@ const loadCheckinHeatmap = async () => {
       const key = c.checkInDate
       const raw = Number(c.heatValue) || 0
       const day = agg?.[key] || {}
-      const fallback = 1 + (Number(day.pomodoro) || 0) * 2 + (Number(day.word) || 0) * 1 + (Number(day.task) || 0) * 3
-      const heatValue = raw > 0 ? raw : (fallback > 0 ? fallback : 0)
+      const fallback =
+        1 +
+        (Number(day.pomodoro) || 0) * 2 +
+        (Number(day.word) || 0) * 1 +
+        (Number(day.task) || 0) * 3
+      const heatValue = raw > 0 ? raw : fallback > 0 ? fallback : 0
       maxHeat = Math.max(maxHeat, heatValue)
       return [key, heatValue]
     })
@@ -290,7 +314,7 @@ const loadCheckinHeatmap = async () => {
           const date = p.data?.[0]
           const heat = p.data?.[1]
           return heat ? `${date}：热力值 ${heat}` : `${date}：未打卡`
-        }
+        },
       },
       visualMap: {
         show: true,
@@ -298,11 +322,11 @@ const loadCheckinHeatmap = async () => {
         max: maxHeat,
         inRange: {
           // 使用渐进色系：白 -> 浅蓝 -> 中蓝 -> 深蓝 -> 靛蓝
-          color: ['#f0f5ff', '#d4e9ff', '#85c4ff', '#409eff', '#0052cc']
+          color: ['#f0f5ff', '#d4e9ff', '#85c4ff', '#409eff', '#0052cc'],
         },
         textStyle: {
-          color: '#666'
-        }
+          color: '#666',
+        },
       },
       calendar: {
         range: `${year}`,
@@ -311,15 +335,15 @@ const loadCheckinHeatmap = async () => {
         itemStyle: { borderWidth: 0.5, borderColor: '#f0f0f0' },
         yearLabel: { show: false },
         monthLabel: { nameMap: 'cn' },
-        dayLabel: { nameMap: 'cn' }
+        dayLabel: { nameMap: 'cn' },
       },
       series: [
         {
           type: 'heatmap',
           coordinateSystem: 'calendar',
-          data
-        }
-      ]
+          data,
+        },
+      ],
     }
     yearHeatmapAvailable.value = true
   } catch (error) {
@@ -345,7 +369,7 @@ async function loadRange() {
     const lastDay = new Date(year, month + 1, 0).getDate()
     const end = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
     const data: any = await getCalendarData({ start, end })
-    stats.value = (data || {})
+    stats.value = data || {}
   } catch (e) {
     ElMessage.error('获取日历数据失败')
   }
@@ -469,11 +493,11 @@ function formatTime(s?: string | null) {
   padding: 10px;
   cursor: pointer;
   background: #fff;
-  transition: all .2s ease;
+  transition: all 0.2s ease;
 }
 
 .day-cell:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transform: translateY(-2px);
 }
 
@@ -519,10 +543,18 @@ function formatTime(s?: string | null) {
   font-weight: 500;
 }
 
-.badge.checkin { background: #67c23a; }
-.badge.pomodoro { background: #e6a23c; }
-.badge.word { background: #409eff; }
-.badge.task { background: #909399; }
+.badge.checkin {
+  background: #67c23a;
+}
+.badge.pomodoro {
+  background: #e6a23c;
+}
+.badge.word {
+  background: #409eff;
+}
+.badge.task {
+  background: #909399;
+}
 
 .list {
   margin: 0;
@@ -533,5 +565,3 @@ function formatTime(s?: string | null) {
   padding: 12px;
 }
 </style>
-
-

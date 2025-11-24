@@ -35,10 +35,3 @@ export const getBooks = () => {
 export const importDefaultWords = () => {
   return request.post('/words/import-default', {}) as Promise<any>
 }
-
-
-
-
-
-
-

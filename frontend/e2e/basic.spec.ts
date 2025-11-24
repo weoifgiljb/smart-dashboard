@@ -5,5 +5,3 @@ test('home redirects to login when unauthenticated', async ({ page }) => {
   await page.waitForLoadState('domcontentloaded')
   expect(page.url()).toContain('/login')
 })
-
-

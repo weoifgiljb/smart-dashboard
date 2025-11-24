@@ -2,7 +2,7 @@
   <el-container class="layout-container">
     <el-header class="header">
       <div class="header-left">
-        <el-button link @click="toggleCollapse" style="margin-right: 16px; color: var(--app-text)">
+        <el-button link style="margin-right: 16px; color: var(--app-text)" @click="toggleCollapse">
           <el-icon :size="24">
             <Fold v-if="!isCollapse" />
             <Expand v-else />
@@ -16,18 +16,18 @@
           inline-prompt
           active-text="暗"
           inactive-text="亮"
-          @change="toggleTheme"
           style="margin-right: 16px"
+          @change="toggleTheme"
         />
         <span>欢迎，{{ userStore.user?.username }}</span>
-        <UiButton type="danger" @click="handleLogout" style="margin-left: 20px">退出</UiButton>
+        <UiButton type="danger" style="margin-left: 20px" @click="handleLogout">退出</UiButton>
       </div>
     </el-header>
     <el-container>
       <el-aside :width="isCollapse ? '64px' : '240px'" class="aside">
         <div class="logo-container">
-          <h2 class="app-title" v-show="!isCollapse">自律组件</h2>
-          <h2 class="app-title" v-show="isCollapse">自</h2>
+          <h2 v-show="!isCollapse" class="app-title">自律组件</h2>
+          <h2 v-show="isCollapse" class="app-title">自</h2>
         </div>
         <el-menu
           :default-active="activeMenu"
@@ -105,7 +105,7 @@ import {
   ChatDotRound,
   Notebook,
   Fold,
-  Expand
+  Expand,
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -224,6 +224,3 @@ const toggleTheme = () => {
   overflow-y: auto;
 }
 </style>
-
-
-

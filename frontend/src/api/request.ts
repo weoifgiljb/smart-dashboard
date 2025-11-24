@@ -8,7 +8,7 @@ const apiBase = (import.meta as any).env?.VITE_API_BASE || '/api'
 const request: AxiosInstance = axios.create({
   baseURL: apiBase,
   timeout: 10000,
-  withCredentials: true
+  withCredentials: true,
 })
 
 const MAX_RETRIES = 2
@@ -25,7 +25,7 @@ async function refreshAuthToken(): Promise<string | null> {
   if (!refreshToken) return null
   try {
     const res = await axios.post(`${apiBase}/auth/refresh`, null, {
-      headers: { 'Refresh-Token': refreshToken }
+      headers: { 'Refresh-Token': refreshToken },
     })
     const newToken = (res.data?.token || res.data?.accessToken) as string | undefined
     if (newToken) {
@@ -50,7 +50,7 @@ request.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error)
-  }
+  },
 )
 
 request.interceptors.response.use(
@@ -95,14 +95,15 @@ request.interceptors.response.use(
 
     // 2.5) 离线：将写操作加入离线队列
     const method = String(config.method || 'get').toLowerCase()
-    const isWrite = method === 'post' || method === 'put' || method === 'patch' || method === 'delete'
+    const isWrite =
+      method === 'post' || method === 'put' || method === 'patch' || method === 'delete'
     if (!error.response && isWrite && typeof navigator !== 'undefined' && !navigator.onLine) {
       try {
         enqueue({
           url: config.url || '',
           method,
           data: config.data,
-          headers: config.headers as any
+          headers: config.headers as any,
         })
         ElMessage.info('当前离线，操作已加入队列，将在恢复网络后自动重试')
       } catch {
@@ -112,20 +113,13 @@ request.interceptors.response.use(
 
     // 3) 统一错误提示
     if (error.response) {
-      const msg =
-        (error.response.data as any)?.message ||
-        `请求失败（${error.response.status}）`
+      const msg = (error.response.data as any)?.message || `请求失败（${error.response.status}）`
       ElMessage.error(msg)
     } else {
       ElMessage.error('网络错误，请稍后重试')
     }
     return Promise.reject(error)
-  }
+  },
 )
 
 export default request
-
-
-
-
-

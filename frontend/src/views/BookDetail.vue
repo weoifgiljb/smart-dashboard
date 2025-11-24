@@ -1,17 +1,17 @@
 <template>
   <div class="book-detail-page">
-    <el-page-header @back="goBack" content="书籍详情" />
+    <el-page-header content="书籍详情" @back="goBack" />
     <el-card class="detail-card">
       <div class="detail-header">
         <img :src="book.cover || fallbackCover" class="detail-cover" @error="onImgError" />
         <div class="detail-meta">
           <h2 class="title">{{ book.title }}</h2>
           <p class="author">作者：{{ book.author || '未知' }}</p>
-          <div class="rating" v-if="book.rating != null">
+          <div v-if="book.rating != null" class="rating">
             <el-rate v-model="book.rating" disabled show-score />
           </div>
           <div class="actions">
-            <el-button type="primary" @click="openGithubSearch" :disabled="!book.title">
+            <el-button type="primary" :disabled="!book.title" @click="openGithubSearch">
               在 GitHub 搜索书目文档
             </el-button>
           </div>
@@ -28,7 +28,9 @@
       <template #header>
         <div class="card-header">
           <span>GitHub 书目文档（Top 5）</span>
-          <el-button text type="primary" @click="openGithubSearch" :disabled="!book.title">在 GitHub 打开</el-button>
+          <el-button text type="primary" :disabled="!book.title" @click="openGithubSearch"
+            >在 GitHub 打开</el-button
+          >
         </div>
       </template>
 
@@ -47,7 +49,7 @@
       </div>
     </el-card>
   </div>
-  </template>
+</template>
 
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
@@ -72,7 +74,7 @@ const book = reactive<any>({
   author: '',
   cover: '',
   description: '',
-  rating: null
+  rating: null,
 })
 
 const githubResults = ref<Repo[]>([])
@@ -89,64 +91,68 @@ const onImgError = (e: Event) => {
   target.src = fallbackCover
 }
 
-    const resolveBook = async () => {
-      const stateBook: any = (history.state && (history.state as any).book) || null
-      let targetBook = stateBook
+const resolveBook = async () => {
+  const stateBook: any = (history.state && (history.state as any).book) || null
+  let targetBook = stateBook
 
-      // Fallback：若刷新后无 state，优先从详情接口获取
-      if (!targetBook) {
-        try {
-          const byId: any = await getBookById(String(route.params.id))
-          if (byId) targetBook = byId
-        } catch {
-          // 失败再尝试从列表兜底（兼容旧逻辑）
-          try {
-            const all: any = await getBooks(0, 100, 'random') // 尝试获取一些书
-            // 注意：这里可能找不到，仅作为最后的尝试
-            if (Array.isArray(all)) {
-               const found = all.find((b:any) => String(b.id) === String(route.params.id))
-               if (found) targetBook = found
-            }
-          } catch {
-            // 保持静默
-          }
+  // Fallback：若刷新后无 state，优先从详情接口获取
+  if (!targetBook) {
+    try {
+      const byId: any = await getBookById(String(route.params.id))
+      if (byId) targetBook = byId
+    } catch {
+      // 失败再尝试从列表兜底（兼容旧逻辑）
+      try {
+        const all: any = await getBooks(0, 100, 'random') // 尝试获取一些书
+        // 注意：这里可能找不到，仅作为最后的尝试
+        if (Array.isArray(all)) {
+          const found = all.find((b: any) => String(b.id) === String(route.params.id))
+          if (found) targetBook = found
         }
-      }
-
-      if (targetBook) {
-        // 修复数据错位逻辑 (同 Books.vue)
-        let title = targetBook.title
-        let author = targetBook.author
-        let category = targetBook.category
-        let cover = targetBook.cover
-        const desc = targetBook.description
-
-        // 1. 修复标题
-        if (title && (title.endsWith('.jpg') || title.endsWith('.png'))) {
-          if (category && category.length > 20 && !category.includes('Calendar')) {
-            title = category
-          } else if (desc && desc.startsWith('From Book32 dataset - ')) {
-            title = desc.replace('From Book32 dataset - ', '')
-          }
-        }
-
-        // 2. 修复作者/封面
-        if (author && (author.startsWith('http') || author.includes('.jpg'))) {
-          if (!cover || !cover.startsWith('http')) {
-            cover = author
-          }
-          author = 'Unknown'
-        }
-
-        // 3. 封面图兜底
-        if (!cover || cover.startsWith('https://via.placeholder.com') || cover.startsWith('http://via.placeholder.com')) {
-          cover = ''
-        }
-
-        // 更新响应式对象
-        Object.assign(book, { ...targetBook, title, author, cover })
+      } catch {
+        // 保持静默
       }
     }
+  }
+
+  if (targetBook) {
+    // 修复数据错位逻辑 (同 Books.vue)
+    let title = targetBook.title
+    let author = targetBook.author
+    let category = targetBook.category
+    let cover = targetBook.cover
+    const desc = targetBook.description
+
+    // 1. 修复标题
+    if (title && (title.endsWith('.jpg') || title.endsWith('.png'))) {
+      if (category && category.length > 20 && !category.includes('Calendar')) {
+        title = category
+      } else if (desc && desc.startsWith('From Book32 dataset - ')) {
+        title = desc.replace('From Book32 dataset - ', '')
+      }
+    }
+
+    // 2. 修复作者/封面
+    if (author && (author.startsWith('http') || author.includes('.jpg'))) {
+      if (!cover || !cover.startsWith('http')) {
+        cover = author
+      }
+      author = 'Unknown'
+    }
+
+    // 3. 封面图兜底
+    if (
+      !cover ||
+      cover.startsWith('https://via.placeholder.com') ||
+      cover.startsWith('http://via.placeholder.com')
+    ) {
+      cover = ''
+    }
+
+    // 更新响应式对象
+    Object.assign(book, { ...targetBook, title, author, cover })
+  }
+}
 
 const searchGithub = async (query: string) => {
   if (!query) return
@@ -255,5 +261,3 @@ onMounted(async () => {
   color: #fa8c16;
 }
 </style>
-
-

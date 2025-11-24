@@ -24,8 +24,8 @@
             <div class="time-display">{{ formatTime(timeLeft) }}</div>
           </div>
           <div class="timer-controls">
-            <el-button type="primary" @click="startTimer" :disabled="isRunning">开始</el-button>
-            <el-button @click="pauseTimer" :disabled="!isRunning">暂停</el-button>
+            <el-button type="primary" :disabled="isRunning" @click="startTimer">开始</el-button>
+            <el-button :disabled="!isRunning" @click="pauseTimer">暂停</el-button>
             <el-button @click="resetTimer">重置</el-button>
           </div>
           <div class="timer-type">
@@ -37,11 +37,23 @@
           <div class="timer-config">
             <div class="config-row">
               <span class="config-label">工作时长(分钟)：</span>
-              <el-input-number v-model="workMinutes" :min="1" :max="240" :step="1" :disabled="isRunning" />
+              <el-input-number
+                v-model="workMinutes"
+                :min="1"
+                :max="240"
+                :step="1"
+                :disabled="isRunning"
+              />
             </div>
             <div class="config-row">
               <span class="config-label">休息时长(分钟)：</span>
-              <el-input-number v-model="breakMinutes" :min="1" :max="120" :step="1" :disabled="isRunning" />
+              <el-input-number
+                v-model="breakMinutes"
+                :min="1"
+                :max="120"
+                :step="1"
+                :disabled="isRunning"
+              />
             </div>
           </div>
         </div>
@@ -88,7 +100,9 @@ const weeklyOption = ref<any>({})
 const fluctuationOption = ref<any>({})
 
 // 进度计算（基于当前模式总秒数与剩余秒数）
-const totalSeconds = computed(() => (timerType.value === 'work' ? workMinutes.value * 60 : breakMinutes.value * 60))
+const totalSeconds = computed(() =>
+  timerType.value === 'work' ? workMinutes.value * 60 : breakMinutes.value * 60,
+)
 const progress = computed(() => {
   if (totalSeconds.value <= 0) return 0
   return 1 - timeLeft.value / totalSeconds.value
@@ -151,7 +165,7 @@ const loadStats = async () => {
 
 const loadWeekly = async () => {
   try {
-    const list: any[] = await getPomodoroHistory()
+    const list: any[] = (await getPomodoroHistory()) as any
     const days: Date[] = []
     const today = new Date()
     for (let i = 6; i >= 0; i--) {
@@ -159,11 +173,17 @@ const loadWeekly = async () => {
       d.setDate(today.getDate() - i)
       days.push(d)
     }
-    const key = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    const labels = days.map(d => `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)
+    const key = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const labels = days.map(
+      (d) => `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+    )
     const workMap = new Map<string, number>()
     const breakMap = new Map<string, number>()
-    days.forEach(d => { workMap.set(key(d), 0); breakMap.set(key(d), 0) })
+    days.forEach((d) => {
+      workMap.set(key(d), 0)
+      breakMap.set(key(d), 0)
+    })
     ;(list || []).forEach((p: any) => {
       if (!p.startTime) return
       const k = key(new Date(p.startTime))
@@ -175,18 +195,42 @@ const loadWeekly = async () => {
         }
       }
     })
-    const workVals = days.map(d => workMap.get(key(d)) || 0)
-    const breakVals = days.map(d => breakMap.get(key(d)) || 0)
+    const workVals = days.map((d) => workMap.get(key(d)) || 0)
+    const breakVals = days.map((d) => breakMap.get(key(d)) || 0)
     weeklyOption.value = {
       grid: { left: 20, right: 10, top: 10, bottom: 20, containLabel: false },
-      xAxis: { type: 'category', data: labels, axisTick: { show: false }, axisLine: { show: false } },
-      yAxis: { type: 'value', splitLine: { show: false }, axisLine: { show: false }, axisTick: { show: false } },
+      xAxis: {
+        type: 'category',
+        data: labels,
+        axisTick: { show: false },
+        axisLine: { show: false },
+      },
+      yAxis: {
+        type: 'value',
+        splitLine: { show: false },
+        axisLine: { show: false },
+        axisTick: { show: false },
+      },
       legend: { data: ['工作', '休息'] },
       series: [
-        { name: '工作', type: 'bar', stack: 'total', data: workVals, itemStyle: { color: '#409eff' }, barWidth: '45%' },
-        { name: '休息', type: 'bar', stack: 'total', data: breakVals, itemStyle: { color: '#67c23a' }, barWidth: '45%' }
+        {
+          name: '工作',
+          type: 'bar',
+          stack: 'total',
+          data: workVals,
+          itemStyle: { color: '#409eff' },
+          barWidth: '45%',
+        },
+        {
+          name: '休息',
+          type: 'bar',
+          stack: 'total',
+          data: breakVals,
+          itemStyle: { color: '#67c23a' },
+          barWidth: '45%',
+        },
       ],
-      tooltip: { trigger: 'axis' }
+      tooltip: { trigger: 'axis' },
     }
   } catch (error) {
     console.error('获取番茄历史失败', error)
@@ -195,7 +239,7 @@ const loadWeekly = async () => {
 
 const loadFluctuation = async () => {
   try {
-    const list: any[] = await getPomodoroHistory()
+    const list: any[] = (await getPomodoroHistory()) as any
     const latest = (list || []).slice(0, 30) // 后端按开始时间倒序
     const workPoints: any[] = []
     const breakPoints: any[] = []
@@ -211,15 +255,35 @@ const loadFluctuation = async () => {
     fluctuationOption.value = {
       grid: { left: 40, right: 10, top: 20, bottom: 30 },
       xAxis: { type: 'time', axisLine: { show: false }, axisTick: { show: false } },
-      yAxis: { type: 'value', name: '分钟', splitLine: { show: true }, axisLine: { show: false }, axisTick: { show: false } },
+      yAxis: {
+        type: 'value',
+        name: '分钟',
+        splitLine: { show: true },
+        axisLine: { show: false },
+        axisTick: { show: false },
+      },
       legend: { data: ['工作', '休息'] },
       tooltip: {
-        trigger: 'axis'
+        trigger: 'axis',
       },
       series: [
-        { name: '工作', type: 'line', smooth: true, showSymbol: false, data: workPoints, itemStyle: { color: '#409eff' } },
-        { name: '休息', type: 'line', smooth: true, showSymbol: false, data: breakPoints, itemStyle: { color: '#67c23a' } }
-      ]
+        {
+          name: '工作',
+          type: 'line',
+          smooth: true,
+          showSymbol: false,
+          data: workPoints,
+          itemStyle: { color: '#409eff' },
+        },
+        {
+          name: '休息',
+          type: 'line',
+          smooth: true,
+          showSymbol: false,
+          data: breakPoints,
+          itemStyle: { color: '#67c23a' },
+        },
+      ],
     }
   } catch (error) {
     console.error('获取时长波动失败', error)
@@ -253,7 +317,7 @@ const finishTimer = async () => {
   try {
     await startPomodoro({
       duration: timerType.value === 'work' ? workMinutes.value : breakMinutes.value,
-      type: timerType.value
+      type: timerType.value,
     })
     ElMessage.success('番茄钟完成！')
     await loadStats()
@@ -352,6 +416,3 @@ const finishTimer = async () => {
   justify-content: space-around;
 }
 </style>
-
-
-

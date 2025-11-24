@@ -10,30 +10,33 @@
   >
     <slot />
   </el-button>
-  </template>
+</template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 
 type Variant = 'primary' | 'secondary' | 'danger' | 'success' | 'warning' | 'info' | 'text'
 
-const props = withDefaults(defineProps<{
-  variant?: Variant
-  type?: string
-  plain?: boolean
-  round?: boolean
-  link?: boolean
-  disabled?: boolean
-  loading?: boolean
-}>(), {
-  variant: 'primary',
-  type: '',
-  plain: false,
-  round: false,
-  link: false,
-  disabled: false,
-  loading: false
-})
+withDefaults(
+  defineProps<{
+    variant?: Variant
+    type?: string
+    plain?: boolean
+    round?: boolean
+    link?: boolean
+    disabled?: boolean
+    loading?: boolean
+  }>(),
+  {
+    variant: 'primary',
+    type: '',
+    plain: false,
+    round: false,
+    link: false,
+    disabled: false,
+    loading: false,
+  },
+)
 
 defineEmits<{ (e: 'click', ev: MouseEvent): void }>()
 
@@ -44,11 +47,8 @@ const typeMap = computed<Record<string, any>>(() => ({
   success: 'success',
   warning: 'warning',
   info: 'info',
-  text: ''
+  text: '',
 }))
 </script>
 
-<style scoped>
-</style>
-
-
+<style scoped></style>

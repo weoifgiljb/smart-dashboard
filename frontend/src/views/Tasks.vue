@@ -3,7 +3,13 @@
     <el-card shadow="never" class="toolbar-card">
       <el-form :inline="true" class="toolbar-form">
         <el-form-item>
-          <el-input v-model="q" placeholder="搜索标题/备注" clearable @keyup.enter="refresh" style="width: 220px" />
+          <el-input
+            v-model="q"
+            placeholder="搜索标题/备注"
+            clearable
+            style="width: 220px"
+            @keyup.enter="refresh"
+          />
         </el-form-item>
         <el-form-item>
           <el-select v-model="status" placeholder="全部状态" clearable style="width: 140px">
@@ -60,7 +66,7 @@
             </el-table-column>
             <el-table-column label="截止" width="140">
               <template #default="{ row }">
-                {{ row.dueDate ? row.dueDate.slice(0,10) : '-' }}
+                {{ row.dueDate ? row.dueDate.slice(0, 10) : '-' }}
               </template>
             </el-table-column>
             <el-table-column label="操作" width="220" fixed="right">
@@ -79,21 +85,28 @@
             <div v-for="col in columns" :key="col.key" class="kanban-col">
               <div class="kanban-header">
                 {{ col.label }}
-                <span class="count">{{ tasks.filter(x=>x.status===col.key).length }}</span>
+                <span class="count">{{ tasks.filter((x) => x.status === col.key).length }}</span>
               </div>
               <div class="kanban-list">
-                <el-card v-for="t in tasks.filter(x=>x.status===col.key)" :key="t.id" shadow="hover" class="kanban-card">
+                <el-card
+                  v-for="t in tasks.filter((x) => x.status === col.key)"
+                  :key="t.id"
+                  shadow="hover"
+                  class="kanban-card"
+                >
                   <template #header>
                     <div class="card-header">
                       <span class="title">{{ t.title }}</span>
-                      <el-tag size="small" :type="priorityType(t.priority)">{{ priorityText(t.priority) }}</el-tag>
+                      <el-tag size="small" :type="priorityType(t.priority)">{{
+                        priorityText(t.priority)
+                      }}</el-tag>
                     </div>
                   </template>
-                  <div class="meta">
-                    截止：{{ t.dueDate ? t.dueDate.slice(0,10) : '-' }}
-                  </div>
+                  <div class="meta">截止：{{ t.dueDate ? t.dueDate.slice(0, 10) : '-' }}</div>
                   <div class="actions">
-                    <el-button size="small" @click="setStatus(t, nextStatus(col.key))">移动到 {{ statusText(nextStatus(col.key)) }}</el-button>
+                    <el-button size="small" @click="setStatus(t, nextStatus(col.key))"
+                      >移动到 {{ statusText(nextStatus(col.key)) }}</el-button
+                    >
                   </div>
                 </el-card>
               </div>
@@ -103,11 +116,17 @@
 
         <el-tab-pane label="甘特" name="gantt">
           <div class="gantt">
-            <el-empty v-if="tasks.filter(x=>x.startDate && x.dueDate).length===0" description="暂无带时间范围的任务" />
+            <el-empty
+              v-if="tasks.filter((x) => x.startDate && x.dueDate).length === 0"
+              description="暂无带时间范围的任务"
+            />
             <el-timeline v-else>
-              <el-timeline-item v-for="t in tasks.filter(x=>x.startDate && x.dueDate)" :key="t.id"
-                                :timestamp="t.startDate?.slice(0,10) + ' → ' + t.dueDate?.slice(0,10)"
-                                :type="statusType(t.status)">
+              <el-timeline-item
+                v-for="t in tasks.filter((x) => x.startDate && x.dueDate)"
+                :key="t.id"
+                :timestamp="t.startDate?.slice(0, 10) + ' → ' + t.dueDate?.slice(0, 10)"
+                :type="statusType(t.status)"
+              >
                 {{ t.title }}
               </el-timeline-item>
             </el-timeline>
@@ -131,7 +150,7 @@
                 <el-icon><CircleCheck /></el-icon>
               </div>
               <div class="stat-info">
-                <div class="stat-value">{{ tasks.filter(x=>x.status==='done').length }}</div>
+                <div class="stat-value">{{ tasks.filter((x) => x.status === 'done').length }}</div>
                 <div class="stat-label">已完成</div>
               </div>
             </el-card>
@@ -140,7 +159,9 @@
                 <el-icon><Clock /></el-icon>
               </div>
               <div class="stat-info">
-                <div class="stat-value">{{ tasks.filter(x=>x.status==='in_progress').length }}</div>
+                <div class="stat-value">
+                  {{ tasks.filter((x) => x.status === 'in_progress').length }}
+                </div>
                 <div class="stat-label">进行中</div>
               </div>
             </el-card>
@@ -149,7 +170,13 @@
                 <el-icon><WarningFilled /></el-icon>
               </div>
               <div class="stat-info">
-                <div class="stat-value">{{ tasks.filter(x=>x.dueDate && x.status!=='done' && new Date(x.dueDate) < new Date()).length }}</div>
+                <div class="stat-value">
+                  {{
+                    tasks.filter(
+                      (x) => x.dueDate && x.status !== 'done' && new Date(x.dueDate) < new Date(),
+                    ).length
+                  }}
+                </div>
                 <div class="stat-label">逾期</div>
               </div>
             </el-card>
@@ -193,11 +220,17 @@
                 </div>
               </template>
               <div class="stat-tags">
-                <div v-for="s in ['todo','in_progress','blocked','done']" :key="s" class="stat-tag-item">
+                <div
+                  v-for="s in ['todo', 'in_progress', 'blocked', 'done']"
+                  :key="s"
+                  class="stat-tag-item"
+                >
                   <el-tag :type="statusType(s)" effect="plain" size="large">
                     {{ statusText(s) }}
                   </el-tag>
-                  <span class="stat-tag-count">{{ tasks.filter(x=>x.status===s).length }}</span>
+                  <span class="stat-tag-count">{{
+                    tasks.filter((x) => x.status === s).length
+                  }}</span>
                 </div>
               </div>
             </el-card>
@@ -209,11 +242,13 @@
                 </div>
               </template>
               <div class="stat-tags">
-                <div v-for="p in ['low','med','high','urgent']" :key="p" class="stat-tag-item">
+                <div v-for="p in ['low', 'med', 'high', 'urgent']" :key="p" class="stat-tag-item">
                   <el-tag :type="priorityType(p)" effect="plain" size="large">
                     {{ priorityText(p) }}
                   </el-tag>
-                  <span class="stat-tag-count">{{ tasks.filter(x=>x.priority===p).length }}</span>
+                  <span class="stat-tag-count">{{
+                    tasks.filter((x) => x.priority === p).length
+                  }}</span>
                 </div>
               </div>
             </el-card>
@@ -221,13 +256,23 @@
         </el-tab-pane>
       </el-tabs>
     </el-card>
-    <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑任务' : '新建任务'" width="620px" destroy-on-close>
+    <el-dialog
+      v-model="dialogVisible"
+      :title="isEdit ? '编辑任务' : '新建任务'"
+      width="620px"
+      destroy-on-close
+    >
       <el-form :model="form" label-width="90px">
         <el-form-item label="标题">
           <el-input v-model="form.title" placeholder="请输入任务标题" />
         </el-form-item>
         <el-form-item label="描述">
-          <el-input v-model="form.description" type="textarea" :rows="3" placeholder="可填写任务描述" />
+          <el-input
+            v-model="form.description"
+            type="textarea"
+            :rows="3"
+            placeholder="可填写任务描述"
+          />
         </el-form-item>
         <el-row :gutter="12">
           <el-col :span="12">
@@ -254,24 +299,45 @@
         <el-row :gutter="12">
           <el-col :span="12">
             <el-form-item label="开始日期">
-              <el-date-picker v-model="form.startDate" type="date" value-format="YYYY-MM-DD" placeholder="选择日期" />
+              <el-date-picker
+                v-model="form.startDate"
+                type="date"
+                value-format="YYYY-MM-DD"
+                placeholder="选择日期"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="截止日期">
-              <el-date-picker v-model="form.dueDate" type="date" value-format="YYYY-MM-DD" placeholder="选择日期" />
+              <el-date-picker
+                v-model="form.dueDate"
+                type="date"
+                value-format="YYYY-MM-DD"
+                placeholder="选择日期"
+              />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="12">
           <el-col :span="12">
             <el-form-item label="预估(分钟)">
-              <el-input-number v-model="form.estimateMinutes" :min="0" :step="15" controls-position="right" style="width: 100%" />
+              <el-input-number
+                v-model="form.estimateMinutes"
+                :min="0"
+                :step="15"
+                controls-position="right"
+                style="width: 100%"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="提醒时间">
-              <el-date-picker v-model="form.remindAt" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" placeholder="选择时间" />
+              <el-date-picker
+                v-model="form.remindAt"
+                type="datetime"
+                value-format="YYYY-MM-DD HH:mm:ss"
+                placeholder="选择时间"
+              />
             </el-form-item>
           </el-col>
         </el-row>
@@ -296,29 +362,37 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, watch } from 'vue';
-import { List, CircleCheck, Clock, WarningFilled } from '@element-plus/icons-vue';
-import { createTask as apiCreate, updateTask as apiUpdate, deleteTask as apiDelete } from '../api/tasks';
-import type { Task } from '../types/task';
-import { useTasksStore } from '../store/tasks';
-import EmptyState from '@/components/ui/EmptyState.vue';
-import { useTasksQuery } from '@/api/hooks/useTasks';
-import BaseChart from '@/components/charts/BaseChart.vue';
+import { ref, computed, nextTick, watch } from 'vue'
+import { List, CircleCheck, Clock, WarningFilled } from '@element-plus/icons-vue'
+import {
+  createTask as apiCreate,
+  updateTask as apiUpdate,
+  deleteTask as apiDelete,
+} from '../api/tasks'
+import type { Task } from '../types/task'
+import { useTasksStore } from '../store/tasks'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import { useTasksQuery } from '@/api/hooks/useTasks'
+import BaseChart from '@/components/charts/BaseChart.vue'
 
-const store = useTasksStore();
-const q = ref(store.filters.q || '');
-const status = ref(store.filters.status || '');
-const priority = ref(store.filters.priority || '');
-const tab = ref<'table'|'kanban'|'gantt'|'stats'>('table');
+const store = useTasksStore()
+const q = ref(store.filters.q || '')
+const status = ref(store.filters.status || '')
+const priority = ref(store.filters.priority || '')
+const tab = ref<'table' | 'kanban' | 'gantt' | 'stats'>('table')
 
-const { data, refetch, isFetching } = useTasksQuery({ q: q.value, status: status.value, priority: priority.value } as any)
-const tasks = computed(() => (data.value as any[]) || []);
-const refreshTick = ref(0);
-const statusChartKey = computed(() => `status-${refreshTick.value}`);
-const priorityChartKey = computed(() => `priority-${refreshTick.value}`);
+const { data, refetch } = useTasksQuery({
+  q: q.value,
+  status: status.value,
+  priority: priority.value,
+} as any)
+const tasks = computed(() => (data.value as any[]) || [])
+const refreshTick = ref(0)
+const statusChartKey = computed(() => `status-${refreshTick.value}`)
+const priorityChartKey = computed(() => `priority-${refreshTick.value}`)
 
-const dialogVisible = ref(false);
-const isEdit = ref(false);
+const dialogVisible = ref(false)
+const isEdit = ref(false)
 const form = ref<Task>({
   title: '',
   description: '',
@@ -328,45 +402,49 @@ const form = ref<Task>({
   startDate: '',
   dueDate: '',
   estimateMinutes: 0,
-  remindAt: ''
-});
+  remindAt: '',
+})
 
 const columns = [
   { key: 'todo', label: '待办' },
   { key: 'in_progress', label: '进行中' },
   { key: 'blocked', label: '阻塞' },
   { key: 'done', label: '已完成' },
-] as const;
+] as const
 
 async function refresh() {
-  store.setFilters({ q: q.value, status: status.value, priority: priority.value });
+  store.setFilters({ q: q.value, status: status.value, priority: priority.value })
   try {
-    await refetch();
+    await refetch()
   } finally {
     // 等待 DOM 更新后强制重建 + 自适应
-    await nextTick();
-    refreshTick.value++;
-    requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
-    setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+    await nextTick()
+    refreshTick.value++
+    requestAnimationFrame(() => window.dispatchEvent(new Event('resize')))
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 100)
   }
 }
 
 // 当任务数据数量变化时，保证图表跟随重建一次
-watch(() => (tasks.value as any[]).length, () => {
-  refreshTick.value++;
-  requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
-}, { flush: 'post' });
+watch(
+  () => (tasks.value as any[]).length,
+  () => {
+    refreshTick.value++
+    requestAnimationFrame(() => window.dispatchEvent(new Event('resize')))
+  },
+  { flush: 'post' },
+)
 
 // 当切换到“统计”标签页时，强制重建并触发自适应，避免隐藏状态初始化导致尺寸过小
 watch(tab, (val) => {
   if (val === 'stats') {
     nextTick().then(() => {
-      refreshTick.value++;
-      requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
-      setTimeout(() => window.dispatchEvent(new Event('resize')), 80);
-    });
+      refreshTick.value++
+      requestAnimationFrame(() => window.dispatchEvent(new Event('resize')))
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 80)
+    })
   }
-});
+})
 
 function resetForm() {
   form.value = {
@@ -378,127 +456,134 @@ function resetForm() {
     startDate: '',
     dueDate: '',
     estimateMinutes: 0,
-    remindAt: ''
-  };
+    remindAt: '',
+  }
 }
 function openCreate() {
-  isEdit.value = false;
-  resetForm();
-  dialogVisible.value = true;
+  isEdit.value = false
+  resetForm()
+  dialogVisible.value = true
 }
 
 function edit(t: Task) {
-  isEdit.value = true;
+  isEdit.value = true
   form.value = {
     ...t,
-    startDate: t.startDate ? (t.startDate.includes('T') ? t.startDate.slice(0, 10) : t.startDate) : '',
+    startDate: t.startDate
+      ? t.startDate.includes('T')
+        ? t.startDate.slice(0, 10)
+        : t.startDate
+      : '',
     dueDate: t.dueDate ? (t.dueDate.includes('T') ? t.dueDate.slice(0, 10) : t.dueDate) : '',
-    remindAt: t.remindAt ? t.remindAt.replace('T', ' ').slice(0, 19) : ''
-  };
-  dialogVisible.value = true;
+    remindAt: t.remindAt ? t.remindAt.replace('T', ' ').slice(0, 19) : '',
+  }
+  dialogVisible.value = true
 }
 
 function history(_t: Task) {
-  window.alert('请在后续“历史抽屉”中查看（此处先占位）。');
+  window.alert('请在后续“历史抽屉”中查看（此处先占位）。')
 }
 
 function share(t: Task) {
-  const uid = window.prompt('分享给用户ID');
-  if (!uid) return;
-  fetch(`/api/tasks/${t.id}/share?userId=${uid}&role=VIEW`, { method: 'POST' }).then(refresh);
+  const uid = window.prompt('分享给用户ID')
+  if (!uid) return
+  fetch(`/api/tasks/${t.id}/share?userId=${uid}&role=VIEW`, { method: 'POST' }).then(refresh)
 }
 
 function remove(t: Task) {
-  if (!window.confirm('确认删除？')) return;
-  apiDelete(t.id!).then(refresh);
+  if (!window.confirm('确认删除？')) return
+  apiDelete(t.id!).then(refresh)
 }
 
 function saveTask() {
   if (!form.value.title || !form.value.title.trim()) {
-    return;
+    return
   }
-  const payload: any = { ...form.value };
-  if (payload.startDate === '') delete payload.startDate;
-  if (payload.dueDate === '') delete payload.dueDate;
-  if (payload.remindAt === '') delete payload.remindAt;
+  const payload: any = { ...form.value }
+  if (payload.startDate === '') delete payload.startDate
+  if (payload.dueDate === '') delete payload.dueDate
+  if (payload.remindAt === '') delete payload.remindAt
   if (typeof payload.startDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(payload.startDate)) {
-    payload.startDate = `${payload.startDate}T00:00:00`;
+    payload.startDate = `${payload.startDate}T00:00:00`
   }
   if (typeof payload.dueDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(payload.dueDate)) {
-    payload.dueDate = `${payload.dueDate}T00:00:00`;
+    payload.dueDate = `${payload.dueDate}T00:00:00`
   }
-  if (typeof payload.remindAt === 'string' && /^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}$/.test(payload.remindAt)) {
-    payload.remindAt = payload.remindAt.replace(' ', 'T');
+  if (
+    typeof payload.remindAt === 'string' &&
+    /^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}$/.test(payload.remindAt)
+  ) {
+    payload.remindAt = payload.remindAt.replace(' ', 'T')
   }
   // 清理空字符串字段，避免后端 LocalDateTime 解析报错
-  Object.keys(payload).forEach(k => {
-    if (payload[k] === '') delete payload[k];
-  });
+  Object.keys(payload).forEach((k) => {
+    if (payload[k] === '') delete payload[k]
+  })
   if (isEdit.value && form.value.id) {
     apiUpdate(form.value.id, payload).then(() => {
-      dialogVisible.value = false;
-      refresh();
-    });
+      dialogVisible.value = false
+      refresh()
+    })
   } else {
     apiCreate(payload).then(() => {
-      dialogVisible.value = false;
-      refresh();
-    });
+      dialogVisible.value = false
+      refresh()
+    })
   }
 }
 
 function nextStatus(s: string) {
-  if (s === 'todo') return 'in_progress';
-  if (s === 'in_progress') return 'blocked';
-  if (s === 'blocked') return 'done';
-  return 'done';
+  if (s === 'todo') return 'in_progress'
+  if (s === 'in_progress') return 'blocked'
+  if (s === 'blocked') return 'done'
+  return 'done'
 }
 
 function setStatus(t: Task, s: string) {
-  apiUpdate(t.id!, { status: s }).then(refresh);
+  apiUpdate(t.id!, { status: s }).then(refresh)
 }
 
 function statusText(s?: string) {
-  if (s === 'todo') return '待办';
-  if (s === 'in_progress') return '进行中';
-  if (s === 'blocked') return '阻塞';
-  if (s === 'done') return '已完成';
-  return '未知';
+  if (s === 'todo') return '待办'
+  if (s === 'in_progress') return '进行中'
+  if (s === 'blocked') return '阻塞'
+  if (s === 'done') return '已完成'
+  return '未知'
 }
 function statusType(s?: string) {
-  if (s === 'todo') return '';
-  if (s === 'in_progress') return 'warning';
-  if (s === 'blocked') return 'danger';
-  if (s === 'done') return 'success';
-  return '';
+  if (s === 'todo') return ''
+  if (s === 'in_progress') return 'warning'
+  if (s === 'blocked') return 'danger'
+  if (s === 'done') return 'success'
+  return ''
 }
 function priorityText(p?: string) {
-  if (p === 'low') return '低';
-  if (p === 'med') return '中';
-  if (p === 'high') return '高';
-  if (p === 'urgent') return '紧急';
-  return '未设';
+  if (p === 'low') return '低'
+  if (p === 'med') return '中'
+  if (p === 'high') return '高'
+  if (p === 'urgent') return '紧急'
+  return '未设'
 }
 function priorityType(p?: string) {
-  if (p === 'low') return '';
-  if (p === 'med') return 'info';
-  if (p === 'high') return 'warning';
-  if (p === 'urgent') return 'danger';
-  return '';
+  if (p === 'low') return ''
+  if (p === 'med') return 'info'
+  if (p === 'high') return 'warning'
+  if (p === 'urgent') return 'danger'
+  return ''
 }
 
 const statusPieOption = computed(() => {
-  const ds = ['todo','in_progress','blocked','done'].map(s => ({
+  const ds = ['todo', 'in_progress', 'blocked', 'done'].map((s) => ({
     name: statusText(s),
-    value: (tasks.value as any[]).filter(x => x.status === s).length
-  }));
+    value: (tasks.value as any[]).filter((x) => x.status === s).length,
+  }))
 
-  const colors = ['#909399', '#409eff', '#f56c6c', '#67c23a'];
+  const colors = ['#909399', '#409eff', '#f56c6c', '#67c23a']
 
   return {
     tooltip: {
       trigger: 'item',
-      formatter: '{b}: {c} ({d}%)'
+      formatter: '{b}: {c} ({d}%)',
     },
     legend: { bottom: 0, left: 'center' },
     color: colors,
@@ -511,20 +596,20 @@ const statusPieOption = computed(() => {
         itemStyle: {
           borderRadius: 8,
           borderColor: '#fff',
-          borderWidth: 2
+          borderWidth: 2,
         },
         label: {
           show: true,
           formatter: '{b}\n{c} ({d}%)',
           fontSize: 13,
           fontWeight: 600,
-          color: '#303133'
+          color: '#303133',
         },
         labelLine: {
           show: true,
           length: 12,
           length2: 10,
-          smooth: true
+          smooth: true,
         },
         emphasis: {
           scale: true,
@@ -532,14 +617,14 @@ const statusPieOption = computed(() => {
           itemStyle: {
             shadowBlur: 12,
             shadowOffsetX: 0,
-            shadowColor: 'rgba(0, 0, 0, 0.3)'
-          }
+            shadowColor: 'rgba(0, 0, 0, 0.3)',
+          },
         },
-        data: ds
-      }
-    ]
-  };
-});
+        data: ds,
+      },
+    ],
+  }
+})
 
 const priorityPieOption = computed(() => {
   const priorities = [
@@ -547,11 +632,11 @@ const priorityPieOption = computed(() => {
     { key: 'med', name: '中' },
     { key: 'high', name: '高' },
     { key: 'urgent', name: '紧急' },
-  ];
-  const ds = priorities.map(p => ({
+  ]
+  const ds = priorities.map((p) => ({
     name: p.name,
-    value: (tasks.value as any[]).filter(x => x.priority === p.key).length
-  }));
+    value: (tasks.value as any[]).filter((x) => x.priority === p.key).length,
+  }))
   return {
     tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
     legend: { bottom: 0, left: 'center' },
@@ -562,33 +647,79 @@ const priorityPieOption = computed(() => {
         radius: ['60%', '80%'],
         label: { show: true, formatter: '{b}\n{c} ({d}%)', fontSize: 13 },
         labelLine: { length: 12, length2: 10 },
-        data: ds
-      }
-    ]
-  };
-});
+        data: ds,
+      },
+    ],
+  }
+})
 
-refresh();
+refresh()
 </script>
 
 <style scoped>
-.tasks-page { padding: 12px; }
-.toolbar-card { margin-bottom: 12px; }
-.toolbar-form { display: flex; flex-wrap: wrap; gap: 8px; }
+.tasks-page {
+  padding: 12px;
+}
+.toolbar-card {
+  margin-bottom: 12px;
+}
+.toolbar-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 
 /* 看板样式 */
-.kanban { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-.kanban-col { background: #fafafa; border: 1px solid #eee; border-radius: 6px; min-height: 120px; }
-.kanban-header { padding: 10px; font-weight: 600; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-.kanban-header .count { color: #909399; font-size: 12px; }
-.kanban-list { padding: 10px; display: flex; flex-direction: column; gap: 10px; }
-.kanban-card .card-header { display: flex; align-items: center; justify-content: space-between; }
-.kanban-card .title { font-weight: 600; }
-.kanban-card .meta { color: #909399; font-size: 12px; margin-bottom: 6px; }
-.kanban-card .actions { text-align: right; }
+.kanban {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.kanban-col {
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  min-height: 120px;
+}
+.kanban-header {
+  padding: 10px;
+  font-weight: 600;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.kanban-header .count {
+  color: #909399;
+  font-size: 12px;
+}
+.kanban-list {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.kanban-card .card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.kanban-card .title {
+  font-weight: 600;
+}
+.kanban-card .meta {
+  color: #909399;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+.kanban-card .actions {
+  text-align: right;
+}
 
 /* 甘特图样式 */
-.gantt { padding: 8px 0; }
+.gantt {
+  padding: 8px 0;
+}
 
 /* 统计页面样式 */
 .stats-overview {
@@ -807,5 +938,3 @@ refresh();
   }
 }
 </style>
-
-

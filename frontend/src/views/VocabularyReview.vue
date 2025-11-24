@@ -15,7 +15,11 @@
         </div>
       </div>
       <div class="top-right">
-        <div v-if="reviewMode === 'recognize' && currentWord" class="countdown-badge" :class="countdownClass">
+        <div
+          v-if="reviewMode === 'recognize' && currentWord"
+          class="countdown-badge"
+          :class="countdownClass"
+        >
           {{ countdown }}
         </div>
         <el-tooltip content="快捷键：Space-翻转 / ←-不认识 / →-认识 / Enter-提交">
@@ -50,7 +54,7 @@
     </div>
 
     <!-- 主卡片区域 -->
-    <div class="card-container" v-if="currentWord">
+    <div v-if="currentWord" class="card-container">
       <!-- 认识/不认识模式 -->
       <div v-if="reviewMode === 'recognize'" class="word-card" :class="{ flipped: isFlipped }">
         <div class="card-inner">
@@ -59,7 +63,10 @@
             <div class="card-content">
               <div class="word-main">
                 <h1 class="word-translation">{{ currentWord.translation || '（无翻译）' }}</h1>
-                <el-tag v-if="currentWord.difficulty" :type="difficultyType(currentWord.difficulty)">
+                <el-tag
+                  v-if="currentWord.difficulty"
+                  :type="difficultyType(currentWord.difficulty)"
+                >
                   {{ difficultyText(currentWord.difficulty) }}
                 </el-tag>
               </div>
@@ -75,7 +82,7 @@
             <div class="card-content">
               <div class="word-main">
                 <h1 class="word-text">{{ currentWord.word }}</h1>
-                <el-button link @click="playAudio" class="audio-btn">
+                <el-button link class="audio-btn" @click="playAudio">
                   <el-icon><Headset /></el-icon>
                 </el-button>
               </div>
@@ -107,7 +114,9 @@
               <svg viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="45" class="circle-bg" />
                 <circle
-                  cx="50" cy="50" r="45"
+                  cx="50"
+                  cy="50"
+                  r="45"
                   class="circle-progress"
                   :style="{ strokeDashoffset: circleOffset }"
                 />
@@ -125,14 +134,14 @@
 
           <div class="spell-input-area">
             <el-input
+              ref="inputRef"
               v-model="answer"
               placeholder="请输入英文单词..."
               size="large"
               clearable
-              @keyup.enter="submitAnswer"
               :disabled="submitting || showResult"
-              ref="inputRef"
               class="spell-input"
+              @keyup.enter="submitAnswer"
             >
               <template #prefix>
                 <el-icon><Edit /></el-icon>
@@ -152,17 +161,12 @@
               v-if="!showResult"
               type="primary"
               size="large"
-              @click="submitAnswer"
               :loading="submitting"
+              @click="submitAnswer"
             >
               提交答案 (Enter)
             </el-button>
-            <el-button
-              v-else
-              type="primary"
-              size="large"
-              @click="nextWord"
-            >
+            <el-button v-else type="primary" size="large" @click="nextWord">
               下一个 (Enter)
             </el-button>
             <el-button size="large" @click="showHint">
@@ -194,9 +198,7 @@
         </div>
         <h2>暂无单词</h2>
         <p>请先添加单词或选择要复习的单词</p>
-        <el-button type="primary" size="large" @click="backToWords">
-          返回单词列表
-        </el-button>
+        <el-button type="primary" size="large" @click="backToWords"> 返回单词列表 </el-button>
       </div>
     </div>
 
@@ -239,9 +241,7 @@
           </el-progress>
         </div>
         <div class="completion-actions">
-          <el-button type="primary" size="large" @click="backToWords">
-            返回单词列表
-          </el-button>
+          <el-button type="primary" size="large" @click="backToWords"> 返回单词列表 </el-button>
           <el-button v-if="nextQueue.length > 0" size="large" @click="startNextRound">
             继续下一轮 ({{ nextQueue.length }} 个)
           </el-button>
@@ -284,7 +284,7 @@ import {
   Check,
   Edit,
   CircleCheck,
-  CircleClose
+  CircleClose,
 } from '@element-plus/icons-vue'
 import { getTodayWords, getWords, reviewWord, importDefaultWords } from '@/api/words'
 
@@ -326,7 +326,7 @@ const summary = ref({
   total: 0,
   correct: 0,
   wrong: 0,
-  timeout: 0
+  timeout: 0,
 })
 
 // 设置
@@ -334,12 +334,14 @@ const showSettings = ref(false)
 const settings = ref({
   countdownTime: 60,
   autoPlayAudio: false,
-  showExample: true
+  showExample: true,
 })
 
 // 计算属性
 const currentWord = computed(() => queue.value[currentIndex.value] || null)
-const totalRemaining = computed(() => queue.value.length - currentIndex.value + nextQueue.value.length)
+const totalRemaining = computed(
+  () => queue.value.length - currentIndex.value + nextQueue.value.length,
+)
 const progressPercentage = computed(() => {
   if (queue.value.length === 0) return 0
   const completed = currentIndex.value
@@ -355,7 +357,7 @@ const accuracyPercentage = computed(() => {
 const progressColors = [
   { color: '#f56c6c', percentage: 30 },
   { color: '#e6a23c', percentage: 60 },
-  { color: '#67c23a', percentage: 100 }
+  { color: '#67c23a', percentage: 100 },
 ]
 
 const countdownClass = computed(() => {
@@ -431,8 +433,12 @@ const markAsKnown = async () => {
     await reviewWord(currentWord.value.id)
     // 通知其它页面（如 Words.vue）刷新统计与图表
     try {
-      window.dispatchEvent(new CustomEvent('word-reviewed', { detail: { id: currentWord.value.id, at: Date.now() } }))
-    } catch {}
+      window.dispatchEvent(
+        new CustomEvent('word-reviewed', { detail: { id: currentWord.value.id, at: Date.now() } }),
+      )
+    } catch {
+      // ignore
+    }
     summary.value.correct += 1
     ElMessage.success('已标记为认识')
     stopTimer()
@@ -465,8 +471,14 @@ const submitAnswer = async () => {
     if (userInput === correct) {
       await reviewWord(currentWord.value.id)
       try {
-        window.dispatchEvent(new CustomEvent('word-reviewed', { detail: { id: currentWord.value.id, at: Date.now() } }))
-      } catch {}
+        window.dispatchEvent(
+          new CustomEvent('word-reviewed', {
+            detail: { id: currentWord.value.id, at: Date.now() },
+          }),
+        )
+      } catch {
+        // ignore
+      }
       summary.value.correct += 1
       resultType.value = 'correct'
       showResult.value = true
@@ -547,7 +559,7 @@ const startNextRound = () => {
     total: queue.value.length,
     correct: 0,
     wrong: 0,
-    timeout: 0
+    timeout: 0,
   }
 
   startTimer()
@@ -587,17 +599,17 @@ const initQueue = async () => {
     }
   }
 
-  const mapped: WordItem[] = (base as any[]).map(w => ({
+  const mapped: WordItem[] = (base as any[]).map((w) => ({
     id: w.id,
     word: w.word,
     translation: w.translation,
     example: w.example,
     difficulty: w.difficulty,
-    image: w.image
+    image: w.image,
   }))
 
   if (ids.length) {
-    queue.value = mapped.filter(w => ids.includes(w.id))
+    queue.value = mapped.filter((w) => ids.includes(w.id))
     console.log('过滤后的单词:', queue.value.length, '个，原始:', mapped.length, '个')
   } else {
     queue.value = mapped
@@ -610,7 +622,7 @@ const initQueue = async () => {
     total: queue.value.length,
     correct: 0,
     wrong: 0,
-    timeout: 0
+    timeout: 0,
   }
 
   console.log('=== 初始化完成 ===')
@@ -629,8 +641,8 @@ const initQueue = async () => {
           {
             confirmButtonText: '导入并开始',
             cancelButtonText: '取消',
-            type: 'warning'
-          }
+            type: 'warning',
+          },
         )
         await importDefaultWords()
         hasAutoImported.value = true
@@ -703,14 +715,13 @@ onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeyPress)
 })
 
-watch(() => route.fullPath, () => {
-  stopTimer()
-  initQueue()
-})
-
-
-
-
+watch(
+  () => route.fullPath,
+  () => {
+    stopTimer()
+    initQueue()
+  },
+)
 </script>
 
 <style scoped>
@@ -999,8 +1010,13 @@ watch(() => route.fullPath, () => {
 }
 
 @keyframes pulse-stroke {
-  0%, 100% { stroke-width: 8; }
-  50% { stroke-width: 10; }
+  0%,
+  100% {
+    stroke-width: 8;
+  }
+  50% {
+    stroke-width: 10;
+  }
 }
 
 .countdown-text {
@@ -1298,7 +1314,7 @@ watch(() => route.fullPath, () => {
   padding: 6px 12px;
   border-radius: 999px;
   line-height: 1;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   border: 1px solid transparent;
 }
 .countdown-badge.safe {
@@ -1318,4 +1334,3 @@ watch(() => route.fullPath, () => {
   animation: pulse 1s infinite;
 }
 </style>
-

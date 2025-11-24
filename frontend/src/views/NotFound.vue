@@ -6,13 +6,10 @@
   </div>
 </template>
 
-<script setup lang="ts">
-</script>
+<script setup lang="ts"></script>
 
 <style scoped>
 .not-found {
   padding: 40px 0;
 }
 </style>
-
-

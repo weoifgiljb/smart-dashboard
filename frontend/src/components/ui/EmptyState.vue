@@ -9,11 +9,14 @@
 </template>
 
 <script setup lang="ts">
-withDefaults(defineProps<{
-  title?: string
-}>(), {
-  title: '暂无数据'
-})
+withDefaults(
+  defineProps<{
+    title?: string
+  }>(),
+  {
+    title: '暂无数据',
+  },
+)
 </script>
 
 <style scoped>
@@ -33,5 +36,3 @@ withDefaults(defineProps<{
   margin-top: 12px;
 }
 </style>
-
-

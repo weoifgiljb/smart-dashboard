@@ -12,14 +12,3 @@ export const register = (data: RegisterRequest): Promise<AuthResponse> => {
 export const getUserInfo = (): Promise<User> => {
   return request.get('/auth/me')
 }
-
-
-
-
-
-
-
-
-
-
-

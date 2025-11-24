@@ -10,12 +10,12 @@ export const getBooks = (page: number = 0, size: number = 10, sortBy: string = '
   // 随机模式调用单独接口
   if (sortBy === 'random') {
     return request.get('/books/random', {
-      params: { limit: size }
+      params: { limit: size },
     })
   }
-  
+
   return request.get('/books', {
-    params: { page, size, sortBy }
+    params: { page, size, sortBy },
   })
 }
 
@@ -38,7 +38,7 @@ export const getBooksByCategory = (category: string) => {
  */
 export const searchBooks = (keyword: string) => {
   return request.get('/books/search', {
-    params: { keyword }
+    params: { keyword },
   })
 }
 

@@ -7,14 +7,3 @@ export const getCalendarData = (params?: { start?: string; end?: string }) => {
 export const getCalendarDay = (date: string) => {
   return request.get('/calendar/day', { params: { date } })
 }
-
-
-
-
-
-
-
-
-
-
-

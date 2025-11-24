@@ -11,5 +11,3 @@ export const getPomodoroStats = () => {
 export const getPomodoroHistory = () => {
   return request.get('/pomodoro/history')
 }
-
-

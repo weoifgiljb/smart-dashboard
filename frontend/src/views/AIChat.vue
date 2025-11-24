@@ -46,7 +46,7 @@
         </el-collapse-transition>
 
         <!-- 消息列表 -->
-        <div class="chat-messages" ref="messagesRef">
+        <div ref="messagesRef" class="chat-messages">
           <div v-if="filteredMessages.length === 0" class="empty-state">
             <el-icon class="empty-icon"><ChatLineRound /></el-icon>
             <p>{{ searchQuery ? '未找到相关消息' : '开始与AI对话吧！' }}</p>
@@ -60,6 +60,7 @@
                 </el-avatar>
               </div>
               <div class="bubble">
+                <!-- eslint-disable-next-line vue/no-v-html -->
                 <div class="message-content" v-html="renderMarkdown(msg.content)"></div>
                 <div class="message-meta">
                   <span class="message-time">{{ formatTime(msg.time) }}</span>
@@ -78,6 +79,7 @@
             <template v-else>
               <div class="avatar-placeholder"></div>
               <div class="bubble">
+                <!-- eslint-disable-next-line vue/no-v-html -->
                 <div class="message-content" v-html="renderMarkdown(msg.content)"></div>
                 <div class="message-meta">
                   <span class="message-time">{{ formatTime(msg.time) }}</span>
@@ -139,23 +141,21 @@
               :rows="3"
               :autosize="{ minRows: 1, maxRows: 6 }"
               placeholder="输入您的问题... (Enter发送，Shift+Enter换行)"
-              @keydown.enter.exact.prevent="onEnter"
-              @keydown.shift.enter.stop
               :disabled="loading"
               class="input-textarea"
+              @keydown.enter.exact.prevent="onEnter"
+              @keydown.shift.enter.stop
             />
             <div class="input-actions">
               <div class="input-hint">
-                <el-text size="small" type="info">
-                  {{ inputMessage.length }} / 2000
-                </el-text>
+                <el-text size="small" type="info"> {{ inputMessage.length }} / 2000 </el-text>
               </div>
               <el-button
                 type="primary"
-                @click="sendMessage"
                 :loading="loading"
                 :disabled="!inputMessage.trim()"
                 round
+                @click="sendMessage"
               >
                 <el-icon v-if="!loading"><Promotion /></el-icon>
                 {{ loading ? '思考中...' : '发送' }}
@@ -182,7 +182,7 @@ import {
   DocumentCopy,
   Refresh,
   ChatLineSquare,
-  Promotion
+  Promotion,
 } from '@element-plus/icons-vue'
 import { sendChatMessage, getChatHistory, streamChatMessage } from '@/api/ai'
 
@@ -198,7 +198,7 @@ const presetQuestions = ref<string[]>([
   '解释一下番茄工作法的最佳实践',
   '把这段中文翻译成英文：保持热爱，奔赴山海。',
   '给我一个3天英语学习计划',
-  '帮我制定一周3次的健身计划'
+  '帮我制定一周3次的健身计划',
 ])
 
 // 过滤消息
@@ -207,9 +207,7 @@ const filteredMessages = computed(() => {
     return messages.value
   }
   const query = searchQuery.value.toLowerCase()
-  return messages.value.filter(msg =>
-    msg.content.toLowerCase().includes(query)
-  )
+  return messages.value.filter((msg) => msg.content.toLowerCase().includes(query))
 })
 
 onMounted(async () => {
@@ -230,16 +228,16 @@ const loadHistory = async () => {
       allMessages.push({
         type: 'user',
         content: item.question,
-        time: item.createTime
+        time: item.createTime,
       })
       allMessages.push({
         type: 'ai',
         content: item.answer,
-        time: item.createTime
+        time: item.createTime,
       })
     })
-    messages.value = allMessages.sort((a: any, b: any) =>
-      new Date(a.time).getTime() - new Date(b.time).getTime()
+    messages.value = allMessages.sort(
+      (a: any, b: any) => new Date(a.time).getTime() - new Date(b.time).getTime(),
     )
     await scrollToBottom()
   } catch (error) {
@@ -259,7 +257,9 @@ const typeStream = async (fullText: string, onChunk: (s: string) => void) => {
 const persist = () => {
   try {
     localStorage.setItem('aiChatMessages', JSON.stringify(messages.value))
-  } catch {}
+  } catch {
+    // ignore
+  }
 }
 
 const restore = () => {
@@ -271,7 +271,9 @@ const restore = () => {
         messages.value = arr
       }
     }
-  } catch {}
+  } catch {
+    // ignore
+  }
 }
 
 const sendMessage = async () => {
@@ -290,7 +292,7 @@ const sendMessage = async () => {
   messages.value.push({
     type: 'user',
     content: question,
-    time: new Date()
+    time: new Date(),
   })
 
   await scrollToBottom()
@@ -301,7 +303,7 @@ const sendMessage = async () => {
     const aiMsg = {
       type: 'ai',
       content: '',
-      time: new Date()
+      time: new Date(),
     } as any
     messages.value.push(aiMsg)
     await scrollToBottom()
@@ -329,7 +331,7 @@ const scrollToBottom = async () => {
   if (messagesRef.value) {
     messagesRef.value.scrollTo({
       top: messagesRef.value.scrollHeight,
-      behavior: 'smooth'
+      behavior: 'smooth',
     })
   }
 }
@@ -356,7 +358,7 @@ const formatTime = (time: Date | string) => {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   })
 }
 
@@ -377,7 +379,7 @@ const renderMarkdown = (text: string) => {
     .replace(/'/g, '&#039;')
 
   // 代码块（必须在行内代码之前处理）
-  html = html.replace(/```([\s\S]*?)```/g, (match, code) => {
+  html = html.replace(/```([\s\S]*?)```/g, (_, code) => {
     return `<pre><code>${code.trim()}</code></pre>`
   })
 
@@ -391,7 +393,10 @@ const renderMarkdown = (text: string) => {
   html = html.replace(/(?<!\*)\*([^*\n]+?)\*(?!\*)/g, '<em>$1</em>')
 
   // 链接
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+  html = html.replace(
+    /\[([^\]]+)\]\(([^)]+)\)/g,
+    '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
+  )
 
   // 换行
   html = html.replace(/\n/g, '<br/>')
@@ -428,7 +433,7 @@ const regenerateResponse = async (index: number) => {
     const aiMsg = {
       type: 'ai',
       content: '',
-      time: new Date()
+      time: new Date(),
     } as any
     messages.value.splice(index, 0, aiMsg)
     await scrollToBottom()
@@ -453,15 +458,11 @@ const regenerateResponse = async (index: number) => {
 
 const clearChat = async () => {
   try {
-    await ElMessageBox.confirm(
-      '确定要清空所有对话记录吗？此操作不可恢复。',
-      '清空对话',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }
-    )
+    await ElMessageBox.confirm('确定要清空所有对话记录吗？此操作不可恢复。', '清空对话', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
     messages.value = []
     persist()
     ElMessage.success('对话已清空')
@@ -480,7 +481,7 @@ const exportChat = () => {
   content += `导出时间: ${new Date().toLocaleString('zh-CN')}\n\n`
   content += '---\n\n'
 
-  messages.value.forEach((msg, index) => {
+  messages.value.forEach((msg) => {
     const role = msg.type === 'user' ? '👤 用户' : '🤖 AI助手'
     const time = formatTime(msg.time)
     content += `## ${role} (${time})\n\n${msg.content}\n\n`
@@ -815,7 +816,9 @@ restore()
 }
 
 @keyframes typing {
-  0%, 60%, 100% {
+  0%,
+  60%,
+  100% {
     transform: translateY(0);
     opacity: 0.5;
   }
@@ -941,6 +944,3 @@ restore()
   }
 }
 </style>
-
-
-

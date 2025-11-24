@@ -48,12 +48,36 @@ const goHome = () => {
 .error-boundary {
   padding: 24px;
 }
-.result { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; background: #fff; }
-.title { font-weight: 700; margin-bottom: 6px; }
-.subtitle { color: #666; margin-bottom: 12px; }
-.actions { display: flex; gap: 8px; }
-.btn { padding: 6px 12px; border: 1px solid #dcdfe6; border-radius: 6px; background: #fff; cursor: pointer; }
-.btn.primary { background: #409eff; color: #fff; border-color: #409eff; }
+.result {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fff;
+}
+.title {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.subtitle {
+  color: #666;
+  margin-bottom: 12px;
+}
+.actions {
+  display: flex;
+  gap: 8px;
+}
+.btn {
+  padding: 6px 12px;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+.btn.primary {
+  background: #409eff;
+  color: #fff;
+  border-color: #409eff;
+}
 .dev-message {
   margin-top: 12px;
   color: #909399;
@@ -61,5 +85,3 @@ const goHome = () => {
   word-break: break-all;
 }
 </style>
-
-

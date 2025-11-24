@@ -28,5 +28,3 @@ describe('SM-2 simplified algorithm', () => {
     expect(state.interval).toBe(1)
   })
 })
-
-
