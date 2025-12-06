@@ -9,6 +9,7 @@ import java.util.List;
 @Repository
 public interface ChatRepository extends MongoRepository<Chat, String> {
     List<Chat> findByUserIdOrderByCreateTimeDesc(String userId);
+    List<Chat> findByConversationIdOrderByCreateTimeAsc(String conversationId);
 }
 
 

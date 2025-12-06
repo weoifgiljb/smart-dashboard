@@ -1,23 +1,31 @@
 <template>
   <div class="ai-chat-page">
     <div class="chat-layout">
-      <!-- 侧边栏（可选：如果有历史记录列表，可放在这里，目前仅作为装饰或未来扩展） -->
+      <!-- 侧边栏 -->
       <div class="chat-sidebar">
         <div class="sidebar-header">
-          <el-button type="primary" class="new-chat-btn" @click="clearChat">
+          <el-button type="primary" class="new-chat-btn" @click="createNewChat">
             <el-icon><Plus /></el-icon> 新对话
           </el-button>
         </div>
         <div class="history-list">
           <div class="history-label">最近对话</div>
-          <!-- 模拟历史记录 -->
-          <div class="history-item active">
+          <div
+            v-for="conv in conversations"
+            :key="conv.id"
+            class="history-item"
+            :class="{ active: activeConversationId === conv.id }"
+            @click="switchConversation(conv.id)"
+          >
             <el-icon><ChatLineSquare /></el-icon>
-            <span class="history-title">当前对话</span>
+            <span class="history-title">{{ conv.title }}</span>
           </div>
+          <div v-if="conversations.length === 0" class="no-history">暂无历史记录</div>
         </div>
         <div class="sidebar-footer">
-          <el-button link @click="exportChat"><el-icon><Download /></el-icon> 导出记录</el-button>
+          <el-button link @click="exportChat"
+            ><el-icon><Download /></el-icon> 导出当前记录</el-button
+          >
         </div>
       </div>
 
@@ -46,7 +54,7 @@
             <div class="welcome-icon">✨</div>
             <h2>你好，我是你的智能助手</h2>
             <p>我可以帮你解答问题、制定计划、翻译文本或提供建议。</p>
-            
+
             <div class="suggestions-grid">
               <div
                 v-for="(q, i) in presetQuestions"
@@ -60,7 +68,11 @@
           </div>
 
           <div v-else class="messages-list">
-            <div v-for="(msg, index) in filteredMessages" :key="index" :class="['message-row', msg.type]">
+            <div
+              v-for="(msg, index) in filteredMessages"
+              :key="index"
+              :class="['message-row', msg.type]"
+            >
               <div class="avatar">
                 <div class="avatar-img" :class="msg.type">
                   <el-icon v-if="msg.type === 'ai'"><Cpu /></el-icon>
@@ -68,12 +80,22 @@
                 </div>
               </div>
               <div class="message-bubble">
-                <div class="bubble-content markdown-body" v-html="renderMarkdown(msg.content)"></div>
+                <div
+                  class="bubble-content markdown-body"
+                  v-html="renderMarkdown(msg.content)"
+                ></div>
                 <div class="bubble-footer">
                   <span class="time">{{ formatTime(msg.time) }}</span>
                   <div class="actions">
-                    <el-icon class="action-icon" @click="copyText(msg.content)"><CopyDocument /></el-icon>
-                    <el-icon class="action-icon" v-if="msg.type === 'ai'" @click="regenerateResponse(index)"><Refresh /></el-icon>
+                    <el-icon class="action-icon" @click="copyText(msg.content)"
+                      ><CopyDocument
+                    /></el-icon>
+                    <el-icon
+                      v-if="msg.type === 'ai'"
+                      class="action-icon"
+                      @click="regenerateResponse(index)"
+                      ><Refresh
+                    /></el-icon>
                   </div>
                 </div>
               </div>
@@ -82,12 +104,12 @@
             <!-- Loading Indicator -->
             <div v-if="loading" class="message-row ai">
               <div class="avatar">
-                <div class="avatar-img ai"><el-icon><Cpu /></el-icon></div>
+                <div class="avatar-img ai">
+                  <el-icon><Cpu /></el-icon>
+                </div>
               </div>
               <div class="message-bubble loading-bubble">
-                <div class="typing-dots">
-                  <span></span><span></span><span></span>
-                </div>
+                <div class="typing-dots"><span></span><span></span><span></span></div>
               </div>
             </div>
           </div>
@@ -105,9 +127,9 @@
               @keydown.enter.exact.prevent="onEnter"
               @keydown.shift.enter.stop
             />
-            <el-button 
-              type="primary" 
-              circle 
+            <el-button
+              type="primary"
+              circle
               class="send-btn"
               :disabled="!inputMessage.trim() || loading"
               @click="sendMessage"
@@ -126,18 +148,32 @@
 
 <script setup lang="ts">
 import { ref, onMounted, nextTick, computed } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import {
-  Plus, Download, ChatLineSquare, Cpu, User,
-  CopyDocument, Refresh, Promotion
+  Plus,
+  Download,
+  ChatLineSquare,
+  Cpu,
+  User,
+  CopyDocument,
+  Refresh,
+  Promotion,
 } from '@element-plus/icons-vue'
-import { sendChatMessage, getChatHistory, streamChatMessage } from '@/api/ai'
+import {
+  sendChatMessage,
+  getChatHistory,
+  streamChatMessage,
+  getConversations,
+  createConversation,
+} from '@/api/ai'
 
 const messages = ref<any[]>([])
 const inputMessage = ref('')
 const loading = ref(false)
 const messagesRef = ref<HTMLElement>()
 const searchQuery = ref('')
+const conversations = ref<any[]>([])
+const activeConversationId = ref<string>('')
 
 const presetQuestions = ref<string[]>([
   '📅 帮我规划今天的日程',
@@ -154,7 +190,7 @@ const filteredMessages = computed(() => {
 })
 
 onMounted(async () => {
-  await loadHistory()
+  await loadConversations()
 })
 
 const onEnter = () => {
@@ -163,9 +199,44 @@ const onEnter = () => {
   }
 }
 
-const loadHistory = async () => {
+const loadConversations = async () => {
   try {
-    const data: any = await getChatHistory()
+    const res: any = await getConversations()
+    conversations.value = res || []
+    if (conversations.value.length > 0) {
+      // 默认选中第一个
+      await switchConversation(conversations.value[0].id)
+    } else {
+      // 没有对话，暂不创建，等发送消息时或点击新对话时创建
+      // 或者为了简单，初始化一个
+      await createNewChat()
+    }
+  } catch (error) {
+    console.error('获取对话列表失败', error)
+  }
+}
+
+const switchConversation = async (id: string) => {
+  if (activeConversationId.value === id && messages.value.length > 0) return
+
+  activeConversationId.value = id
+  messages.value = [] // clear view
+  await loadHistory(id)
+}
+
+const createNewChat = async () => {
+  try {
+    const res: any = await createConversation('新对话')
+    conversations.value.unshift(res)
+    await switchConversation(res.id)
+  } catch (error) {
+    ElMessage.error('创建新对话失败')
+  }
+}
+
+const loadHistory = async (conversationId: string) => {
+  try {
+    const data: any = await getChatHistory(conversationId)
     const allMessages: any[] = []
     data.forEach((item: any) => {
       allMessages.push({
@@ -196,15 +267,14 @@ const typeStream = async (fullText: string, onChunk: (s: string) => void) => {
   }
 }
 
-const persist = () => {
-  try {
-    localStorage.setItem('aiChatMessages', JSON.stringify(messages.value))
-  } catch { /* ignore */ }
-}
-
 const sendMessage = async () => {
   if (!inputMessage.value.trim()) return
-  
+
+  // 如果没有当前对话，先创建一个
+  if (!activeConversationId.value) {
+    await createNewChat()
+  }
+
   const question = inputMessage.value
   inputMessage.value = ''
   messages.value.push({
@@ -224,27 +294,42 @@ const sendMessage = async () => {
     } as any
     messages.value.push(aiMsg)
     await scrollToBottom()
-    
+
+    const currentConvId = activeConversationId.value
+
     try {
-      await streamChatMessage(question, async (chunk) => {
-        aiMsg.content += chunk
-        await scrollToBottom()
-      })
+      await streamChatMessage(
+        question,
+        async (chunk) => {
+          aiMsg.content += chunk
+          await scrollToBottom()
+        },
+        currentConvId,
+      )
     } catch (e) {
       console.warn('Stream failed, falling back to normal request:', e)
-      const response: any = await sendChatMessage(question)
+      const response: any = await sendChatMessage(question, currentConvId)
       // 兼容多种返回格式
-      const ans = typeof response === 'string' ? response : (response.answer || response.text || response.content || '')
+      const ans =
+        typeof response === 'string'
+          ? response
+          : response.answer || response.text || response.content || ''
       await typeStream(String(ans), (chunk) => {
         aiMsg.content += chunk
       })
     }
-    persist()
+
+    // 如果是新对话且标题是默认的，刷新一下列表以获取更新后的标题
+    const currentConv = conversations.value.find((c) => c.id === currentConvId)
+    if (currentConv && currentConv.title === '新对话') {
+      // 简单做法：重新获取列表
+      // 优化：只更新当前标题（需要后端返回或自己判断）
+      // 这里为了保险，重新拉取一次列表（或者延迟拉取）
+      loadConversations()
+    }
   } catch (error: any) {
-    // 如果是取消请求或非关键错误，可以忽略
     console.error(error)
     ElMessage.error(error.response?.data?.message || '发送失败')
-    // 移除失败的消息占位
     messages.value.pop()
   } finally {
     loading.value = false
@@ -268,27 +353,18 @@ const formatTime = (time: Date | string) => {
 
 const applyPreset = (q: string) => {
   inputMessage.value = q
-  // remove emoji if present at start for cleaner input
-  // 使用简单的 Unicode 范围匹配 Emoji，避免复杂的代理对问题
   if (/^[\u2000-\u3300]/.test(q) || /^[\uD83C-\uD83E]/.test(q)) {
-     // keep it or remove it, user preference. Let's keep it.
+    // keep emoji
   }
 }
 
 const renderMarkdown = (text: string) => {
   if (!text) return ''
-  let html = text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-  
-  // Code blocks
+  let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
   html = html.replace(/```([\s\S]*?)```/g, (_, code) => `<pre><code>${code.trim()}</code></pre>`)
-  // Inline code
   html = html.replace(/`([^`\n]+?)`/g, '<code>$1</code>')
-  // Bold
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-  // Line breaks
   html = html.replace(/\n/g, '<br/>')
   return html
 }
@@ -306,54 +382,52 @@ const regenerateResponse = async (index: number) => {
   if (loading.value) return
   const userMsgIndex = index - 1
   if (userMsgIndex < 0 || messages.value[userMsgIndex].type !== 'user') return
-  
+
   const question = messages.value[userMsgIndex].content
   messages.value.splice(index, 1) // remove old
-  
+
   loading.value = true
   try {
     const aiMsg = { type: 'ai', content: '', time: new Date() } as any
     messages.value.splice(index, 0, aiMsg)
     await scrollToBottom()
-    
-    // Logic same as sendMessage
+
+    const currentConvId = activeConversationId.value
+
     try {
-      await streamChatMessage(question, async (chunk) => {
-        aiMsg.content += chunk
-        await scrollToBottom()
-      })
+      await streamChatMessage(
+        question,
+        async (chunk) => {
+          aiMsg.content += chunk
+          await scrollToBottom()
+        },
+        currentConvId,
+      )
     } catch (e) {
       console.warn('Stream regeneration failed:', e)
-      const response: any = await sendChatMessage(question)
-      const ans = typeof response === 'string' ? response : (response.answer || response.text || response.content || '')
+      const response: any = await sendChatMessage(question, currentConvId)
+      const ans =
+        typeof response === 'string'
+          ? response
+          : response.answer || response.text || response.content || ''
       await typeStream(String(ans), (chunk) => {
         aiMsg.content += chunk
       })
     }
-    persist()
   } catch {
     ElMessage.error('重新生成失败')
-    // 恢复原来的空消息或删除
     if (!messages.value[index].content) {
-       messages.value.splice(index, 1)
+      messages.value.splice(index, 1)
     }
   } finally {
     loading.value = false
   }
 }
 
-const clearChat = async () => {
-  try {
-    await ElMessageBox.confirm('确定清空对话吗？', '提示', { type: 'warning' })
-    messages.value = []
-    persist()
-  } catch { }
-}
-
 const exportChat = () => {
   if (!messages.value.length) return
   let content = '# 对话记录\n\n'
-  messages.value.forEach(m => {
+  messages.value.forEach((m) => {
     content += `### ${m.type === 'user' ? 'User' : 'AI'}\n${m.content}\n\n`
   })
   const blob = new Blob([content], { type: 'text/markdown' })
@@ -424,6 +498,13 @@ const exportChat = () => {
   cursor: pointer;
   color: var(--text-secondary);
   transition: all 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.history-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .history-item:hover {
@@ -433,6 +514,13 @@ const exportChat = () => {
 .history-item.active {
   background: #eff6ff;
   color: var(--primary);
+}
+
+.no-history {
+  padding: 20px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
 }
 
 .sidebar-footer {
@@ -580,7 +668,10 @@ const exportChat = () => {
   font-family: monospace;
 }
 
-.message-row.user .bubble-content :deep(a) { color: white; text-decoration: underline; }
+.message-row.user .bubble-content :deep(a) {
+  color: white;
+  text-decoration: underline;
+}
 
 .bubble-footer {
   display: flex;
@@ -621,13 +712,25 @@ const exportChat = () => {
   animation: typing 1.4s infinite both;
 }
 
-.typing-dots span:nth-child(1) { animation-delay: 0s; }
-.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+.typing-dots span:nth-child(1) {
+  animation-delay: 0s;
+}
+.typing-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.typing-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
 
 @keyframes typing {
-  0%, 80%, 100% { transform: scale(0); }
-  40% { transform: scale(1); }
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
 }
 
 /* Input Area */
@@ -643,7 +746,7 @@ const exportChat = () => {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 4px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
   transition: border-color 0.2s;
 }
 

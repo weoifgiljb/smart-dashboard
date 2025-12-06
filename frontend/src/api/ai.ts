@@ -1,11 +1,19 @@
 import request from './request'
 
-export const sendChatMessage = (question: string) => {
-  return request.post('/ai/chat', { question })
+export const sendChatMessage = (question: string, conversationId?: string) => {
+  return request.post('/ai/chat', { question, conversationId })
 }
 
-export const getChatHistory = () => {
-  return request.get('/ai/history')
+export const getChatHistory = (conversationId?: string) => {
+  return request.get('/ai/history', { params: { conversationId } })
+}
+
+export const createConversation = (title?: string) => {
+  return request.post('/ai/conversations', { title })
+}
+
+export const getConversations = () => {
+  return request.get('/ai/conversations')
 }
 
 export const generateBookImage = (bookId: string) => {
@@ -20,9 +28,14 @@ export const generateWordImage = (wordId: string) => {
 export async function streamChatMessage(
   question: string,
   onChunk: (text: string) => void,
+  conversationId?: string,
 ): Promise<void> {
   const apiBase = (import.meta as any).env?.VITE_API_BASE || '/api'
   const token = localStorage.getItem('token') || ''
+
+  // Construct body with conversationId
+  const body = JSON.stringify({ question, conversationId })
+
   const res = await fetch(`${apiBase}/ai/chat/stream`, {
     method: 'POST',
     headers: {
@@ -30,7 +43,7 @@ export async function streamChatMessage(
       Accept: 'text/event-stream, text/plain, */*',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify({ question }),
+    body,
   })
   if (!res.ok || !res.body) {
     throw new Error('流式接口不可用')
