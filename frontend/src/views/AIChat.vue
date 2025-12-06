@@ -128,7 +128,7 @@
 import { ref, onMounted, nextTick, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
-  Plus, Search, Download, ChatLineSquare, Cpu, User,
+  Plus, Download, ChatLineSquare, Cpu, User,
   CopyDocument, Refresh, Promotion
 } from '@element-plus/icons-vue'
 import { sendChatMessage, getChatHistory, streamChatMessage } from '@/api/ai'

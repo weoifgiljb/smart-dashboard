@@ -61,7 +61,7 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { ElMessage } from 'element-plus'
-import { User, Lock, ArrowRight } from '@element-plus/icons-vue'
+import { ArrowRight } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus'
 
 const router = useRouter()

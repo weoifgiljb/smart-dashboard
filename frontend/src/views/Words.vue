@@ -238,7 +238,6 @@ const importLoading = ref(false)
 const trendOption = ref<any>({})
 const activeTab = ref('today')
 const showDefaultBtn = ref(false)
-const selectedTodayIds = ref<string[]>([])
 
 // 分页
 const pageSize = 10

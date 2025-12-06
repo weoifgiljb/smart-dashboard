@@ -119,7 +119,7 @@
                   <el-tag size="small" :type="priorityType(t.priority)" effect="dark" class="mini-tag">
                     {{ priorityText(t.priority) }}
                   </el-tag>
-                  <el-dropdown trigger="click" @command="(c) => handleCommand(c, t)" @click.stop>
+                  <el-dropdown trigger="click" @command="(c: any) => handleCommand(c, t)" @click.stop>
                     <el-icon class="more-btn"><MoreFilled /></el-icon>
                     <template #dropdown>
                       <el-dropdown-menu>
@@ -300,8 +300,8 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, watch } from 'vue'
 import { 
-  Plus, Search, RefreshRight, Operation, Grid, Calendar, PieChart, 
-  Check, MoreFilled, ArrowRight
+  Plus, RefreshRight, Operation, Grid, Calendar, PieChart, 
+  Check, MoreFilled
 } from '@element-plus/icons-vue'
 import {
   createTask as apiCreate,
@@ -383,6 +383,10 @@ watch(tab, (val) => {
 function toggleTaskStatus(row: Task) {
   const newStatus = row.status === 'done' ? 'todo' : 'done'
   apiUpdate(row.id!, { status: newStatus }).then(refresh)
+}
+
+function setStatus(t: Task, s: string) {
+  apiUpdate(t.id!, { status: s }).then(refresh)
 }
 
 function handleCommand(command: string, t: Task) {
