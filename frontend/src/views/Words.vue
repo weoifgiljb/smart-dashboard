@@ -1,287 +1,194 @@
 <template>
   <div class="words-page">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <h3>背单词</h3>
-          <div>
-            <el-button
-              v-if="showDefaultBtn"
-              style="margin-right: 8px"
-              type="success"
-              plain
-              :loading="defaultLoading"
-              @click="handleImportDefault"
-              >一键导入默认词库</el-button
-            >
-            <el-button style="margin-right: 8px" @click="showImportDialog = true"
-              >导入词库</el-button
-            >
-            <el-button type="primary" @click="showAddDialog = true">添加单词</el-button>
-          </div>
-        </div>
-      </template>
-      <el-tabs v-model="activeTab">
-        <el-tab-pane label="今日需背" name="today">
-          <div
-            style="
-              margin-bottom: 10px;
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-            "
-          >
-            <div style="display: flex; gap: 12px">
-              <el-button
-                type="success"
-                :disabled="selectedTodayIds.length === 0"
-                @click="startNewReview"
-              >
-                <el-icon><Star /></el-icon>
-                新版复习（{{ selectedTodayIds.length }}）
-              </el-button>
-            </div>
-          </div>
-          <el-table
-            v-if="pagedTodayWords.length < 50"
-            :data="pagedTodayWords"
-            style="width: 100%"
-            @selection-change="onTodaySelectionChange"
-          >
-            <el-table-column type="selection" width="50" />
-            <el-table-column prop="word" label="单词" />
-            <el-table-column prop="translation" label="翻译" />
-            <el-table-column label="配图" width="120">
-              <template #default="scope">
-                <img
-                  v-if="scope.row.image"
-                  :src="scope.row.image"
-                  style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px"
-                />
-                <el-button
-                  v-else
-                  size="small"
-                  type="primary"
-                  plain
-                  @click="handleGenWordImage(scope.row)"
-                  >生成图</el-button
-                >
+    <div class="header-section">
+      <div class="page-title">
+        <h2>单词本</h2>
+        <p class="subtitle">积累词汇，点亮思维</p>
+      </div>
+      <div class="header-actions">
+        <el-button v-if="showDefaultBtn" type="success" plain :loading="defaultLoading" @click="handleImportDefault">
+          一键导入默认词库
+        </el-button>
+        <el-button @click="showImportDialog = true">
+          <el-icon class="el-icon--left"><Download /></el-icon>导入
+        </el-button>
+        <el-button type="primary" @click="showAddDialog = true">
+          <el-icon class="el-icon--left"><Plus /></el-icon>添加单词
+        </el-button>
+      </div>
+    </div>
+
+    <el-row :gutter="24">
+      <el-col :span="16">
+        <el-card class="list-card">
+          <el-tabs v-model="activeTab" class="custom-tabs">
+            <el-tab-pane name="today">
+              <template #label>
+                <span class="tab-label">
+                  <el-icon><Calendar /></el-icon> 今日需背
+                  <el-badge :value="todayWords.length" class="tab-badge" type="primary" />
+                </span>
               </template>
-            </el-table-column>
-            <el-table-column prop="book" label="书籍" width="160" />
-            <el-table-column prop="sectionIndex" label="分区" width="80" />
-            <el-table-column prop="dueDate" label="计划日期" width="160">
-              <template #default="scope">
-                <span>{{ formatDate(scope.row.dueDate) }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="nextStage" label="下个阶段" width="180">
-              <template #default="scope">
-                <div>
-                  <div>第{{ nextStage(scope.row) }}/9</div>
-                  <div style="color: var(--app-subtext); font-size: 12px">
-                    {{ nextIntervalText(scope.row) }}
+              
+              <div class="tab-toolbar">
+                <el-button type="primary" size="large" class="start-review-btn" :disabled="todayWords.length === 0" @click="startNewReview">
+                  <el-icon class="el-icon--left"><VideoPlay /></el-icon>
+                  开始复习 ({{ todayWords.length }})
+                </el-button>
+              </div>
+
+              <div class="word-list">
+                <el-empty v-if="todayWords.length === 0" description="今日任务已完成！" :image-size="100" />
+                <div v-else class="list-container">
+                  <div v-for="word in pagedTodayWords" :key="word.id" class="word-item">
+                    <div class="word-info">
+                      <div class="word-text">{{ word.word }}</div>
+                      <div class="word-trans">{{ word.translation }}</div>
+                    </div>
+                    <div class="word-meta">
+                      <el-tag size="small" effect="plain" type="info">第{{ nextStage(word) }}阶段</el-tag>
+                      <span class="next-time">{{ nextIntervalText(word) }}</span>
+                    </div>
+                    <div class="word-actions">
+                      <el-button circle size="small" @click="handleReview(word)"><el-icon><VideoPlay /></el-icon></el-button>
+                      <el-button circle size="small" type="success" plain @click="handleDone(word.id)"><el-icon><Check /></el-icon></el-button>
+                    </div>
                   </div>
                 </div>
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="380">
-              <template #default="scope">
-                <el-button size="small" @click="handleReview(scope.row)">复习</el-button>
-                <el-button size="small" type="success" @click="handleDone(scope.row.id)"
-                  >完成</el-button
-                >
-                <el-button size="small" type="warning" @click="handleReset(scope.row.id)"
-                  >忘了/重置</el-button
-                >
-                <el-button
-                  v-if="scope.row.image"
-                  size="small"
-                  type="primary"
-                  plain
-                  @click="handleGenWordImage(scope.row)"
-                  >重生图</el-button
-                >
-                <el-button size="small" type="danger" @click="handleDelete(scope.row.id)"
-                  >删除</el-button
-                >
-              </template>
-            </el-table-column>
-          </el-table>
-          <VirtualList
-            v-else
-            :items="pagedTodayWords"
-            :item-height="80"
-            height="600px"
-            style="border: 1px solid #ebeef5"
-          >
-            <template #default="{ item }">
-              <div
-                style="
-                  display: flex;
-                  align-items: center;
-                  padding: 10px;
-                  border-bottom: 1px solid #ebeef5;
-                "
-              >
-                <div style="flex: 1; font-weight: bold">{{ item.word }}</div>
-                <div style="flex: 2">{{ item.translation }}</div>
-                <div style="flex: 1">
-                  <img
-                    v-if="item.image"
-                    :src="item.image"
-                    style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px"
+                <div class="pagination-wrapper">
+                  <el-pagination
+                    v-model:current-page="currentPageToday"
+                    :page-size="pageSize"
+                    layout="prev, pager, next"
+                    :total="todayWords.length"
+                    hide-on-single-page
                   />
                 </div>
-                <div style="width: 200px; text-align: right">
-                  <el-button size="small" @click="handleReview(item)">复习</el-button>
-                </div>
               </div>
-            </template>
-          </VirtualList>
-          <div style="margin-top: 12px; text-align: right">
-            <el-pagination
-              v-model:current-page="currentPageToday"
-              :page-size="pageSize"
-              layout="prev, pager, next, total"
-              :total="todayWords.length"
-            />
-          </div>
-        </el-tab-pane>
-        <el-tab-pane label="全部" name="all">
-          <el-table :data="pagedWords" style="width: 100%">
-            <el-table-column prop="word" label="单词" />
-            <el-table-column prop="translation" label="翻译" />
-            <el-table-column prop="example" label="例句" />
-            <el-table-column label="配图" width="120">
-              <template #default="scope">
-                <img
-                  v-if="scope.row.image"
-                  :src="scope.row.image"
-                  style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px"
-                />
-                <el-button
-                  v-else
-                  size="small"
-                  type="primary"
-                  plain
-                  @click="handleGenWordImage(scope.row)"
-                  >生成图</el-button
-                >
+            </el-tab-pane>
+
+            <el-tab-pane name="all">
+              <template #label>
+                <span class="tab-label">
+                  <el-icon><Collection /></el-icon> 全部单词
+                  <el-badge :value="words.length" class="tab-badge" type="info" />
+                </span>
               </template>
-            </el-table-column>
-            <el-table-column prop="reviewCount" label="复习次数" width="100" />
-            <el-table-column prop="book" label="书籍" width="160" />
-            <el-table-column prop="sectionIndex" label="分区" width="80" />
-            <el-table-column prop="status" label="状态" width="100" />
-            <el-table-column prop="dueDate" label="计划日期" width="160">
-              <template #default="scope">
-                <span>{{ formatDate(scope.row.dueDate) }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="nextStage" label="下个阶段" width="180">
-              <template #default="scope">
-                <div>
-                  <div>第{{ nextStage(scope.row) }}/9</div>
-                  <div style="color: var(--app-subtext); font-size: 12px">
-                    {{ nextIntervalText(scope.row) }}
+              
+              <div class="word-list">
+                <div class="list-container">
+                  <div v-for="word in pagedWords" :key="word.id" class="word-item">
+                    <div class="word-img-wrapper" @click="handleGenWordImage(word)">
+                      <img v-if="word.image" :src="word.image" loading="lazy" />
+                      <div v-else class="img-placeholder"><el-icon><Picture /></el-icon></div>
+                    </div>
+                    <div class="word-info">
+                      <div class="word-text">{{ word.word }}</div>
+                      <div class="word-trans">{{ word.translation }}</div>
+                    </div>
+                    <div class="word-actions">
+                      <el-button link type="primary" @click="handleReview(word)">复习</el-button>
+                      <el-popconfirm title="确定删除吗？" @confirm="handleDelete(word.id)">
+                        <template #reference>
+                          <el-button link type="danger">删除</el-button>
+                        </template>
+                      </el-popconfirm>
+                    </div>
                   </div>
                 </div>
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="320">
-              <template #default="scope">
-                <el-button size="small" @click="handleReview(scope.row)">复习</el-button>
-                <el-button size="small" type="warning" @click="handleReset(scope.row.id)"
-                  >重置</el-button
-                >
-                <el-button
-                  v-if="scope.row.image"
-                  size="small"
-                  type="primary"
-                  plain
-                  @click="handleGenWordImage(scope.row)"
-                  >重生图</el-button
-                >
-                <el-button size="small" type="danger" @click="handleDelete(scope.row.id)"
-                  >删除</el-button
-                >
-              </template>
-            </el-table-column>
-          </el-table>
-          <div style="margin-top: 12px; text-align: right">
-            <el-pagination
-              v-model:current-page="currentPageAll"
-              :page-size="pageSize"
-              layout="prev, pager, next, total"
-              :total="words.length"
-            />
-          </div>
-        </el-tab-pane>
-      </el-tabs>
-    </el-card>
-    <el-card style="margin-top: 20px">
-      <template #header>
-        <div class="card-header">
-          <h3>近7天新增/复习趋势</h3>
-        </div>
-      </template>
-      <BaseChart :option="trendOption" height="220px" />
-    </el-card>
+                <div class="pagination-wrapper">
+                  <el-pagination
+                    v-model:current-page="currentPageAll"
+                    :page-size="pageSize"
+                    layout="prev, pager, next"
+                    :total="words.length"
+                    hide-on-single-page
+                  />
+                </div>
+              </div>
+            </el-tab-pane>
+          </el-tabs>
+        </el-card>
+      </el-col>
 
-    <el-dialog v-model="showAddDialog" title="添加单词" width="500px">
-      <el-form :model="wordForm" label-width="80px">
+      <el-col :span="8">
+        <el-card class="chart-card">
+          <template #header>
+            <div class="card-header">
+              <span>学习趋势</span>
+              <el-tag size="small" effect="plain">近7天</el-tag>
+            </div>
+          </template>
+          <BaseChart :option="trendOption" height="240px" />
+        </el-card>
+
+        <el-card class="books-card" style="margin-top: 20px">
+          <template #header>
+            <div class="card-header">
+              <span>我的词库</span>
+            </div>
+          </template>
+          <div class="books-list">
+            <div v-for="(book, idx) in books" :key="idx" class="book-item">
+              <el-icon class="book-icon"><Notebook /></el-icon>
+              <div class="book-info">
+                <div class="book-name">{{ book.name || '默认词库' }}</div>
+                <div class="book-count">{{ book.count || 0 }} 词</div>
+              </div>
+            </div>
+            <el-empty v-if="books.length === 0" description="暂无词库" :image-size="60" />
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- Dialogs -->
+    <el-dialog v-model="showAddDialog" title="添加单词" width="480px" align-center class="custom-dialog">
+      <el-form :model="wordForm" label-position="top">
         <el-form-item label="单词">
-          <el-input v-model="wordForm.word" />
+          <el-input v-model="wordForm.word" placeholder="输入英文单词" size="large" />
         </el-form-item>
         <el-form-item label="翻译">
-          <el-input v-model="wordForm.translation" />
+          <el-input v-model="wordForm.translation" placeholder="中文含义" />
         </el-form-item>
         <el-form-item label="例句">
-          <el-input v-model="wordForm.example" type="textarea" />
+          <el-input v-model="wordForm.example" type="textarea" :rows="3" placeholder="辅助记忆的例句" />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="showAddDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleAdd">确定</el-button>
+        <el-button type="primary" @click="handleAdd">添加</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="showImportDialog" title="导入词库（GitHub 原始链接）" width="600px">
-      <el-form :model="importForm" label-width="120px">
-        <el-form-item label="原始链接">
-          <el-input
-            v-model="importForm.sourceUrl"
-            placeholder="https://raw.githubusercontent.com/xxx/wordlist.txt"
-          />
+    <el-dialog v-model="showImportDialog" title="导入词库" width="520px" align-center class="custom-dialog">
+      <el-form :model="importForm" label-position="top">
+        <el-form-item label="词库链接 (GitHub Raw URL)">
+          <el-input v-model="importForm.sourceUrl" placeholder="https://raw.githubusercontent.com/..." />
         </el-form-item>
-        <el-form-item label="书籍/词库名称">
-          <el-input v-model="importForm.bookName" placeholder="如 CET4 高频词" />
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="词库名称">
+              <el-input v-model="importForm.bookName" placeholder="例如：CET-4" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="每日分区大小">
+              <el-input-number v-model="importForm.sectionSize" :min="10" :step="10" controls-position="right" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="开始学习日期">
+          <el-date-picker v-model="importForm.startDate" type="date" placeholder="选择日期" style="width: 100%" value-format="YYYY-MM-DD" />
         </el-form-item>
-        <el-form-item label="每区单词数">
-          <el-input v-model.number="importForm.sectionSize" placeholder="如 50" />
-        </el-form-item>
-        <el-form-item label="开始日期">
-          <el-date-picker
-            v-model="importForm.startDate"
-            type="date"
-            placeholder="选择日期"
-            format="YYYY-MM-DD"
-            value-format="YYYY-MM-DD"
-          />
-        </el-form-item>
-        <el-alert
-          title="格式说明：每行一个词；也支持“单词|翻译”、“单词,翻译”、“单词[TAB]翻译”。分区会按顺序自动分配到每天学习计划。"
-          type="info"
-          :closable="false"
-          show-icon
-        />
+        <div class="dialog-tip">
+          <el-icon><InfoFilled /></el-icon>
+          <span>支持格式：每行一个 "单词" 或 "单词|翻译"</span>
+        </div>
       </el-form>
       <template #footer>
         <el-button @click="showImportDialog = false">取消</el-button>
-        <el-button type="primary" :loading="importLoading" @click="handleImport"
-          >开始导入</el-button
-        >
+        <el-button type="primary" :loading="importLoading" @click="handleImport">开始导入</el-button>
       </template>
     </el-dialog>
   </div>
@@ -291,7 +198,10 @@
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Star } from '@element-plus/icons-vue'
+import { 
+  Plus, Download, VideoPlay, Calendar, Collection, Picture, Check, 
+  Notebook, InfoFilled 
+} from '@element-plus/icons-vue'
 import {
   getWords,
   addWord,
@@ -303,7 +213,6 @@ import {
   importDefaultWords,
 } from '@/api/words'
 import BaseChart from '@/components/charts/BaseChart.vue'
-import VirtualList from '@/components/virtual/VirtualList.vue'
 import { generateWordImage } from '@/api/ai'
 import { getState as getSm2State } from '@/utils/sm2'
 
@@ -350,7 +259,6 @@ onMounted(async () => {
   showDefaultBtn.value = (words.value as any[]).length === 0
 })
 
-// 跨页复习完成后，自动刷新趋势图与列表
 const handleReviewedEvent = async () => {
   try {
     await loadWords()
@@ -396,7 +304,6 @@ const loadBooksSummary = async () => {
   }
 }
 
-// 兼容后端时间戳（秒/毫秒）与字符串
 const toDate = (val: any): Date | null => {
   if (!val) return null
   if (typeof val === 'number') {
@@ -444,15 +351,14 @@ const handleDelete = async (id: string) => {
 }
 
 const handleReview = (word: any) => {
-  // 跳转到新版复习页面，只复习这一个单词
   const ids = encodeURIComponent(word.id)
   router.push(`/vocabulary/review?ids=${ids}`)
 }
 
 const handleGenWordImage = async (row: any) => {
+  if (row.image) return // 已有图不重复生成，除非加个强制按钮
   try {
     const updated: any = await generateWordImage(row.id)
-    // 同步更新两个列表中的该条
     const updateLocal = (list: any[]) => {
       const idx = list.findIndex((w: any) => w.id === row.id)
       if (idx >= 0) list[idx] = { ...list[idx], ...updated }
@@ -469,16 +375,6 @@ const handleDone = async (id: string) => {
   try {
     await updateWordStatus(id, 'done')
     ElMessage.success('标记完成')
-    await Promise.all([loadWords(), loadTodayWords(), loadBooksSummary()])
-  } catch (error: any) {
-    ElMessage.error(error.response?.data?.message || '操作失败')
-  }
-}
-
-const handleReset = async (id: string) => {
-  try {
-    await updateWordStatus(id, 'todo')
-    ElMessage.success('已重置到首阶段（5分钟后再来）')
     await Promise.all([loadWords(), loadTodayWords(), loadBooksSummary()])
   } catch (error: any) {
     ElMessage.error(error.response?.data?.message || '操作失败')
@@ -552,8 +448,8 @@ const buildTrendOption = () => {
   const addMax = niceMax(Math.max(...addVals, 0))
   const reviewMax = niceMax(Math.max(...reviewVals, 0))
   trendOption.value = {
-    grid: { left: 20, right: 10, top: 10, bottom: 20, containLabel: false },
-    xAxis: { type: 'category', data: labels, axisTick: { show: false }, axisLine: { show: false } },
+    grid: { left: 10, right: 10, top: 10, bottom: 20, containLabel: false },
+    xAxis: { type: 'category', data: labels, axisTick: { show: false }, axisLine: { show: false }, axisLabel: { fontSize: 10, color: '#999' } },
     yAxis: [
       {
         type: 'value',
@@ -562,6 +458,7 @@ const buildTrendOption = () => {
         splitLine: { show: false },
         axisLine: { show: false },
         axisTick: { show: false },
+        axisLabel: { show: false }
       },
       {
         type: 'value',
@@ -570,9 +467,9 @@ const buildTrendOption = () => {
         splitLine: { show: false },
         axisLine: { show: false },
         axisTick: { show: false },
+        axisLabel: { show: false }
       },
     ],
-    legend: { data: ['新增', '复习'] },
     series: [
       {
         name: '新增',
@@ -580,30 +477,21 @@ const buildTrendOption = () => {
         smooth: true,
         yAxisIndex: 0,
         data: addVals,
-        lineStyle: { color: '#409eff' },
+        showSymbol: false,
+        lineStyle: { color: '#409eff', width: 3 },
         itemStyle: { color: '#409eff' },
       },
       {
         name: '复习',
-        type: 'line',
-        smooth: true,
+        type: 'bar',
         yAxisIndex: 1,
         data: reviewVals,
-        lineStyle: { color: '#67c23a' },
-        itemStyle: { color: '#67c23a' },
+        itemStyle: { color: '#e5e7eb', borderRadius: 2 },
+        barWidth: '60%'
       },
     ],
     tooltip: { trigger: 'axis' },
   }
-}
-
-const formatDate = (val: any) => {
-  if (!val) return ''
-  const d = new Date(val)
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
 }
 
 const nextStage = (w: any) => {
@@ -614,25 +502,166 @@ const nextStage = (w: any) => {
 
 const nextIntervalText = (w: any) => {
   const st = getSm2State(w.id)
-  if (!st) return '—'
+  if (!st) return '待学习'
   const days = Math.max(1, Math.round(st.interval))
   return `约 ${days} 天后`
 }
 
-const onTodaySelectionChange = (selection: any[]) => {
-  selectedTodayIds.value = (selection || []).map((w: any) => w.id)
-}
-
 const startNewReview = () => {
-  if (!selectedTodayIds.value.length) return
-  const ids = encodeURIComponent(selectedTodayIds.value.join(','))
-  router.push(`/vocabulary/review?ids=${ids}`)
+  const ids = todayWords.value.map((w:any) => w.id).join(',')
+  const encoded = encodeURIComponent(ids)
+  router.push(`/vocabulary/review?ids=${encoded}`)
 }
 </script>
 
 <style scoped>
 .words-page {
-  padding: 20px;
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header */
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.page-title h2 { margin: 0; font-size: 24px; color: var(--app-text); }
+.subtitle { margin: 4px 0 0; color: var(--text-secondary); font-size: 14px; }
+
+/* Tabs */
+.list-card {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  min-height: 600px;
+}
+
+.custom-tabs :deep(.el-tabs__nav-wrap::after) {
+  height: 1px;
+  background-color: var(--border);
+}
+
+.tab-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+}
+
+.tab-badge :deep(.el-badge__content) {
+  transform: translateY(-2px);
+}
+
+.tab-toolbar {
+  padding: 16px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.start-review-btn {
+  width: 100%;
+  font-weight: 600;
+  box-shadow: var(--shadow-colored);
+}
+
+/* Word List */
+.word-list {
+  min-height: 400px;
+}
+
+.list-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.word-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  transition: background 0.2s;
+}
+
+.word-item:hover {
+  background: var(--app-bg);
+  padding-left: 8px;
+  padding-right: 8px;
+  border-radius: 8px;
+  margin: 0 -8px;
+}
+
+.word-img-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-right: 16px;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.word-img-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.img-placeholder {
+  color: #cbd5e1;
+  font-size: 20px;
+}
+
+.word-info {
+  flex: 1;
+}
+
+.word-text {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--app-text);
+  margin-bottom: 2px;
+}
+
+.word-trans {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.word-meta {
+  text-align: right;
+  margin-right: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.next-time {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.word-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.pagination-wrapper {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+/* Side Column */
+.chart-card {
+  border-radius: var(--radius-md);
+  border: none;
 }
 
 .card-header {
@@ -641,7 +670,58 @@ const startNewReview = () => {
   align-items: center;
 }
 
-.card-header h3 {
-  margin: 0;
+.books-card {
+  border-radius: var(--radius-md);
+  border: none;
+}
+
+.books-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.book-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.book-icon {
+  font-size: 24px;
+  color: var(--primary);
+  margin-right: 12px;
+  background: var(--primary-light);
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.book-info {
+  flex: 1;
+}
+
+.book-name {
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--app-text);
+}
+
+.book-count {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.dialog-tip {
+  margin-top: 16px;
+  background: #eff6ff;
+  color: #3b82f6;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 </style>

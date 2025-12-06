@@ -1,19 +1,28 @@
 :root {
   /* Colors - Green/Blue Youthful Theme */
+  /* Emerald for Growth/Discipline */
   --primary: #10b981; /* Emerald 500 */
   --primary-hover: #059669; /* Emerald 600 */
   --primary-light: #d1fae5; /* Emerald 100 */
   --primary-fade: rgba(16, 185, 129, 0.1);
   
+  /* Blue for Technology/Efficiency */
   --secondary: #3b82f6; /* Blue 500 */
   --secondary-hover: #2563eb; /* Blue 600 */
   --secondary-light: #dbeafe; /* Blue 100 */
 
-  --accent: #f59e0b; /* Amber 500 - for highlights */
-  --accent-light: #fef3c7; /* Amber 100 */
+  /* Status Colors */
+  --success: #10b981;
+  --success-light: #d1fae5;
+  --warning: #f59e0b; /* Amber 500 */
+  --warning-light: #fef3c7;
+  --danger: #ef4444; /* Red 500 */
+  --danger-light: #fee2e2;
+  --info: #3b82f6;
+  --info-light: #dbeafe;
 
   /* Backgrounds */
-  --app-bg: #f0fdf4; /* Very light green tint for freshness */
+  --app-bg: #f8fafc; /* Slate 50 - Cleaner than greenish tint */
   --card-bg: #ffffff;
   --sidebar-bg: #ffffff;
   --header-bg: #ffffff;
@@ -22,22 +31,14 @@
   --app-text: #1f2937; /* Gray 800 */
   --text-secondary: #6b7280; /* Gray 500 */
   --text-light: #9ca3af; /* Gray 400 */
-
-  /* Status */
-  --success: #10b981;
-  --success-light: #d1fae5;
-  --warning: #f59e0b;
-  --warning-light: #fef3c7;
-  --danger: #ef4444;
-  --danger-light: #fee2e2;
-  --info: #3b82f6;
-  --info-light: #dbeafe;
+  --border: #e5e7eb; /* Gray 200 */
 
   /* Layout */
   --radius-sm: 8px;
   --radius-md: 12px;
-  --radius-lg: 20px; /* More rounded for youthful look */
+  --radius-lg: 16px; 
   
+  /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -46,37 +47,49 @@
   /* Gradients */
   --gradient-primary: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
   --gradient-light: linear-gradient(135deg, #d1fae5 0%, #dbeafe 100%);
+
+  /* Element Plus Mapping */
+  --el-color-primary: var(--primary);
+  --el-color-success: var(--success);
+  --el-color-warning: var(--warning);
+  --el-color-danger: var(--danger);
+  --el-color-info: var(--info);
+  --el-border-radius-base: var(--radius-sm);
+  --el-text-color-primary: var(--app-text);
+  --el-text-color-regular: var(--text-secondary);
+  --el-text-color-secondary: var(--text-light);
+  --el-bg-color: var(--card-bg);
+  --el-bg-color-page: var(--app-bg);
+  --el-border-color: var(--border);
+  --el-border-color-light: #f3f4f6;
 }
 
 [data-theme="dark"] {
-  --app-bg: #111827;
-  --card-bg: #1f2937;
+  /* Dark Mode Colors */
+  --app-bg: #111827; /* Gray 900 */
+  --card-bg: #1f2937; /* Gray 800 */
   --sidebar-bg: #1f2937;
   --header-bg: #1f2937;
   
-  --app-text: #f9fafb;
-  --text-secondary: #d1d5db;
-  --text-light: #9ca3af;
+  --app-text: #f9fafb; /* Gray 50 */
+  --text-secondary: #d1d5db; /* Gray 300 */
+  --text-light: #9ca3af; /* Gray 400 */
+  --border: #374151; /* Gray 700 */
 
-  --primary: #34d399; /* Emerald 400 */
+  --primary: #34d399; /* Emerald 400 - brighter for dark mode */
   --primary-hover: #10b981;
   --primary-light: rgba(52, 211, 153, 0.1);
+  --primary-fade: rgba(52, 211, 153, 0.1);
   
   --secondary: #60a5fa; /* Blue 400 */
   
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
   --shadow-colored: 0 10px 25px -5px rgba(52, 211, 153, 0.15);
-}
 
-/* High contrast mode */
-[data-theme="hc"] {
-  --app-bg: #000;
-  --app-text: #fff;
-  --primary: #00ff00;
-  --success: #00ff00;
-  --warning: #ffff00;
-  --danger: #ff0000;
-  --card-bg: #000;
-  --sidebar-bg: #000;
+  /* Element Plus Mapping Dark */
+  --el-border-color-light: #374151;
 }
 
 html, body, #app {
@@ -84,77 +97,51 @@ html, body, #app {
   color: var(--app-text);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
 }
 
-/* Global Element Plus Overrides for the Theme */
-:root {
-  --el-color-primary: var(--primary);
-  --el-color-success: var(--success);
-  --el-color-warning: var(--warning);
-  --el-color-danger: var(--danger);
-  --el-color-info: var(--info);
-  --el-border-radius-base: var(--radius-sm);
-}
-  --border: #e4e7ed;
-}
-
-html[data-theme='dark'] {
-  --bg: #0f1419;
-  --fg: #e6edf3;
-  --muted: #9da7b2;
-  --primary: #7aa2f7;
-  --success: #73d13d;
-  --warning: #f0a020;
-  --danger: #ff7875;
-  --card-bg: #161b22;
-  --border: #30363d;
-}
-
-html, body, #app {
-  background: var(--bg);
-  color: var(--fg);
-}
-
+/* Global Element Plus Overrides */
 .el-card {
-  background: var(--card-bg);
-  border-color: var(--border);
+  --el-card-border-radius: var(--radius-md);
+  --el-card-border-color: var(--border);
+  --el-card-bg-color: var(--card-bg);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+  border: 1px solid var(--border);
 }
 
-:root {
-  /* 基础色板 */
-  --color-bg: #f5f5f5;
-  --color-surface: #ffffff;
-  --color-text: #303133;
-  --color-subtext: #909399;
-  --color-border: #e4e7ed;
-  --color-primary: #409eff;
-  --color-success: #67c23a;
-  --color-warning: #e6a23c;
-  --color-danger: #f56c6c;
-
-  /* 应用级 */
-  --app-bg: var(--color-bg);
-  --card-bg: var(--color-surface);
-  --app-text: var(--color-text);
-  --app-subtext: var(--color-subtext);
-  --app-border: var(--color-border);
+.el-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
-[data-theme="dark"] {
-  --color-bg: #0f1115;
-  --color-surface: #171a21;
-  --color-text: #e5eaf3;
-  --color-subtext: #9aa4b2;
-  --color-border: #2a2f3a;
-  --color-primary: #76a9fa;
-  --color-success: #4ade80;
-  --color-warning: #fbbf24;
-  --color-danger: #f87171;
-}
-
-html, body, #app {
-  background: var(--app-bg);
+.el-card__header {
+  border-bottom: 1px solid var(--el-border-color-light);
+  padding: 16px 20px;
+  font-weight: 600;
   color: var(--app-text);
 }
 
+.el-button--primary {
+  --el-button-bg-color: var(--primary);
+  --el-button-border-color: var(--primary);
+  --el-button-hover-bg-color: var(--primary-hover);
+  --el-button-hover-border-color: var(--primary-hover);
+}
 
+/* Card Utility */
+.app-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
+}
+
+.app-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}

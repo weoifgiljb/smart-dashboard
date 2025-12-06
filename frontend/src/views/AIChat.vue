@@ -1,170 +1,126 @@
 <template>
   <div class="ai-chat-page">
-    <el-card class="chat-card">
-      <template #header>
-        <div class="card-header">
-          <div class="header-left">
-            <el-icon class="header-icon"><ChatDotRound /></el-icon>
-            <h3>AI智能助手</h3>
-            <el-tag size="small" type="success" effect="plain">在线</el-tag>
+    <div class="chat-layout">
+      <!-- 侧边栏（可选：如果有历史记录列表，可放在这里，目前仅作为装饰或未来扩展） -->
+      <div class="chat-sidebar">
+        <div class="sidebar-header">
+          <el-button type="primary" class="new-chat-btn" @click="clearChat">
+            <el-icon><Plus /></el-icon> 新对话
+          </el-button>
+        </div>
+        <div class="history-list">
+          <div class="history-label">最近对话</div>
+          <!-- 模拟历史记录 -->
+          <div class="history-item active">
+            <el-icon><ChatLineSquare /></el-icon>
+            <span class="history-title">当前对话</span>
+          </div>
+        </div>
+        <div class="sidebar-footer">
+          <el-button link @click="exportChat"><el-icon><Download /></el-icon> 导出记录</el-button>
+        </div>
+      </div>
+
+      <!-- 主聊天区 -->
+      <div class="chat-main">
+        <!-- 顶部栏 -->
+        <div class="chat-header">
+          <div class="model-info">
+            <span class="model-name">AI 助手</span>
+            <el-tag size="small" type="success" effect="light" round>Online</el-tag>
           </div>
           <div class="header-actions">
-            <el-tooltip content="搜索对话" placement="bottom">
-              <el-button link @click="showSearch = !showSearch">
-                <el-icon><Search /></el-icon>
-              </el-button>
-            </el-tooltip>
-            <el-tooltip content="导出对话" placement="bottom">
-              <el-button link @click="exportChat">
-                <el-icon><Download /></el-icon>
-              </el-button>
-            </el-tooltip>
-            <el-tooltip content="清空对话" placement="bottom">
-              <el-button link @click="clearChat">
-                <el-icon><Delete /></el-icon>
-              </el-button>
-            </el-tooltip>
-          </div>
-        </div>
-      </template>
-
-      <div class="chat-container">
-        <!-- 搜索框 -->
-        <el-collapse-transition>
-          <div v-show="showSearch" class="search-bar">
             <el-input
               v-model="searchQuery"
-              placeholder="搜索对话内容..."
+              placeholder="搜索..."
+              prefix-icon="Search"
               clearable
-              @input="handleSearch"
-            >
-              <template #prefix>
-                <el-icon><Search /></el-icon>
-              </template>
-            </el-input>
-          </div>
-        </el-collapse-transition>
-
-        <!-- 消息列表 -->
-        <div ref="messagesRef" class="chat-messages">
-          <div v-if="filteredMessages.length === 0" class="empty-state">
-            <el-icon class="empty-icon"><ChatLineRound /></el-icon>
-            <p>{{ searchQuery ? '未找到相关消息' : '开始与AI对话吧！' }}</p>
-          </div>
-
-          <div v-for="(msg, index) in filteredMessages" :key="index" :class="['message', msg.type]">
-            <template v-if="msg.type === 'ai'">
-              <div class="avatar">
-                <el-avatar :size="40" class="ai-avatar">
-                  <el-icon><Cpu /></el-icon>
-                </el-avatar>
-              </div>
-              <div class="bubble">
-                <!-- eslint-disable-next-line vue/no-v-html -->
-                <div class="message-content" v-html="renderMarkdown(msg.content)"></div>
-                <div class="message-meta">
-                  <span class="message-time">{{ formatTime(msg.time) }}</span>
-                  <div class="message-actions">
-                    <el-button link size="small" @click="copyText(msg.content)">
-                      <el-icon><DocumentCopy /></el-icon> 复制
-                    </el-button>
-                    <el-button link size="small" @click="regenerateResponse(index)">
-                      <el-icon><Refresh /></el-icon> 重新生成
-                    </el-button>
-                  </div>
-                </div>
-              </div>
-              <div class="avatar-placeholder"></div>
-            </template>
-            <template v-else>
-              <div class="avatar-placeholder"></div>
-              <div class="bubble">
-                <!-- eslint-disable-next-line vue/no-v-html -->
-                <div class="message-content" v-html="renderMarkdown(msg.content)"></div>
-                <div class="message-meta">
-                  <span class="message-time">{{ formatTime(msg.time) }}</span>
-                  <div class="message-actions">
-                    <el-button link size="small" @click="copyText(msg.content)">
-                      <el-icon><DocumentCopy /></el-icon> 复制
-                    </el-button>
-                  </div>
-                </div>
-              </div>
-              <div class="avatar">
-                <el-avatar :size="40" class="user-avatar">
-                  <el-icon><User /></el-icon>
-                </el-avatar>
-              </div>
-            </template>
-          </div>
-
-          <!-- 加载动画 -->
-          <div v-if="loading" class="message ai">
-            <div class="avatar">
-              <el-avatar :size="40" class="ai-avatar">
-                <el-icon><Cpu /></el-icon>
-              </el-avatar>
-            </div>
-            <div class="bubble">
-              <div class="typing-indicator">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-            </div>
-            <div class="avatar-placeholder"></div>
+              class="search-input"
+            />
           </div>
         </div>
 
-        <!-- 预设问题 -->
-        <div v-if="messages.length === 0" class="preset-questions">
-          <div class="preset-title">💡 试试这些问题</div>
-          <div class="preset-grid">
-            <div
-              v-for="(q, i) in presetQuestions"
-              :key="i"
-              class="preset-card"
-              @click="applyPreset(q)"
-            >
-              <el-icon class="preset-icon"><ChatLineSquare /></el-icon>
-              <span>{{ q }}</span>
+        <!-- 消息列表 -->
+        <div ref="messagesRef" class="messages-container">
+          <div v-if="filteredMessages.length === 0 && !loading" class="empty-welcome">
+            <div class="welcome-icon">✨</div>
+            <h2>你好，我是你的智能助手</h2>
+            <p>我可以帮你解答问题、制定计划、翻译文本或提供建议。</p>
+            
+            <div class="suggestions-grid">
+              <div
+                v-for="(q, i) in presetQuestions"
+                :key="i"
+                class="suggestion-card"
+                @click="applyPreset(q)"
+              >
+                {{ q }}
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="messages-list">
+            <div v-for="(msg, index) in filteredMessages" :key="index" :class="['message-row', msg.type]">
+              <div class="avatar">
+                <div class="avatar-img" :class="msg.type">
+                  <el-icon v-if="msg.type === 'ai'"><Cpu /></el-icon>
+                  <el-icon v-else><User /></el-icon>
+                </div>
+              </div>
+              <div class="message-bubble">
+                <div class="bubble-content markdown-body" v-html="renderMarkdown(msg.content)"></div>
+                <div class="bubble-footer">
+                  <span class="time">{{ formatTime(msg.time) }}</span>
+                  <div class="actions">
+                    <el-icon class="action-icon" @click="copyText(msg.content)"><CopyDocument /></el-icon>
+                    <el-icon class="action-icon" v-if="msg.type === 'ai'" @click="regenerateResponse(index)"><Refresh /></el-icon>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div v-if="loading" class="message-row ai">
+              <div class="avatar">
+                <div class="avatar-img ai"><el-icon><Cpu /></el-icon></div>
+              </div>
+              <div class="message-bubble loading-bubble">
+                <div class="typing-dots">
+                  <span></span><span></span><span></span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- 输入区域 -->
-        <div class="chat-input-wrapper">
-          <div class="chat-input">
+        <div class="input-area">
+          <div class="input-box">
             <el-input
               v-model="inputMessage"
               type="textarea"
-              :rows="3"
-              :autosize="{ minRows: 1, maxRows: 6 }"
-              placeholder="输入您的问题... (Enter发送，Shift+Enter换行)"
-              :disabled="loading"
-              class="input-textarea"
+              :autosize="{ minRows: 1, maxRows: 5 }"
+              placeholder="输入消息... (Shift+Enter 换行)"
+              class="custom-textarea"
               @keydown.enter.exact.prevent="onEnter"
               @keydown.shift.enter.stop
             />
-            <div class="input-actions">
-              <div class="input-hint">
-                <el-text size="small" type="info"> {{ inputMessage.length }} / 2000 </el-text>
-              </div>
-              <el-button
-                type="primary"
-                :loading="loading"
-                :disabled="!inputMessage.trim()"
-                round
-                @click="sendMessage"
-              >
-                <el-icon v-if="!loading"><Promotion /></el-icon>
-                {{ loading ? '思考中...' : '发送' }}
-              </el-button>
-            </div>
+            <el-button 
+              type="primary" 
+              circle 
+              class="send-btn"
+              :disabled="!inputMessage.trim() || loading"
+              @click="sendMessage"
+            >
+              <el-icon><Promotion /></el-icon>
+            </el-button>
+          </div>
+          <div class="input-footer">
+            <span>AI 生成内容仅供参考</span>
           </div>
         </div>
       </div>
-    </el-card>
+    </div>
   </div>
 </template>
 
@@ -172,17 +128,8 @@
 import { ref, onMounted, nextTick, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
-  ChatDotRound,
-  Search,
-  Download,
-  Delete,
-  ChatLineRound,
-  Cpu,
-  User,
-  DocumentCopy,
-  Refresh,
-  ChatLineSquare,
-  Promotion,
+  Plus, Search, Download, ChatLineSquare, Cpu, User,
+  CopyDocument, Refresh, Promotion
 } from '@element-plus/icons-vue'
 import { sendChatMessage, getChatHistory, streamChatMessage } from '@/api/ai'
 
@@ -190,22 +137,18 @@ const messages = ref<any[]>([])
 const inputMessage = ref('')
 const loading = ref(false)
 const messagesRef = ref<HTMLElement>()
-const showSearch = ref(false)
 const searchQuery = ref('')
 
 const presetQuestions = ref<string[]>([
-  '今天如何更高效地安排待办？',
-  '解释一下番茄工作法的最佳实践',
-  '把这段中文翻译成英文：保持热爱，奔赴山海。',
-  '给我一个3天英语学习计划',
-  '帮我制定一周3次的健身计划',
+  '📅 帮我规划今天的日程',
+  '🍅 解释一下番茄工作法',
+  '📝 帮我写一份周报摘要',
+  '💪 制定一周健身计划',
 ])
 
 // 过滤消息
 const filteredMessages = computed(() => {
-  if (!searchQuery.value.trim()) {
-    return messages.value
-  }
+  if (!searchQuery.value.trim()) return messages.value
   const query = searchQuery.value.toLowerCase()
   return messages.value.filter((msg) => msg.content.toLowerCase().includes(query))
 })
@@ -246,47 +189,22 @@ const loadHistory = async () => {
 }
 
 const typeStream = async (fullText: string, onChunk: (s: string) => void) => {
-  // 将文本切成小段模拟流式渲染
   const chunks = fullText.split(/(\s+|[,.，。!！?？])/).filter(Boolean)
   for (const c of chunks) {
     onChunk(c)
-    await new Promise((r) => setTimeout(r, Math.min(120, 20 + c.length * 8)))
+    await new Promise((r) => setTimeout(r, Math.min(80, 20 + c.length * 5)))
   }
 }
 
 const persist = () => {
   try {
     localStorage.setItem('aiChatMessages', JSON.stringify(messages.value))
-  } catch {
-    // ignore
-  }
-}
-
-const restore = () => {
-  try {
-    const raw = localStorage.getItem('aiChatMessages')
-    if (raw) {
-      const arr = JSON.parse(raw)
-      if (Array.isArray(arr)) {
-        messages.value = arr
-      }
-    }
-  } catch {
-    // ignore
-  }
+  } catch { /* ignore */ }
 }
 
 const sendMessage = async () => {
-  if (!inputMessage.value.trim()) {
-    ElMessage.warning('请输入问题')
-    return
-  }
-
-  if (inputMessage.value.length > 2000) {
-    ElMessage.warning('问题长度不能超过2000字符')
-    return
-  }
-
+  if (!inputMessage.value.trim()) return
+  
   const question = inputMessage.value
   inputMessage.value = ''
   messages.value.push({
@@ -299,7 +217,6 @@ const sendMessage = async () => {
   loading.value = true
 
   try {
-    // 优先流式，失败则回退
     const aiMsg = {
       type: 'ai',
       content: '',
@@ -307,20 +224,28 @@ const sendMessage = async () => {
     } as any
     messages.value.push(aiMsg)
     await scrollToBottom()
+    
     try {
       await streamChatMessage(question, async (chunk) => {
         aiMsg.content += chunk
         await scrollToBottom()
       })
-    } catch {
+    } catch (e) {
+      console.warn('Stream failed, falling back to normal request:', e)
       const response: any = await sendChatMessage(question)
-      await typeStream(String(response.answer || ''), (chunk) => {
+      // 兼容多种返回格式
+      const ans = typeof response === 'string' ? response : (response.answer || response.text || response.content || '')
+      await typeStream(String(ans), (chunk) => {
         aiMsg.content += chunk
       })
     }
     persist()
   } catch (error: any) {
-    ElMessage.error(error.response?.data?.message || '发送失败，请稍后重试')
+    // 如果是取消请求或非关键错误，可以忽略
+    console.error(error)
+    ElMessage.error(error.response?.data?.message || '发送失败')
+    // 移除失败的消息占位
+    messages.value.pop()
   } finally {
     loading.value = false
   }
@@ -338,76 +263,40 @@ const scrollToBottom = async () => {
 
 const formatTime = (time: Date | string) => {
   const date = typeof time === 'string' ? new Date(time) : time
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-
-  // 小于1分钟
-  if (diff < 60000) {
-    return '刚刚'
-  }
-  // 小于1小时
-  if (diff < 3600000) {
-    return `${Math.floor(diff / 60000)}分钟前`
-  }
-  // 今天
-  if (date.toDateString() === now.toDateString()) {
-    return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-  }
-  // 其他
-  return date.toLocaleString('zh-CN', {
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
 }
 
 const applyPreset = (q: string) => {
   inputMessage.value = q
+  // remove emoji if present at start for cleaner input
+  // 使用简单的 Unicode 范围匹配 Emoji，避免复杂的代理对问题
+  if (/^[\u2000-\u3300]/.test(q) || /^[\uD83C-\uD83E]/.test(q)) {
+     // keep it or remove it, user preference. Let's keep it.
+  }
 }
 
 const renderMarkdown = (text: string) => {
   if (!text) return ''
-
-  // 简单的文本渲染，避免复杂的Markdown解析
   let html = text
-    // 转义HTML特殊字符
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
-
-  // 代码块（必须在行内代码之前处理）
-  html = html.replace(/```([\s\S]*?)```/g, (_, code) => {
-    return `<pre><code>${code.trim()}</code></pre>`
-  })
-
-  // 行内代码
+  
+  // Code blocks
+  html = html.replace(/```([\s\S]*?)```/g, (_, code) => `<pre><code>${code.trim()}</code></pre>`)
+  // Inline code
   html = html.replace(/`([^`\n]+?)`/g, '<code>$1</code>')
-
-  // 粗体
+  // Bold
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-
-  // 斜体（避免与粗体冲突）
-  html = html.replace(/(?<!\*)\*([^*\n]+?)\*(?!\*)/g, '<em>$1</em>')
-
-  // 链接
-  html = html.replace(
-    /\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
-  )
-
-  // 换行
+  // Line breaks
   html = html.replace(/\n/g, '<br/>')
-
   return html
 }
 
 const copyText = async (text: string) => {
   try {
-    await navigator.clipboard.writeText(text || '')
-    ElMessage.success('已复制到剪贴板')
+    await navigator.clipboard.writeText(text)
+    ElMessage.success('已复制')
   } catch {
     ElMessage.error('复制失败')
   }
@@ -415,42 +304,39 @@ const copyText = async (text: string) => {
 
 const regenerateResponse = async (index: number) => {
   if (loading.value) return
-
-  // 找到对应的用户问题
   const userMsgIndex = index - 1
-  if (userMsgIndex < 0 || messages.value[userMsgIndex].type !== 'user') {
-    ElMessage.warning('无法重新生成')
-    return
-  }
-
+  if (userMsgIndex < 0 || messages.value[userMsgIndex].type !== 'user') return
+  
   const question = messages.value[userMsgIndex].content
-
-  // 删除旧的AI回复
-  messages.value.splice(index, 1)
-
+  messages.value.splice(index, 1) // remove old
+  
   loading.value = true
   try {
-    const aiMsg = {
-      type: 'ai',
-      content: '',
-      time: new Date(),
-    } as any
+    const aiMsg = { type: 'ai', content: '', time: new Date() } as any
     messages.value.splice(index, 0, aiMsg)
     await scrollToBottom()
+    
+    // Logic same as sendMessage
     try {
       await streamChatMessage(question, async (chunk) => {
         aiMsg.content += chunk
         await scrollToBottom()
       })
-    } catch {
+    } catch (e) {
+      console.warn('Stream regeneration failed:', e)
       const response: any = await sendChatMessage(question)
-      await typeStream(String(response.answer || ''), (chunk) => {
+      const ans = typeof response === 'string' ? response : (response.answer || response.text || response.content || '')
+      await typeStream(String(ans), (chunk) => {
         aiMsg.content += chunk
       })
     }
     persist()
-  } catch (error: any) {
-    ElMessage.error(error.response?.data?.message || '重新生成失败')
+  } catch {
+    ElMessage.error('重新生成失败')
+    // 恢复原来的空消息或删除
+    if (!messages.value[index].content) {
+       messages.value.splice(index, 1)
+    }
   } finally {
     loading.value = false
   }
@@ -458,489 +344,341 @@ const regenerateResponse = async (index: number) => {
 
 const clearChat = async () => {
   try {
-    await ElMessageBox.confirm('确定要清空所有对话记录吗？此操作不可恢复。', '清空对话', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning',
-    })
+    await ElMessageBox.confirm('确定清空对话吗？', '提示', { type: 'warning' })
     messages.value = []
     persist()
-    ElMessage.success('对话已清空')
-  } catch {
-    // 用户取消
-  }
+  } catch { }
 }
 
 const exportChat = () => {
-  if (messages.value.length === 0) {
-    ElMessage.warning('暂无对话记录')
-    return
-  }
-
-  let content = '# AI对话记录\n\n'
-  content += `导出时间: ${new Date().toLocaleString('zh-CN')}\n\n`
-  content += '---\n\n'
-
-  messages.value.forEach((msg) => {
-    const role = msg.type === 'user' ? '👤 用户' : '🤖 AI助手'
-    const time = formatTime(msg.time)
-    content += `## ${role} (${time})\n\n${msg.content}\n\n`
+  if (!messages.value.length) return
+  let content = '# 对话记录\n\n'
+  messages.value.forEach(m => {
+    content += `### ${m.type === 'user' ? 'User' : 'AI'}\n${m.content}\n\n`
   })
-
-  const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
+  const blob = new Blob([content], { type: 'text/markdown' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `AI对话记录_${new Date().getTime()}.md`
+  a.download = `chat_${Date.now()}.md`
   a.click()
-  URL.revokeObjectURL(url)
-
-  ElMessage.success('对话已导出')
 }
-
-const handleSearch = () => {
-  // 搜索时自动滚动到第一个匹配项
-  nextTick(() => {
-    if (filteredMessages.value.length > 0) {
-      messagesRef.value?.scrollTo({ top: 0, behavior: 'smooth' })
-    }
-  })
-}
-
-// 持久化加载
-restore()
 </script>
 
 <style scoped>
 .ai-chat-page {
-  padding: 20px;
-  min-height: calc(100vh - 60px);
-  height: calc(100vh - 60px);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  height: calc(100vh - 20px);
+  padding: 10px;
   box-sizing: border-box;
+  background: var(--app-bg);
 }
 
-.chat-card {
-  flex: 1;
+.chat-layout {
+  display: flex;
+  height: 100%;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
+}
+
+/* Sidebar */
+.chat-sidebar {
+  width: 260px;
+  background: #f8fafc;
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
-.chat-card :deep(.el-card__body) {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  padding: 0;
+.sidebar-header {
+  padding: 20px;
 }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-icon {
-  font-size: 24px;
-  color: #409eff;
-}
-
-.card-header h3 {
-  margin: 0;
-  font-size: 18px;
+.new-chat-btn {
+  width: 100%;
+  justify-content: flex-start;
   font-weight: 600;
 }
 
-.header-actions {
+.history-list {
+  flex: 1;
+  padding: 0 12px;
+  overflow-y: auto;
+}
+
+.history-label {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-bottom: 8px;
+  padding-left: 8px;
+}
+
+.history-item {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s;
 }
 
-.header-actions .el-button {
-  font-size: 18px;
+.history-item:hover {
+  background: #e2e8f0;
 }
 
-.chat-container {
+.history-item.active {
+  background: #eff6ff;
+  color: var(--primary);
+}
+
+.sidebar-footer {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* Main Chat */
+.chat-main {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  overflow: hidden;
+  position: relative;
 }
 
-.search-bar {
-  padding: 16px;
-  background: #f5f7fa;
-  border-bottom: 1px solid #e4e7ed;
+.chat-header {
+  height: 60px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
 }
 
-.chat-messages {
+.model-name {
+  font-weight: 700;
+  margin-right: 8px;
+  color: var(--app-text);
+}
+
+.search-input {
+  width: 200px;
+}
+
+/* Messages */
+.messages-container {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
-  background: linear-gradient(to bottom, #f5f7fa 0%, #ffffff 100%);
-  scroll-behavior: smooth;
+  padding: 24px;
+  background: white;
 }
 
-.chat-messages::-webkit-scrollbar {
-  width: 6px;
-}
-
-.chat-messages::-webkit-scrollbar-thumb {
-  background: #dcdfe6;
-  border-radius: 3px;
-}
-
-.chat-messages::-webkit-scrollbar-thumb:hover {
-  background: #c0c4cc;
-}
-
-.empty-state {
+.empty-welcome {
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  color: #909399;
+  text-align: center;
+  color: var(--text-secondary);
 }
 
-.empty-icon {
-  font-size: 64px;
+.welcome-icon {
+  font-size: 48px;
   margin-bottom: 16px;
-  opacity: 0.5;
 }
 
-.message {
-  margin-bottom: 24px;
-  display: flex;
+.suggestions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
-  align-items: flex-start;
-  animation: fadeIn 0.3s ease-in;
+  margin-top: 32px;
+  max-width: 600px;
+  width: 100%;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.suggestion-card {
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  font-size: 14px;
 }
 
-.message.user {
+.suggestion-card:hover {
+  border-color: var(--primary);
+  background: #eff6ff;
+}
+
+/* Message Rows */
+.message-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.message-row.user {
   flex-direction: row-reverse;
 }
 
-.message.ai {
-  flex-direction: row;
-}
-
-.avatar {
-  flex-shrink: 0;
-  width: 40px;
+.avatar-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  padding-top: 4px;
+  font-size: 20px;
 }
 
-.avatar-placeholder {
-  flex-shrink: 0;
-  width: 40px;
+.avatar-img.ai {
+  background: #f1f5f9;
+  color: var(--primary);
 }
 
-.ai-avatar {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+.avatar-img.user {
+  background: var(--primary-light);
+  color: var(--primary);
 }
 
-.user-avatar {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white;
-}
-
-.message .bubble {
-  flex: 1;
-  max-width: calc(100% - 100px);
-  min-width: 0;
-}
-
-.message-content {
+.message-bubble {
+  max-width: 70%;
   padding: 12px 16px;
   border-radius: 12px;
-  word-wrap: break-word;
-  word-break: break-word;
+  position: relative;
+  font-size: 15px;
   line-height: 1.6;
-  font-size: 14px;
-  overflow-wrap: break-word;
 }
 
-.message.user .message-content {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
-  border-radius: 12px 12px 4px 12px;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+.message-row.ai .message-bubble {
+  background: #f8fafc;
+  border-top-left-radius: 2px;
+  color: #334155;
 }
 
-.message.user .message-content :deep(code) {
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
+.message-row.user .message-bubble {
+  background: var(--primary);
+  color: white;
+  border-top-right-radius: 2px;
 }
 
-.message.user .message-content :deep(pre) {
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.message.user .message-content :deep(pre code) {
-  background: transparent;
-  color: #fff;
-}
-
-.message.user .message-content :deep(a) {
-  color: #fff;
-  text-decoration: underline;
-}
-
-.message.ai .message-content {
-  background: #fff;
-  color: #333;
-  border: 1px solid #e4e7ed;
-  border-radius: 12px 12px 12px 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.message-content :deep(pre) {
-  background: #f5f7fa;
+.bubble-content :deep(pre) {
+  background: #1e293b;
+  color: #e2e8f0;
   padding: 12px;
-  border-radius: 6px;
+  border-radius: 8px;
   overflow-x: auto;
-  overflow-y: hidden;
   margin: 8px 0;
-  max-width: 100%;
 }
 
-.message-content :deep(code) {
-  background: #f5f7fa;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-size: 13px;
-  word-break: break-all;
+.bubble-content :deep(code) {
+  font-family: monospace;
 }
 
-.message-content :deep(pre code) {
-  background: transparent;
-  padding: 0;
-  white-space: pre;
-  word-break: normal;
-  overflow-wrap: normal;
-}
+.message-row.user .bubble-content :deep(a) { color: white; text-decoration: underline; }
 
-.message-content :deep(a) {
-  color: #409eff;
-  text-decoration: none;
-  word-break: break-all;
-}
-
-.message-content :deep(a:hover) {
-  text-decoration: underline;
-}
-
-.message-content :deep(strong) {
-  font-weight: 600;
-}
-
-.message-content :deep(em) {
-  font-style: italic;
-}
-
-.message-meta {
-  margin-top: 8px;
-  font-size: 12px;
-  color: #909399;
+.bubble-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-top: 6px;
+  font-size: 11px;
+  opacity: 0.7;
 }
 
-.message-actions {
+.actions {
   display: flex;
-  gap: 4px;
+  gap: 8px;
   opacity: 0;
   transition: opacity 0.2s;
 }
 
-.message:hover .message-actions {
+.message-bubble:hover .actions {
   opacity: 1;
 }
 
-.message-time {
-  color: #909399;
+.action-icon {
+  cursor: pointer;
 }
 
-/* 打字机效果 */
-.typing-indicator {
-  display: flex;
-  gap: 4px;
-  padding: 12px 16px;
-  background: #fff;
-  border: 1px solid #e4e7ed;
-  border-radius: 12px 12px 12px 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+/* Loading Dots */
+.loading-bubble {
+  padding: 12px 20px;
 }
 
-.typing-indicator span {
-  width: 8px;
-  height: 8px;
-  background: #909399;
+.typing-dots span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #94a3b8;
   border-radius: 50%;
-  animation: typing 1.4s infinite;
+  margin: 0 2px;
+  animation: typing 1.4s infinite both;
 }
 
-.typing-indicator span:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.typing-indicator span:nth-child(3) {
-  animation-delay: 0.4s;
-}
+.typing-dots span:nth-child(1) { animation-delay: 0s; }
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
 
 @keyframes typing {
-  0%,
-  60%,
-  100% {
-    transform: translateY(0);
-    opacity: 0.5;
-  }
-  30% {
-    transform: translateY(-10px);
-    opacity: 1;
-  }
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
 }
 
-.preset-questions {
+/* Input Area */
+.input-area {
   padding: 20px;
+  background: white;
+  border-top: 1px solid #f1f5f9;
+}
+
+.input-box {
+  position: relative;
   background: #fff;
-  border-top: 1px solid #e4e7ed;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+  transition: border-color 0.2s;
 }
 
-.preset-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #606266;
-  margin-bottom: 12px;
+.input-box:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.1);
 }
 
-.preset-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
-}
-
-.preset-card {
-  padding: 12px 16px;
-  background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
-  border: 1px solid #e4e7ed;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: #606266;
-}
-
-.preset-card:hover {
-  border-color: #409eff;
-  background: linear-gradient(135deg, #ecf5ff 0%, #ffffff 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.2);
-}
-
-.preset-icon {
-  font-size: 16px;
-  color: #409eff;
-}
-
-.chat-input-wrapper {
-  padding: 16px;
-  background: #fff;
-  border-top: 1px solid #e4e7ed;
-}
-
-.chat-input {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.input-textarea :deep(.el-textarea__inner) {
-  border-radius: 8px;
+.custom-textarea :deep(.el-textarea__inner) {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  padding: 10px 50px 10px 12px;
   resize: none;
-  font-size: 14px;
-  line-height: 1.6;
 }
 
-.input-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.send-btn {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
 }
 
-.input-hint {
-  color: #909399;
+.input-footer {
+  text-align: center;
+  margin-top: 8px;
+  font-size: 11px;
+  color: #94a3b8;
 }
 
-/* 响应式设计 */
 @media (max-width: 768px) {
-  .ai-chat-page {
-    padding: 10px;
-    height: calc(100vh - 20px);
+  .chat-sidebar {
+    display: none;
   }
-
-  .chat-messages {
-    padding: 12px;
-  }
-
-  .message {
-    gap: 8px;
-  }
-
-  .avatar,
-  .avatar-placeholder {
-    width: 32px;
-  }
-
-  .message .bubble {
-    max-width: calc(100% - 80px);
-  }
-
-  .preset-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .header-left h3 {
-    font-size: 16px;
-  }
-
-  .header-actions .el-button {
-    font-size: 16px;
-  }
-
-  .message-content {
-    font-size: 13px;
-    padding: 10px 12px;
+  .message-bubble {
+    max-width: 85%;
   }
 }
 </style>

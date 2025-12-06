@@ -1,165 +1,158 @@
 <template>
   <div class="calendar-page">
-    <!-- 打卡功能卡片 -->
-    <el-card style="margin-bottom: 20px">
-      <template #header>
-        <div class="card-header">
-          <h3>每日打卡</h3>
-        </div>
-      </template>
-      <div class="checkin-content">
-        <el-button
-          type="primary"
-          size="large"
+    <div class="header-section">
+      <div class="page-title">
+        <h2>日历与打卡</h2>
+        <p class="subtitle">记录每一天的努力与坚持</p>
+      </div>
+      <div class="actions">
+        <el-button 
+          type="primary" 
+          size="large" 
           :disabled="hasCheckedIn"
-          style="margin-right: 20px"
+          class="checkin-btn"
           @click="handleCheckIn"
         >
+          <el-icon class="el-icon--left" v-if="hasCheckedIn"><Check /></el-icon>
+          <el-icon class="el-icon--left" v-else><CalendarIcon /></el-icon>
           {{ hasCheckedIn ? '今日已打卡' : '立即打卡' }}
         </el-button>
-        <el-row :gutter="20">
-          <el-col :xs="8" :sm="6" :md="4">
-            <el-statistic title="连续打卡" :value="consecutiveDays" />
-          </el-col>
-          <el-col :xs="8" :sm="6" :md="4">
-            <el-statistic title="总打卡天数" :value="totalDays" />
-          </el-col>
-          <el-col :xs="8" :sm="6" :md="4">
-            <el-statistic title="年度热力图">
-              <template #formatter>
-                <span>{{ yearHeatmapAvailable ? '已生成' : '加载中' }}</span>
-              </template>
-            </el-statistic>
-          </el-col>
-        </el-row>
       </div>
-    </el-card>
+    </div>
 
-    <!-- 年度热力图卡片 -->
-    <el-card style="margin-bottom: 20px">
-      <template #header>
-        <div class="card-header">
-          <h3>年度打卡热力图</h3>
-          <span style="font-size: 12px; color: #909399">
-            颜色深浅代表该天的热力值：基础分1 + 番茄×2 + 单词×1 + 任务×3
-          </span>
-        </div>
-      </template>
-      <BaseChart :option="calendarOption" height="240px" />
-    </el-card>
-
-    <!-- 日历卡片 -->
-    <el-card>
-      <template #header>
-        <div class="toolbar">
-          <div class="left">
-            <el-button-group>
-              <el-button size="small" @click="goPrevMonth">上个月</el-button>
-              <el-button size="small" @click="goToday">今天</el-button>
-              <el-button size="small" @click="goNextMonth">下个月</el-button>
-            </el-button-group>
+    <!-- Bento Grid Layout -->
+    <div class="bento-grid">
+      <!-- 统计卡片区 -->
+      <div class="bento-item stats-card" style="grid-area: stats">
+        <div class="stat-group">
+          <div class="stat-box">
+            <div class="value">{{ consecutiveDays }}<span class="unit">天</span></div>
+            <div class="label">连续打卡</div>
           </div>
-          <div class="center">
-            <span class="month-title">{{ currentYear }} 年 {{ currentMonth + 1 }} 月</span>
+          <el-divider direction="vertical" />
+          <div class="stat-box">
+            <div class="value">{{ totalDays }}<span class="unit">天</span></div>
+            <div class="label">累计坚持</div>
           </div>
-          <div class="right">
-            <el-select v-model="firstDayOfWeek" size="small" style="width: 140px">
-              <el-option :value="1" label="周一开始" />
-              <el-option :value="0" label="周日开始" />
-            </el-select>
-          </div>
-        </div>
-      </template>
-      <div class="week-headers">
-        <div v-for="w in weekLabels" :key="w" class="week-cell">{{ w }}</div>
-      </div>
-      <div class="day-grid">
-        <div
-          v-for="(cell, idx) in dayCells"
-          :key="idx"
-          class="day-cell"
-          :class="{ 'is-other': !cell.inMonth, 'is-today': cell.key === todayKey }"
-          @click="cell.inMonth && openDay(cell.key)"
-        >
-          <div class="date-num">{{ cell.date.getDate() }}</div>
-          <div class="badges">
-            <span v-if="stats[cell.key]?.checkin" class="badge checkin">打卡</span>
-            <span v-if="stats[cell.key]?.pomodoro" class="badge pomodoro">{{
-              stats[cell.key].pomodoro
-            }}</span>
-            <span v-if="stats[cell.key]?.word" class="badge word">{{ stats[cell.key].word }}</span>
-            <span v-if="stats[cell.key]?.task" class="badge task">{{ stats[cell.key].task }}</span>
+          <el-divider direction="vertical" />
+          <div class="stat-box">
+             <div class="value year-status">
+               <span v-if="yearHeatmapAvailable" class="active">●</span>
+               <span v-else class="loading">○</span>
+             </div>
+             <div class="label">热力图就绪</div>
           </div>
         </div>
       </div>
-    </el-card>
 
-    <el-drawer v-model="drawerOpen" :title="drawerTitle" size="40%">
+      <!-- 热力图区 -->
+      <div class="bento-item heatmap-card" style="grid-area: heatmap">
+        <div class="card-title">
+          <span>年度活动热力</span>
+          <el-tooltip content="颜色深浅代表综合活跃度：打卡+番茄+单词+任务" placement="top">
+            <el-icon class="info-icon"><InfoFilled /></el-icon>
+          </el-tooltip>
+        </div>
+        <div class="chart-wrapper">
+          <BaseChart :option="calendarOption" height="180px" />
+        </div>
+      </div>
+
+      <!-- 月历区 -->
+      <div class="bento-item calendar-main" style="grid-area: main">
+        <div class="calendar-toolbar">
+          <div class="month-selector">
+            <el-button circle size="small" @click="goPrevMonth"><el-icon><ArrowLeft /></el-icon></el-button>
+            <span class="current-month">{{ currentYear }}年 {{ currentMonth + 1 }}月</span>
+            <el-button circle size="small" @click="goNextMonth"><el-icon><ArrowRight /></el-icon></el-button>
+            <el-button size="small" text bg @click="goToday">今天</el-button>
+          </div>
+          <div class="settings">
+            <el-radio-group v-model="firstDayOfWeek" size="small">
+              <el-radio-button :label="1">周一</el-radio-button>
+              <el-radio-button :label="0">周日</el-radio-button>
+            </el-radio-group>
+          </div>
+        </div>
+        
+        <div class="calendar-body">
+          <div class="week-header">
+            <div v-for="w in weekLabels" :key="w" class="week-day">{{ w }}</div>
+          </div>
+          <div class="day-grid">
+            <div
+              v-for="(cell, idx) in dayCells"
+              :key="idx"
+              class="day-cell"
+              :class="{ 
+                'is-other': !cell.inMonth, 
+                'is-today': cell.key === todayKey,
+                'has-events': hasEvents(cell.key)
+              }"
+              @click="cell.inMonth && openDay(cell.key)"
+            >
+              <div class="date-num">{{ cell.date.getDate() }}</div>
+              <div class="dots-indicator">
+                <span v-if="stats[cell.key]?.checkin" class="dot checkin"></span>
+                <span v-if="stats[cell.key]?.pomodoro" class="dot pomodoro"></span>
+                <span v-if="stats[cell.key]?.word" class="dot word"></span>
+                <span v-if="stats[cell.key]?.task" class="dot task"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <el-drawer v-model="drawerOpen" :title="drawerTitle" size="400px" destroy-on-close class="day-detail-drawer">
       <div v-if="loadingDay" class="drawer-loading">
         <el-skeleton :rows="6" animated />
       </div>
-      <div v-else>
+      <div v-else class="drawer-content">
         <template v-if="dayDetails">
-          <el-descriptions title="概览" :column="2" size="small" border style="margin-bottom: 12px">
-            <el-descriptions-item label="打卡">{{
-              (dayDetails.checkins || []).length
-            }}</el-descriptions-item>
-            <el-descriptions-item label="番茄">{{
-              (dayDetails.pomodoros || []).length
-            }}</el-descriptions-item>
-            <el-descriptions-item label="单词">{{
-              (dayDetails.words || []).length
-            }}</el-descriptions-item>
-            <el-descriptions-item label="任务">{{
-              (dayDetails.tasks || []).length
-            }}</el-descriptions-item>
-          </el-descriptions>
+          <div class="summary-cards">
+            <div class="summary-item">
+              <div class="s-val">{{ (dayDetails.checkins || []).length }}</div>
+              <div class="s-label">打卡</div>
+            </div>
+            <div class="summary-item">
+              <div class="s-val">{{ (dayDetails.pomodoros || []).length }}</div>
+              <div class="s-label">番茄</div>
+            </div>
+            <div class="summary-item">
+              <div class="s-val">{{ (dayDetails.words || []).length }}</div>
+              <div class="s-label">单词</div>
+            </div>
+             <div class="summary-item">
+              <div class="s-val">{{ (dayDetails.tasks || []).length }}</div>
+              <div class="s-label">任务</div>
+            </div>
+          </div>
 
-          <el-collapse>
-            <el-collapse-item name="checkin" title="打卡">
-              <el-empty v-if="!(dayDetails.checkins || []).length" description="无打卡" />
-              <ul v-else class="list">
-                <li v-for="c in dayDetails.checkins" :key="c.id">✅ 已打卡</li>
-              </ul>
-            </el-collapse-item>
-            <el-collapse-item name="pomodoro" title="番茄钟">
-              <el-empty v-if="!(dayDetails.pomodoros || []).length" description="无番茄钟" />
-              <ul v-else class="list">
-                <li v-for="p in dayDetails.pomodoros" :key="p.id">
-                  <el-tag size="small" type="warning" style="margin-right: 6px">{{
-                    p.type || 'work'
-                  }}</el-tag>
-                  {{ formatTime(p.startTime) }} - {{ formatTime(p.endTime) }}（{{ p.duration || 0 }}
-                  分钟）
-                </li>
-              </ul>
-            </el-collapse-item>
-            <el-collapse-item name="words" title="单词">
-              <el-empty v-if="!(dayDetails.words || []).length" description="无单词活动" />
-              <ul v-else class="list">
-                <li v-for="w in dayDetails.words" :key="w.id">
-                  <strong>{{ w.word }}</strong>
-                  <el-tag v-if="w.status" size="small" style="margin-left: 6px">{{
-                    w.status
-                  }}</el-tag>
-                </li>
-              </ul>
-            </el-collapse-item>
-            <el-collapse-item name="tasks" title="任务">
-              <el-empty v-if="!(dayDetails.tasks || []).length" description="无任务" />
-              <ul v-else class="list">
-                <li v-for="t in dayDetails.tasks" :key="t.id">
-                  <el-tag size="small" :type="taskStatusType(t.status)" style="margin-right: 6px">{{
-                    t.status
-                  }}</el-tag>
-                  <strong>{{ t.title }}</strong>
-                  <el-tag size="small" :type="priorityType(t.priority)" style="margin-left: 6px">{{
-                    t.priority
-                  }}</el-tag>
-                </li>
-              </ul>
-            </el-collapse-item>
-          </el-collapse>
+          <div class="timeline-section">
+            <h4 class="section-title">今日时间轴</h4>
+            <el-timeline>
+              <el-timeline-item
+                v-for="(item, idx) in sortedTimelineEvents"
+                :key="idx"
+                :type="item.type"
+                :color="item.color"
+                :timestamp="item.time"
+                placement="top"
+              >
+                <el-card class="timeline-card" shadow="hover">
+                  <div class="t-header">
+                    <span class="t-title">{{ item.title }}</span>
+                    <el-tag size="small" :type="item.tagType" v-if="item.tag">{{ item.tag }}</el-tag>
+                  </div>
+                  <div class="t-desc" v-if="item.desc">{{ item.desc }}</div>
+                </el-card>
+              </el-timeline-item>
+              <el-timeline-item v-if="sortedTimelineEvents.length === 0" timestamp="" color="#e4e7ed">
+                <span style="color: #909399">暂无活动记录</span>
+              </el-timeline-item>
+            </el-timeline>
+          </div>
         </template>
       </div>
     </el-drawer>
@@ -168,10 +161,14 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElNotification } from 'element-plus'
+import { ArrowLeft, ArrowRight, InfoFilled, Calendar, Check } from '@element-plus/icons-vue'
 import { getCalendarData, getCalendarDay } from '@/api/calendar'
 import { checkIn, getCheckInStats } from '@/api/checkin'
 import BaseChart from '@/components/charts/BaseChart.vue'
+
+// Avoid conflict with local component registration
+const CalendarIcon = Calendar
 
 type StatsMap = Record<
   string,
@@ -236,6 +233,12 @@ const dayCells = computed(() => {
   return cells
 })
 
+const hasEvents = (key: string) => {
+  const s = stats.value[key]
+  if (!s) return false
+  return (s.checkin || 0) + (s.pomodoro || 0) + (s.word || 0) + (s.task || 0) > 0
+}
+
 const goPrevMonth = () => {
   const d = new Date(current.value)
   d.setMonth(d.getMonth() - 1)
@@ -254,12 +257,22 @@ const goToday = () => {
 const handleCheckIn = async () => {
   try {
     await checkIn()
-    ElMessage.success('打卡成功')
+    ElNotification({
+      title: '打卡成功！',
+      message: '坚持就是胜利，今天也向前迈进了一步。',
+      type: 'success',
+    })
     hasCheckedIn.value = true
-    await loadCheckInStats()
-    await loadRange() // 刷新日历数据
-  } catch (error) {
-    ElMessage.error('打卡失败')
+    // 尝试刷新数据，即使失败也不影响打卡成功的状态
+    try {
+      await loadCheckInStats()
+      await loadRange() 
+    } catch (e) {
+      console.warn('刷新日历数据失败', e)
+    }
+  } catch (error: any) {
+    console.error('打卡请求失败', error)
+    ElMessage.error(error.response?.data?.message || '打卡失败，请稍后重试')
   }
 }
 
@@ -281,7 +294,6 @@ const loadCheckinHeatmap = async () => {
     const { getCheckInHistoryWithHeatValue } = await import('@/api/checkin')
     const { getCalendarData } = await import('@/api/calendar')
 
-    // 并行请求：历史热力值 + 当年活动聚合（用于兜底计算）
     const year = new Date().getFullYear()
     const start = `${year}-01-01`
     const end = `${year}-12-31`
@@ -292,8 +304,7 @@ const loadCheckinHeatmap = async () => {
     const historyData = historyResp?.data || historyResp || []
     const agg = calendarAgg || {}
 
-    // 找出最大热力值用于色阶映射（带兜底：若后端为0，则用聚合数据按新公式重算）
-    let maxHeat = 10 // 最小色阶范围
+    let maxHeat = 10 
     const data = (Array.isArray(historyData) ? historyData : []).map((c: any) => {
       const key = c.checkInDate
       const raw = Number(c.heatValue) || 0
@@ -317,31 +328,33 @@ const loadCheckinHeatmap = async () => {
         },
       },
       visualMap: {
-        show: true,
+        show: false, // 隐藏图例以节省空间，颜色已足够说明
         min: 0,
         max: maxHeat,
         inRange: {
-          // 使用渐进色系：白 -> 浅蓝 -> 中蓝 -> 深蓝 -> 靛蓝
-          color: ['#f0f5ff', '#d4e9ff', '#85c4ff', '#409eff', '#0052cc'],
-        },
-        textStyle: {
-          color: '#666',
+          color: ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'], // GitHub Green Style
         },
       },
       calendar: {
+        top: 25,
+        left: 30,
+        right: 30,
         range: `${year}`,
-        cellSize: ['auto', 18],
+        cellSize: ['auto', 14],
         splitLine: { show: false },
-        itemStyle: { borderWidth: 0.5, borderColor: '#f0f0f0' },
+        itemStyle: { borderWidth: 3, borderColor: '#fff' }, // 白色边框模拟间距
         yearLabel: { show: false },
-        monthLabel: { nameMap: 'cn' },
-        dayLabel: { nameMap: 'cn' },
+        monthLabel: { nameMap: 'cn', fontSize: 10, color: '#9ca3af' },
+        dayLabel: { nameMap: 'cn', fontSize: 10, color: '#9ca3af' },
       },
       series: [
         {
           type: 'heatmap',
           coordinateSystem: 'calendar',
           data,
+          itemStyle: {
+            borderRadius: 2
+          }
         },
       ],
     }
@@ -380,8 +393,73 @@ const drawerTitle = ref('')
 const loadingDay = ref(false)
 const dayDetails = ref<any>(null)
 
+// 转换详情数据为时间轴格式
+const sortedTimelineEvents = computed(() => {
+  if (!dayDetails.value) return []
+  const d = dayDetails.value
+  const events: any[] = []
+
+  // Checkins
+  ;(d.checkins || []).forEach((c: any) => {
+    events.push({
+      time: c.checkInTime ? formatTime(c.checkInTime) : '',
+      timestamp: new Date(c.checkInTime || 0).getTime(),
+      title: '每日打卡',
+      type: 'success',
+      color: '#10b981',
+      tag: 'Check-in',
+      tagType: 'success'
+    })
+  })
+
+  // Pomodoros
+  ;(d.pomodoros || []).forEach((p: any) => {
+    events.push({
+      time: p.startTime ? formatTime(p.startTime) : '',
+      timestamp: new Date(p.startTime || 0).getTime(),
+      title: p.type === 'work' ? '专注时间' : '休息时间',
+      desc: `时长：${p.duration}分钟`,
+      type: p.type === 'work' ? 'primary' : 'warning',
+      color: p.type === 'work' ? '#3b82f6' : '#f59e0b',
+      tag: p.type === 'work' ? 'Focus' : 'Break',
+      tagType: p.type === 'work' ? '' : 'warning'
+    })
+  })
+
+  // Words - 汇总显示还是单条？太多单词会刷屏，这里汇总显示
+  if ((d.words || []).length > 0) {
+    // 找最早的时间
+    const firstWord = d.words[0]
+    events.push({
+      time: firstWord.createTime ? formatTime(firstWord.createTime) : '',
+      timestamp: new Date(firstWord.createTime || 0).getTime(),
+      title: `学习了 ${d.words.length} 个单词`,
+      desc: d.words.map((w: any) => w.word).slice(0, 5).join(', ') + (d.words.length > 5 ? '...' : ''),
+      type: 'info',
+      color: '#06b6d4',
+      tag: 'Vocabulary',
+      tagType: 'info'
+    })
+  }
+
+  // Tasks - 完成的任务
+  ;(d.tasks || []).filter((t:any) => t.status === 'done').forEach((t: any) => {
+    events.push({
+      time: '', // 任务往往没有精确完成时间，放最后
+      timestamp: 9999999999999,
+      title: `完成任务：${t.title}`,
+      type: 'success',
+      color: '#8b5cf6',
+      tag: 'Task',
+      tagType: ''
+    })
+  })
+
+  return events.sort((a, b) => a.timestamp - b.timestamp)
+})
+
 async function openDay(key: string) {
-  drawerTitle.value = key
+  drawerTitle.value = `${key} 活动详情`
   drawerOpen.value = true
   loadingDay.value = true
   try {
@@ -393,20 +471,6 @@ async function openDay(key: string) {
   }
 }
 
-function taskStatusType(status?: string) {
-  const s = (status || '').toLowerCase()
-  if (s === 'done') return 'success'
-  if (s === 'blocked') return 'danger'
-  if (s === 'in_progress') return 'warning'
-  return 'info'
-}
-function priorityType(p?: string) {
-  const x = (p || '').toLowerCase()
-  if (x === 'urgent') return 'danger'
-  if (x === 'high') return 'warning'
-  if (x === 'med') return 'primary'
-  return 'info'
-}
 function getKey(d: Date) {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
@@ -425,143 +489,283 @@ function formatTime(s?: string | null) {
 
 <style scoped>
 .calendar-page {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header */
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.page-title h2 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--app-text);
+  margin: 0 0 8px 0;
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 14px;
+}
+
+.checkin-btn {
+  font-weight: 600;
+  box-shadow: var(--shadow-colored);
+}
+
+/* Bento Grid */
+.bento-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "stats main"
+    "heatmap main";
+  gap: 24px;
+}
+
+.bento-item {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+/* Stats Card */
+.stats-card {
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-group {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.stat-box {
+  text-align: center;
+  flex: 1;
+}
+
+.stat-box .value {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--app-text);
+  line-height: 1.2;
+}
+
+.stat-box .unit {
+  font-size: 12px;
+  font-weight: normal;
+  color: var(--text-light);
+  margin-left: 2px;
+}
+
+.stat-box .label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.year-status .active { color: var(--success); }
+.year-status .loading { color: var(--text-light); animation: blink 1s infinite; }
+
+@keyframes blink { 50% { opacity: 0.5; } }
+
+/* Heatmap Card */
+.heatmap-card {
   padding: 20px;
 }
 
-/* 打卡卡片样式 */
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.card-header h3 {
-  margin: 0;
+.card-title {
   font-size: 16px;
   font-weight: 600;
-  color: #303133;
-}
-
-.checkin-content {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-/* 日历样式 */
-.toolbar {
+  color: var(--app-text);
+  margin-bottom: 12px;
   display: flex;
   align-items: center;
+  gap: 6px;
+}
+
+.info-icon {
+  color: var(--text-light);
+  cursor: help;
+  font-size: 14px;
+}
+
+/* Calendar Main */
+.calendar-main {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-toolbar {
+  display: flex;
   justify-content: space-between;
-  padding: 10px 0;
+  align-items: center;
+  margin-bottom: 24px;
 }
 
-.month-title {
-  font-weight: 600;
+.month-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.current-month {
   font-size: 18px;
-  color: #303133;
+  font-weight: 700;
+  color: var(--app-text);
+  min-width: 120px;
+  text-align: center;
 }
 
-.week-headers {
+.week-header {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   text-align: center;
-  font-weight: 600;
-  color: #606266;
-  padding: 12px 0;
-  background: #f5f7fa;
-  border-radius: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
-.week-cell {
-  padding: 8px 0;
-  font-size: 14px;
+.week-day {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+  text-transform: uppercase;
 }
 
 .day-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 10px;
-  margin-top: 10px;
+  gap: 8px;
+  flex: 1;
 }
 
 .day-cell {
-  border: 1px solid #e4e7ed;
-  border-radius: 8px;
-  min-height: 100px;
-  padding: 10px;
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  padding: 8px;
   cursor: pointer;
-  background: #fff;
   transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .day-cell:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
+  background-color: var(--app-bg);
+  border-color: var(--border);
 }
 
 .day-cell.is-other {
-  opacity: 0.4;
-  background: #fafafa;
+  opacity: 0.3;
 }
 
 .day-cell.is-today {
-  border-color: #409eff;
-  border-width: 2px;
-  background: #ecf5ff;
+  background-color: var(--primary-light);
+  color: var(--primary);
+  font-weight: 700;
 }
 
 .date-num {
   font-size: 14px;
-  font-weight: 600;
-  color: #303133;
-  margin-bottom: 8px;
 }
 
-.day-cell.is-other .date-num {
-  color: #909399;
-}
-
-.day-cell.is-today .date-num {
-  color: #409eff;
-}
-
-.badges {
+.dots-indicator {
   display: flex;
-  flex-wrap: wrap;
   gap: 4px;
-  margin-top: 8px;
+  justify-content: center;
 }
 
-.badge {
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.dot.checkin { background-color: var(--success); }
+.dot.pomodoro { background-color: var(--warning); }
+.dot.word { background-color: var(--info); }
+.dot.task { background-color: #8b5cf6; }
+
+/* Drawer Styles */
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.summary-item {
+  background: var(--app-bg);
+  padding: 12px 4px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.s-val {
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--app-text);
+}
+
+.s-label {
   font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 12px;
-  line-height: 1.2;
-  color: #fff;
-  font-weight: 500;
+  color: var(--text-light);
 }
 
-.badge.checkin {
-  background: #67c23a;
-}
-.badge.pomodoro {
-  background: #e6a23c;
-}
-.badge.word {
-  background: #409eff;
-}
-.badge.task {
-  background: #909399;
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  padding-left: 8px;
+  border-left: 3px solid var(--primary);
 }
 
-.list {
-  margin: 0;
-  padding-left: 16px;
+.timeline-card {
+  border: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border-radius: 8px;
 }
 
-.drawer-loading {
-  padding: 12px;
+.t-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.t-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.t-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 992px) {
+  .bento-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "stats"
+      "main"
+      "heatmap";
+  }
 }
 </style>

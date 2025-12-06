@@ -29,6 +29,7 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
+    base: env.VITE_BASE_URL || '/',
     plugins: [
       vue(),
       bundleBudget(),

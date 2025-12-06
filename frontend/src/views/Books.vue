@@ -1,208 +1,177 @@
 <template>
   <div class="books-page">
-    <!-- 工具栏 -->
-    <el-card class="toolbar-card">
-      <div class="toolbar">
-        <div class="search-bar">
+    <!-- 头部搜索区 -->
+    <div class="header-banner">
+      <div class="banner-content">
+        <h2>发现下一本好书</h2>
+        <p>探索、阅读、收藏，构建你的知识殿堂</p>
+        <div class="search-box">
           <el-input
             v-model="searchKeyword"
-            placeholder="搜索书籍..."
+            placeholder="搜索书名、作者..."
+            class="main-search"
+            size="large"
             clearable
             @keyup.enter="handleSearch"
           >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
             <template #suffix>
-              <el-icon v-if="searching" class="is-loading">
-                <Loading />
-              </el-icon>
-              <el-icon v-else class="cursor-pointer" @click="handleSearch">
-                <Search />
-              </el-icon>
+              <el-button type="primary" round @click="handleSearch" :loading="searching">搜索</el-button>
             </template>
           </el-input>
         </div>
-
-        <div class="filter-controls">
-          <el-select v-model="sortBy" placeholder="排序方式" @change="handleSortChange">
-            <el-option label="评分最高" value="rating" />
-            <el-option label="最热" value="hot" />
-            <el-option label="最新" value="new" />
-            <el-option label="随机发现" value="random" />
-          </el-select>
-
-          <el-button-group>
-            <el-button type="primary" :plain="!showOnlyFavorited" @click="showOnlyFavorited = false"
-              >全部</el-button
-            >
-            <el-button type="primary" :plain="showOnlyFavorited" @click="showOnlyFavorited = true"
-              >收藏</el-button
-            >
-          </el-button-group>
-
-          <el-button type="primary" :loading="loading" @click="loadBooks">
-            <el-icon><Refresh /></el-icon>
-            刷新推荐
-          </el-button>
+        <div class="quick-filters">
+          <span 
+            v-for="opt in sortOptions" 
+            :key="opt.value" 
+            class="filter-tag" 
+            :class="{ active: sortBy === opt.value }"
+            @click="changeSort(opt.value)"
+          >
+            {{ opt.label }}
+          </span>
+          <el-divider direction="vertical" />
+          <span 
+            class="filter-tag" 
+            :class="{ active: showOnlyFavorited }" 
+            @click="toggleShowFavorite"
+          >
+            <el-icon><StarFilled /></el-icon> 仅看收藏
+          </span>
         </div>
       </div>
-    </el-card>
+    </div>
 
     <!-- 书籍列表 -->
-    <el-card v-loading="loading" class="books-list-card">
+    <div class="books-container" v-loading="loading">
       <div v-if="books.length === 0" class="empty-state">
         <div class="empty-icon">📚</div>
-        <p>暂无书籍推荐</p>
+        <p>没有找到相关书籍，换个词试试？</p>
+        <el-button @click="resetFilters">重置筛选</el-button>
       </div>
-      <div v-else class="books-masonry">
-        <div v-for="item in books" :key="item.id" class="book-masonry-item">
-          <el-card
-            :body-style="{ padding: '0px' }"
-            class="book-card"
-            @mouseenter="hoveredId = item.id"
-            @mouseleave="hoveredId = null"
-          >
-            <div class="book-cover-wrapper">
-              <img
-                :src="item.cover || fallbackCover"
-                class="book-cover"
-                loading="lazy"
-                @error="onImgError($event)"
-              />
-              <div v-if="hoveredId === item.id" class="overlay">
-                <el-button type="primary" text @click="goDetail(item)">查看详情</el-button>
+
+      <div v-else class="masonry-grid">
+        <div v-for="book in books" :key="book.id" class="book-card-wrapper">
+          <div class="book-card" @click="goDetail(book)">
+            <div class="cover-image">
+              <img :src="book.cover || fallbackCover" loading="lazy" @error="onImgError" />
+              <div class="cover-overlay">
+                <el-button type="primary" round size="small">查看详情</el-button>
+              </div>
+              <div class="fav-btn" @click.stop="toggleFavorite(book)">
+                <el-icon :class="{ active: isFavorited(book.id) }">
+                  <StarFilled v-if="isFavorited(book.id)" />
+                  <Star v-else />
+                </el-icon>
               </div>
             </div>
             <div class="book-info">
-              <h4 class="book-title" :title="item.title">{{ item.title }}</h4>
-              <p class="book-author">{{ item.author || '未知作者' }}</p>
-              <p class="book-description">{{ item.description }}</p>
-              <div class="book-stats">
-                <el-rate v-model="item.rating" disabled show-score size="small" />
+              <h3 class="book-title" :title="book.title">{{ book.title }}</h3>
+              <div class="book-meta">
+                <span class="author">{{ book.author || '佚名' }}</span>
+                <div class="rating" v-if="book.rating > 0">
+                  <el-icon class="star-icon"><StarFilled /></el-icon>
+                  {{ book.rating }}
+                </div>
               </div>
               <div class="book-actions">
-                <el-button
-                  size="small"
-                  :type="isFavorited(item.id) ? 'danger' : 'default'"
-                  @click.stop="toggleFavorite(item)"
-                >
-                  <el-icon><Star /></el-icon>
-                  {{ isFavorited(item.id) ? '已收藏' : '收藏' }}
-                </el-button>
-                <el-button
-                  size="small"
-                  type="primary"
-                  plain
-                  :loading="generatingId === item.id"
-                  @click.stop="handleGenBookImage(item)"
-                >
-                  <el-icon><Picture /></el-icon>
-                  AI配图
-                </el-button>
+                 <el-button 
+                   text 
+                   bg 
+                   size="small" 
+                   class="ai-btn" 
+                   :loading="generatingId === book.id"
+                   @click.stop="handleGenBookImage(book)"
+                 >
+                   <el-icon><MagicStick /></el-icon> AI配图
+                 </el-button>
               </div>
             </div>
-          </el-card>
+          </div>
         </div>
       </div>
-    </el-card>
 
-    <!-- 分页 -->
-    <el-card v-if="totalPages > 1" class="pagination-card">
-      <el-pagination
-        v-model:current-page="currentPage"
-        :page-size="pageSize"
-        :total="total"
-        layout="total, prev, pager, next"
-        @current-change="handlePageChange"
-      />
-    </el-card>
+      <!-- 分页 -->
+      <div class="pagination-section" v-if="totalPages > 1">
+        <el-pagination
+          v-model:current-page="currentPage"
+          :page-size="pageSize"
+          :total="total"
+          layout="prev, pager, next"
+          background
+          @current-change="handlePageChange"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { Search, Star, StarFilled, MagicStick } from '@element-plus/icons-vue'
 import { getBooks, searchBooks } from '@/api/books'
 import { generateBookImage } from '@/api/ai'
-import { useRouter } from 'vue-router'
-import { Loading, Search, Refresh, Star, Picture } from '@element-plus/icons-vue'
 
-// 基础数据
-const books = ref<any[]>([])
 const router = useRouter()
-const loading = ref<boolean>(false)
-const searching = ref<boolean>(false)
+const books = ref<any[]>([])
+const loading = ref(false)
+const searching = ref(false)
 const fallbackCover = '/no-cover.svg'
 
-// 新增数据
-const searchKeyword = ref<string>('')
-const sortBy = ref<string>('random') // 默认使用随机发现模式，让用户看到新内容
-const showOnlyFavorited = ref<boolean>(false)
-const hoveredId = ref<string | null>(null)
+const searchKeyword = ref('')
+const sortBy = ref('random')
+const showOnlyFavorited = ref(false)
 const generatingId = ref<string | null>(null)
-const currentPage = ref<number>(1)
-const pageSize = ref<number>(10)
-const total = ref<number>(0)
-
-// 本地收藏管理
+const currentPage = ref(1)
+const pageSize = ref(12) // 4 columns * 3 rows
+const total = ref(0)
 const favoriteIds = ref<Set<string>>(new Set())
 
-// 计算属性
+const sortOptions = [
+  { label: '随机推荐', value: 'random' },
+  { label: '评分最高', value: 'rating' },
+  { label: '最新上架', value: 'new' },
+  { label: '热门书籍', value: 'hot' },
+]
+
 const totalPages = computed(() => Math.ceil(total.value / pageSize.value))
 
 onMounted(async () => {
-  // 从 localStorage 恢复收藏
   const saved = localStorage.getItem('favoriteBooks')
-  if (saved) {
-    favoriteIds.value = new Set(JSON.parse(saved))
-  }
+  if (saved) favoriteIds.value = new Set(JSON.parse(saved))
   await loadBooks()
 })
 
-// 数据清洗与修复逻辑
 const processBooksData = (rawBooks: any[]) => {
   return rawBooks.map((b: any) => {
     let title = b.title
     let author = b.author
-    let category = b.category
     let cover = b.cover
-
-    // 修复导入数据可能出现的字段错位
-    // 如果标题看起来像图片文件名
     if (title && (title.endsWith('.jpg') || title.endsWith('.png'))) {
-      // 尝试从分类中恢复标题，如果分类看起来像标题
-      if (category && category.length > 20 && !category.includes('Calendar')) {
-        title = category
-      } else if (b.description && b.description.startsWith('From Book32 dataset - ')) {
-        // 从描述中提取
-        title = b.description.replace('From Book32 dataset - ', '')
-      }
+      if (b.category && b.category.length > 20) title = b.category
     }
-
-    // 如果作者看起来像URL
     if (author && (author.startsWith('http') || author.includes('.jpg'))) {
-      // 这其实是封面图
-      if (!cover || !cover.startsWith('http')) {
-        cover = author
-      }
+      if (!cover || !cover.startsWith('http')) cover = author
       author = 'Unknown'
     }
-
-    // 封面图降级处理
-    if (
-      !cover ||
-      cover.startsWith('https://via.placeholder.com') ||
-      cover.startsWith('http://via.placeholder.com')
-    ) {
-      cover = ''
-    }
-
+    if (!cover || cover.includes('placeholder')) cover = ''
     return { ...b, title, author, cover }
   })
 }
 
-// 加载书籍
 const loadBooks = async () => {
   try {
     loading.value = true
+    // 如果是仅看收藏，就在前端过滤（简化逻辑，实际应由后端支持）
+    if (showOnlyFavorited.value) {
+      // 模拟加载收藏...这里简单处理为加载所有后过滤，或者需要后端支持findByIds
+      // 暂时先加载普通列表
+    }
+    
     const params = {
       page: currentPage.value - 1,
       size: pageSize.value,
@@ -210,96 +179,96 @@ const loadBooks = async () => {
     }
     const data: any = await getBooks(params.page, params.size, params.sortBy)
 
-    // 处理分页响应和非分页响应
     if (data.content) {
-      books.value = data.content
+      books.value = processBooksData(data.content)
       total.value = data.totalElements || 0
     } else if (Array.isArray(data)) {
-      books.value = data
+      books.value = processBooksData(data)
       total.value = data.length
     } else {
       books.value = []
     }
-
-    // 清理占位图和修复数据错位
-    books.value = processBooksData(books.value)
-  } catch (error: any) {
-    ElMessage.error(error.response?.data?.message || '获取书籍失败')
+    
+    if (showOnlyFavorited.value) {
+      books.value = books.value.filter(b => favoriteIds.value.has(b.id))
+    }
+  } catch (error) {
+    ElMessage.error('获取书籍失败')
   } finally {
     loading.value = false
   }
 }
 
-// 搜索书籍
 const handleSearch = async () => {
   if (!searchKeyword.value.trim()) {
     currentPage.value = 1
     await loadBooks()
     return
   }
-
+  searching.value = true
   try {
-    searching.value = true
     const data: any = await searchBooks(searchKeyword.value)
     const rawList = Array.isArray(data) ? data : []
     books.value = processBooksData(rawList)
     total.value = books.value.length
     currentPage.value = 1
-    ElMessage.success(`找到 ${books.value.length} 本书籍`)
-  } catch (error: any) {
+  } catch {
     ElMessage.error('搜索失败')
   } finally {
     searching.value = false
   }
 }
 
-// 排序变化
-const handleSortChange = async () => {
+const changeSort = (val: string) => {
+  sortBy.value = val
   currentPage.value = 1
-  await loadBooks()
+  loadBooks()
 }
 
-// 分页变化
-const handlePageChange = async () => {
-  await loadBooks()
+const toggleShowFavorite = () => {
+  showOnlyFavorited.value = !showOnlyFavorited.value
+  loadBooks()
 }
 
-// 收藏管理
-const isFavorited = (bookId: string): boolean => {
-  return favoriteIds.value.has(bookId)
+const resetFilters = () => {
+  searchKeyword.value = ''
+  sortBy.value = 'random'
+  showOnlyFavorited.value = false
+  loadBooks()
 }
+
+const handlePageChange = () => {
+  loadBooks()
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+const isFavorited = (id: string) => favoriteIds.value.has(id)
 
 const toggleFavorite = (book: any) => {
   if (isFavorited(book.id)) {
     favoriteIds.value.delete(book.id)
-    ElMessage.info('已取消收藏')
+    ElMessage.info('取消收藏')
   } else {
     favoriteIds.value.add(book.id)
     ElMessage.success('已收藏')
   }
-  // 保存到 localStorage
   localStorage.setItem('favoriteBooks', JSON.stringify(Array.from(favoriteIds.value)))
 }
 
-// 生成配图
 const handleGenBookImage = async (book: any) => {
+  generatingId.value = book.id
   try {
-    generatingId.value = book.id
     const updated: any = await generateBookImage(book.id)
-    // 更新本地数据
-    const idx = books.value.findIndex((b) => b.id === book.id)
-    if (idx >= 0) {
-      books.value[idx] = { ...books.value[idx], ...updated }
-    }
+    const idx = books.value.findIndex(b => b.id === book.id)
+    if (idx >= 0) books.value[idx] = { ...books.value[idx], ...updated }
     ElMessage.success('配图已生成')
-  } catch (error: any) {
-    ElMessage.error(error?.response?.data?.message || '生成配图失败')
+  } catch {
+    ElMessage.error('生成失败')
   } finally {
     generatingId.value = null
   }
 }
 
-// 跳转详情页
 const goDetail = (book: any) => {
   router.push({
     name: 'BookDetail',
@@ -308,273 +277,209 @@ const goDetail = (book: any) => {
   })
 }
 
-// 处理图片加载失败
 const onImgError = (e: Event) => {
-  const target = e.target as HTMLImageElement
-  target.onerror = null
-  target.src = fallbackCover
+  (e.target as HTMLImageElement).src = fallbackCover
 }
 </script>
 
 <style scoped>
-/* 布局 */
 .books-page {
-  padding: 20px;
+  min-height: 100vh;
+  background: var(--app-bg);
 }
 
-.toolbar-card,
-.books-list-card,
-.pagination-card {
-  margin-bottom: 20px;
+/* 顶部横幅 */
+.header-banner {
+  background: white;
+  padding: 40px 20px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
 }
 
-/* 工具栏 */
-.toolbar {
+.banner-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.banner-content h2 { font-size: 28px; margin: 0 0 8px; color: var(--app-text); }
+.banner-content p { color: var(--text-secondary); margin-bottom: 24px; }
+
+.search-box {
+  max-width: 600px;
+  margin: 0 auto 20px;
+}
+
+.main-search :deep(.el-input__wrapper) {
+  border-radius: 24px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  padding-left: 16px;
+}
+
+.quick-filters {
   display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.search-bar {
-  flex: 1;
-  min-width: 250px;
-}
-
-.search-bar :deep(.el-input) {
-  border-radius: 4px;
-}
-
-.filter-controls {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.filter-controls :deep(.el-select) {
-  width: 120px;
-}
-
-/* 空状态 */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
-  padding: 60px 20px;
-  color: #909399;
+  align-items: center;
+  gap: 16px;
+  font-size: 14px;
+  color: var(--text-secondary);
 }
 
-.empty-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-}
-
-/* 书籍卡片 */
-.book-card {
+.filter-tag {
   cursor: pointer;
-  transition:
-    transform 0.2s ease-in-out,
-    box-shadow 0.2s ease-in-out;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.filter-tag:hover { color: var(--primary); }
+.filter-tag.active { color: var(--primary); font-weight: 600; }
+
+/* 瀑布流 */
+.books-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 30px 20px;
+}
+
+.masonry-grid {
+  column-count: 4;
+  column-gap: 24px;
+}
+
+.book-card-wrapper {
+  break-inside: avoid;
+  margin-bottom: 24px;
+}
+
+.book-card {
+  background: white;
+  border-radius: 12px;
   overflow: hidden;
-  height: 100%; /* 确保卡片填满容器 */
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  border: 1px solid transparent;
 }
 
 .book-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-md);
+  border-color: var(--el-border-color-lighter);
 }
 
-/* 书籍封面 */
-.book-cover-wrapper {
+.cover-image {
   position: relative;
   width: 100%;
-  height: 200px;
-  overflow: hidden;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding-top: 140%; /* 2:3 aspect ratio approximately */
+  background: #f1f5f9;
 }
 
-.book-cover {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease-in-out;
-}
-
-.book-card:hover .book-cover {
-  transform: scale(1.05);
-}
-
-.overlay {
+.cover-image img {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cover-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: fadeIn 0.2s ease-in-out;
+  opacity: 0;
+  transition: opacity 0.2s;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
+.book-card:hover .cover-overlay { opacity: 1; }
 
-.overlay :deep(.el-button) {
-  background: white;
-}
-
-/* 书籍信息 */
-.book-info {
-  padding: 14px;
+.fav-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(255,255,255,0.9);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  font-size: 18px;
+  color: #cbd5e1;
+  transition: all 0.2s;
+}
+
+.fav-btn:hover { transform: scale(1.1); }
+.fav-btn .active { color: #f59e0b; }
+
+.book-info {
+  padding: 12px;
 }
 
 .book-title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #303133;
-}
-
-.book-author {
-  margin: 0;
-  color: #666;
-  font-size: 13px;
-}
-
-.book-description {
-  margin: 0;
-  color: #909399;
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--app-text);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  line-clamp: 2;
+  overflow: hidden;
 }
 
-.book-stats {
-  margin: 4px 0 0 0;
-}
-
-.book-stats :deep(.el-rate) {
-  align-items: center;
-}
-
-/* 操作按钮 */
-.book-actions {
+.book-meta {
   display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--text-light);
 }
 
-.book-actions :deep(.el-button) {
-  flex: 1;
-  min-width: 80px;
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: #f59e0b;
+  font-weight: 600;
 }
 
-/* 分页 */
-.pagination-card :deep(.el-pagination) {
+.book-actions {
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.ai-btn {
+  width: 100%;
+  color: var(--primary);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 0;
+  color: var(--text-secondary);
+}
+.empty-icon { font-size: 48px; margin-bottom: 16px; }
+
+.pagination-section {
   display: flex;
   justify-content: center;
-  padding: 20px 0;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .search-bar {
-    min-width: unset;
-    width: 100%;
-  }
-
-  .filter-controls {
-    width: 100%;
-  }
-
-  .filter-controls :deep(.el-select) {
-    width: 100%;
-  }
-
-  .book-actions {
-    flex-direction: column;
-  }
-
-  .book-actions :deep(.el-button) {
-    width: 100%;
-    min-width: unset;
-  }
-}
-
-/* 加载动画 */
-.is-loading {
-  animation: rotating 2s linear infinite;
-}
-
-@keyframes rotating {
-  0% {
-    transform: rotateZ(0deg);
-  }
-  100% {
-    transform: rotateZ(360deg);
-  }
-}
-
-/* 光标指针 */
-.cursor-pointer {
-  cursor: pointer;
-}
-
-/* 瀑布流布局 */
-.books-masonry {
-  column-count: 4;
-  column-gap: 20px;
-  padding: 10px 0;
-}
-
-.book-masonry-item {
-  break-inside: avoid;
-  margin-bottom: 20px;
-  /* 修复 Chrome 渲染 bug */
-  -webkit-column-break-inside: avoid;
-  page-break-inside: avoid;
-}
-
-@media (max-width: 1400px) {
-  .books-masonry {
-    column-count: 3;
-  }
+  margin-top: 40px;
 }
 
 @media (max-width: 992px) {
-  .books-masonry {
-    column-count: 2;
-  }
+  .masonry-grid { column-count: 3; }
 }
-
-@media (max-width: 600px) {
-  .books-masonry {
-    column-count: 1;
-  }
+@media (max-width: 768px) {
+  .masonry-grid { column-count: 2; }
+}
+@media (max-width: 480px) {
+  .masonry-grid { column-count: 1; }
 }
 </style>

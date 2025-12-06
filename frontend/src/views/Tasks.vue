@@ -1,122 +1,157 @@
 <template>
   <div class="tasks-page">
-    <el-card shadow="never" class="toolbar-card">
-      <el-form :inline="true" class="toolbar-form">
-        <el-form-item>
-          <el-input
-            v-model="q"
-            placeholder="搜索标题/备注"
-            clearable
-            style="width: 220px"
-            @keyup.enter="refresh"
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-select v-model="status" placeholder="全部状态" clearable style="width: 140px">
-            <el-option label="全部状态" value="" />
-            <el-option label="待办" value="todo" />
-            <el-option label="进行中" value="in_progress" />
-            <el-option label="阻塞" value="blocked" />
-            <el-option label="已完成" value="done" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-select v-model="priority" placeholder="全部优先级" clearable style="width: 140px">
-            <el-option label="全部优先级" value="" />
-            <el-option label="低" value="low" />
-            <el-option label="中" value="med" />
-            <el-option label="高" value="high" />
-            <el-option label="紧急" value="urgent" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="refresh">查询</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="success" @click="openCreate">新建任务</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
+    <div class="header-section">
+      <div class="page-title">
+        <h2>任务清单</h2>
+      </div>
+      <div class="header-actions">
+        <el-button type="primary" size="large" @click="openCreate">
+          <el-icon class="el-icon--left"><Plus /></el-icon>新建任务
+        </el-button>
+      </div>
+    </div>
 
-    <el-card shadow="never">
-      <el-tabs v-model="tab" type="border-card">
-        <el-tab-pane label="表格" name="table">
-          <el-table :data="tasks" stripe border table-layout="auto">
+    <!-- 过滤器与视图切换 -->
+    <div class="toolbar-container">
+      <div class="filters">
+        <el-input
+          v-model="q"
+          placeholder="搜索任务..."
+          prefix-icon="Search"
+          clearable
+          class="search-input"
+          @keyup.enter="refresh"
+        />
+        <el-select v-model="status" placeholder="状态" clearable class="filter-select">
+          <el-option label="待办" value="todo" />
+          <el-option label="进行中" value="in_progress" />
+          <el-option label="阻塞" value="blocked" />
+          <el-option label="已完成" value="done" />
+        </el-select>
+        <el-select v-model="priority" placeholder="优先级" clearable class="filter-select">
+          <el-option label="低" value="low" />
+          <el-option label="中" value="med" />
+          <el-option label="高" value="high" />
+          <el-option label="紧急" value="urgent" />
+        </el-select>
+        <el-button @click="refresh" circle><el-icon><RefreshRight /></el-icon></el-button>
+      </div>
+      
+      <div class="view-switcher">
+        <el-radio-group v-model="tab" size="default">
+          <el-radio-button label="table"><el-icon><Operation /></el-icon></el-radio-button>
+          <el-radio-button label="kanban"><el-icon><Grid /></el-icon></el-radio-button>
+          <el-radio-button label="gantt"><el-icon><Calendar /></el-icon></el-radio-button>
+          <el-radio-button label="stats"><el-icon><PieChart /></el-icon></el-radio-button>
+        </el-radio-group>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <transition name="fade" mode="out-in">
+        <!-- 列表视图 -->
+        <div v-if="tab === 'table'" key="table" class="view-container">
+          <el-table :data="tasks" class="custom-table" :show-header="true" row-key="id">
             <template #empty>
-              <EmptyState title="暂无任务，点击“新建任务”开始">
-                <template #action>
-                  <el-button type="primary" @click="openCreate">新建任务</el-button>
-                </template>
-              </EmptyState>
+              <EmptyState title="暂无任务，开始规划你的一天吧" />
             </template>
-            <el-table-column prop="title" label="标题" min-width="240" />
-            <el-table-column label="优先级" width="120">
+            
+            <el-table-column width="48">
               <template #default="{ row }">
-                <el-tag :type="priorityType(row.priority)" effect="light" disable-transitions>
+                <div 
+                  class="custom-checkbox" 
+                  :class="{ checked: row.status === 'done' }"
+                  @click="toggleTaskStatus(row)"
+                >
+                  <el-icon v-if="row.status === 'done'"><Check /></el-icon>
+                </div>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="任务内容" min-width="300">
+              <template #default="{ row }">
+                <div class="task-cell-main">
+                  <div class="task-title" :class="{ done: row.status === 'done' }">{{ row.title }}</div>
+                  <div class="task-meta">
+                    <span v-if="row.dueDate" class="meta-item" :class="{ overdue: isOverdue(row) }">
+                      <el-icon><Calendar /></el-icon> {{ row.dueDate.slice(0, 10) }}
+                    </span>
+                    <el-tag v-for="tag in row.tags" :key="tag" size="small" type="info" effect="plain" class="meta-tag">
+                      #{{ tag }}
+                    </el-tag>
+                  </div>
+                </div>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="优先级" width="100" align="center">
+              <template #default="{ row }">
+                <div class="priority-indicator" :class="row.priority">
                   {{ priorityText(row.priority) }}
-                </el-tag>
+                </div>
               </template>
             </el-table-column>
-            <el-table-column label="状态" width="140">
-              <template #default="{ row }">
-                <el-tag :type="statusType(row.status)" effect="plain" disable-transitions>
-                  {{ statusText(row.status) }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="截止" width="140">
-              <template #default="{ row }">
-                {{ row.dueDate ? row.dueDate.slice(0, 10) : '-' }}
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="220" fixed="right">
+            
+            <el-table-column label="操作" width="180" align="right">
               <template #default="{ row }">
                 <el-button link type="primary" @click="edit(row)">编辑</el-button>
-                <el-button link type="info" @click="history(row)">历史</el-button>
-                <el-button link type="warning" @click="share(row)">分享</el-button>
                 <el-button link type="danger" @click="remove(row)">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
-        </el-tab-pane>
+        </div>
 
-        <el-tab-pane label="看板" name="kanban">
-          <div class="kanban">
-            <div v-for="col in columns" :key="col.key" class="kanban-col">
-              <div class="kanban-header">
-                {{ col.label }}
-                <span class="count">{{ tasks.filter((x) => x.status === col.key).length }}</span>
-              </div>
-              <div class="kanban-list">
-                <el-card
-                  v-for="t in tasks.filter((x) => x.status === col.key)"
-                  :key="t.id"
-                  shadow="hover"
-                  class="kanban-card"
-                >
-                  <template #header>
-                    <div class="card-header">
-                      <span class="title">{{ t.title }}</span>
-                      <el-tag size="small" :type="priorityType(t.priority)">{{
-                        priorityText(t.priority)
-                      }}</el-tag>
-                    </div>
-                  </template>
-                  <div class="meta">截止：{{ t.dueDate ? t.dueDate.slice(0, 10) : '-' }}</div>
-                  <div class="actions">
-                    <el-button size="small" @click="setStatus(t, nextStatus(col.key))"
-                      >移动到 {{ statusText(nextStatus(col.key)) }}</el-button
-                    >
+        <!-- 看板视图 -->
+        <div v-else-if="tab === 'kanban'" key="kanban" class="view-container kanban-view">
+          <div v-for="col in columns" :key="col.key" class="kanban-column">
+            <div class="column-header">
+              <span class="col-title">{{ col.label }}</span>
+              <span class="col-count">{{ tasks.filter((x) => x.status === col.key).length }}</span>
+            </div>
+            <div class="column-body">
+              <div
+                v-for="t in tasks.filter((x) => x.status === col.key)"
+                :key="t.id"
+                class="kanban-card"
+                @click="edit(t)"
+              >
+                <div class="k-card-top">
+                  <el-tag size="small" :type="priorityType(t.priority)" effect="dark" class="mini-tag">
+                    {{ priorityText(t.priority) }}
+                  </el-tag>
+                  <el-dropdown trigger="click" @command="(c) => handleCommand(c, t)" @click.stop>
+                    <el-icon class="more-btn"><MoreFilled /></el-icon>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item command="edit">编辑</el-dropdown-item>
+                        <el-dropdown-item command="delete" divided style="color: var(--danger)">删除</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
+                <div class="k-card-title">{{ t.title }}</div>
+                <div class="k-card-footer">
+                  <span v-if="t.dueDate" class="due-date" :class="{ overdue: isOverdue(t) }">
+                    {{ t.dueDate.slice(5, 10) }}
+                  </span>
+                  <div class="status-actions" @click.stop>
+                    <el-button 
+                      v-if="col.key !== 'done'" 
+                      size="small" 
+                      circle 
+                      icon="ArrowRight" 
+                      @click="setStatus(t, nextStatus(col.key))" 
+                    />
                   </div>
-                </el-card>
+                </div>
               </div>
             </div>
           </div>
-        </el-tab-pane>
+        </div>
 
-        <el-tab-pane label="甘特" name="gantt">
-          <div class="gantt">
-            <el-empty
+        <!-- 甘特视图 -->
+        <div v-else-if="tab === 'gantt'" key="gantt" class="view-container gantt-view">
+           <el-empty
               v-if="tasks.filter((x) => x.startDate && x.dueDate).length === 0"
               description="暂无带时间范围的任务"
             />
@@ -126,168 +161,70 @@
                 :key="t.id"
                 :timestamp="t.startDate?.slice(0, 10) + ' → ' + t.dueDate?.slice(0, 10)"
                 :type="statusType(t.status)"
+                placement="top"
               >
-                {{ t.title }}
+                <el-card shadow="hover" class="gantt-card">
+                  <h4>{{ t.title }}</h4>
+                  <p>{{ t.description || '无描述' }}</p>
+                </el-card>
               </el-timeline-item>
             </el-timeline>
-          </div>
-        </el-tab-pane>
+        </div>
 
-        <el-tab-pane label="统计" name="stats">
-          <!-- 顶部统计卡片 -->
+        <!-- 统计视图 -->
+        <div v-else-if="tab === 'stats'" key="stats" class="view-container stats-view">
+          <!-- 统计概览 -->
           <div class="stats-overview">
-            <el-card shadow="hover" class="stat-card">
-              <div class="stat-icon total">
-                <el-icon><List /></el-icon>
-              </div>
-              <div class="stat-info">
-                <div class="stat-value">{{ tasks.length }}</div>
-                <div class="stat-label">总任务</div>
-              </div>
-            </el-card>
-            <el-card shadow="hover" class="stat-card">
-              <div class="stat-icon success">
-                <el-icon><CircleCheck /></el-icon>
-              </div>
-              <div class="stat-info">
-                <div class="stat-value">{{ tasks.filter((x) => x.status === 'done').length }}</div>
-                <div class="stat-label">已完成</div>
-              </div>
-            </el-card>
-            <el-card shadow="hover" class="stat-card">
-              <div class="stat-icon warning">
-                <el-icon><Clock /></el-icon>
-              </div>
-              <div class="stat-info">
-                <div class="stat-value">
-                  {{ tasks.filter((x) => x.status === 'in_progress').length }}
-                </div>
-                <div class="stat-label">进行中</div>
-              </div>
-            </el-card>
-            <el-card shadow="hover" class="stat-card">
-              <div class="stat-icon danger">
-                <el-icon><WarningFilled /></el-icon>
-              </div>
-              <div class="stat-info">
-                <div class="stat-value">
-                  {{
-                    tasks.filter(
-                      (x) => x.dueDate && x.status !== 'done' && new Date(x.dueDate) < new Date(),
-                    ).length
-                  }}
-                </div>
-                <div class="stat-label">逾期</div>
-              </div>
-            </el-card>
+            <div class="stat-box total">
+              <div class="num">{{ tasks.length }}</div>
+              <div class="txt">总任务</div>
+            </div>
+            <div class="stat-box done">
+              <div class="num">{{ tasks.filter(x => x.status === 'done').length }}</div>
+              <div class="txt">已完成</div>
+            </div>
+            <div class="stat-box progress">
+              <div class="num">{{ tasks.filter(x => x.status === 'in_progress').length }}</div>
+              <div class="txt">进行中</div>
+            </div>
+             <div class="stat-box urgent">
+              <div class="num">{{ tasks.filter(x => x.priority === 'urgent' && x.status !== 'done').length }}</div>
+              <div class="txt">紧急待办</div>
+            </div>
           </div>
 
-          <!-- 图表区域 -->
-          <div class="charts-grid">
-            <!-- 状态分布 -->
-            <el-card shadow="never" class="chart-card">
-              <template #header>
-                <div class="chart-header">
-                  <span class="chart-title">状态分布</span>
-                  <el-tag size="small" type="info">环形图</el-tag>
-                </div>
-              </template>
-              <div class="chart-container">
-                <BaseChart :key="statusChartKey" :option="statusPieOption" height="460px" />
-              </div>
-            </el-card>
-
-            <!-- 优先级分布 -->
-            <el-card shadow="never" class="chart-card">
-              <template #header>
-                <div class="chart-header">
-                  <span class="chart-title">优先级分布</span>
-                  <el-tag size="small" type="info">环形图</el-tag>
-                </div>
-              </template>
-              <div class="chart-container">
-                <BaseChart :key="priorityChartKey" :option="priorityPieOption" height="460px" />
-              </div>
-            </el-card>
+          <div class="charts-row">
+             <div class="chart-box">
+               <h3>状态分布</h3>
+               <BaseChart :key="statusChartKey" :option="statusPieOption" height="300px" />
+             </div>
+             <div class="chart-box">
+               <h3>优先级分布</h3>
+               <BaseChart :key="priorityChartKey" :option="priorityPieOption" height="300px" />
+             </div>
           </div>
+        </div>
+      </transition>
+    </div>
 
-          <!-- 详细统计 -->
-          <div class="detail-stats">
-            <el-card shadow="never">
-              <template #header>
-                <div class="chart-header">
-                  <span class="chart-title">按状态统计</span>
-                </div>
-              </template>
-              <div class="stat-tags">
-                <div
-                  v-for="s in ['todo', 'in_progress', 'blocked', 'done']"
-                  :key="s"
-                  class="stat-tag-item"
-                >
-                  <el-tag :type="statusType(s)" effect="plain" size="large">
-                    {{ statusText(s) }}
-                  </el-tag>
-                  <span class="stat-tag-count">{{
-                    tasks.filter((x) => x.status === s).length
-                  }}</span>
-                </div>
-              </div>
-            </el-card>
-
-            <el-card shadow="never">
-              <template #header>
-                <div class="chart-header">
-                  <span class="chart-title">按优先级统计</span>
-                </div>
-              </template>
-              <div class="stat-tags">
-                <div v-for="p in ['low', 'med', 'high', 'urgent']" :key="p" class="stat-tag-item">
-                  <el-tag :type="priorityType(p)" effect="plain" size="large">
-                    {{ priorityText(p) }}
-                  </el-tag>
-                  <span class="stat-tag-count">{{
-                    tasks.filter((x) => x.priority === p).length
-                  }}</span>
-                </div>
-              </div>
-            </el-card>
-          </div>
-        </el-tab-pane>
-      </el-tabs>
-    </el-card>
+    <!-- Dialog -->
     <el-dialog
       v-model="dialogVisible"
       :title="isEdit ? '编辑任务' : '新建任务'"
-      width="620px"
+      width="500px"
+      align-center
       destroy-on-close
+      class="task-dialog"
     >
-      <el-form :model="form" label-width="90px">
+      <el-form :model="form" label-position="top">
         <el-form-item label="标题">
-          <el-input v-model="form.title" placeholder="请输入任务标题" />
+          <el-input v-model="form.title" placeholder="要做什么？" size="large" />
         </el-form-item>
-        <el-form-item label="描述">
-          <el-input
-            v-model="form.description"
-            type="textarea"
-            :rows="3"
-            placeholder="可填写任务描述"
-          />
-        </el-form-item>
-        <el-row :gutter="12">
-          <el-col :span="12">
-            <el-form-item label="优先级">
-              <el-select v-model="form.priority" placeholder="请选择">
-                <el-option label="低" value="low" />
-                <el-option label="中" value="med" />
-                <el-option label="高" value="high" />
-                <el-option label="紧急" value="urgent" />
-              </el-select>
-            </el-form-item>
-          </el-col>
+        
+        <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="状态">
-              <el-select v-model="form.status" placeholder="请选择">
+              <el-select v-model="form.status" style="width: 100%">
                 <el-option label="待办" value="todo" />
                 <el-option label="进行中" value="in_progress" />
                 <el-option label="阻塞" value="blocked" />
@@ -295,18 +232,28 @@
               </el-select>
             </el-form-item>
           </el-col>
-        </el-row>
-        <el-row :gutter="12">
-          <el-col :span="12">
-            <el-form-item label="开始日期">
-              <el-date-picker
-                v-model="form.startDate"
-                type="date"
-                value-format="YYYY-MM-DD"
-                placeholder="选择日期"
-              />
+           <el-col :span="12">
+            <el-form-item label="优先级">
+              <el-select v-model="form.priority" style="width: 100%">
+                <el-option label="低" value="low" />
+                <el-option label="中" value="med" />
+                <el-option label="高" value="high" />
+                <el-option label="紧急" value="urgent" />
+              </el-select>
             </el-form-item>
           </el-col>
+        </el-row>
+
+        <el-form-item label="描述">
+          <el-input
+            v-model="form.description"
+            type="textarea"
+            :rows="3"
+            placeholder="详细描述..."
+          />
+        </el-form-item>
+
+        <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="截止日期">
               <el-date-picker
@@ -314,13 +261,12 @@
                 type="date"
                 value-format="YYYY-MM-DD"
                 placeholder="选择日期"
+                style="width: 100%"
               />
             </el-form-item>
           </el-col>
-        </el-row>
-        <el-row :gutter="12">
-          <el-col :span="12">
-            <el-form-item label="预估(分钟)">
+           <el-col :span="12">
+            <el-form-item label="预估时间(分钟)">
               <el-input-number
                 v-model="form.estimateMinutes"
                 :min="0"
@@ -330,25 +276,15 @@
               />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
-            <el-form-item label="提醒时间">
-              <el-date-picker
-                v-model="form.remindAt"
-                type="datetime"
-                value-format="YYYY-MM-DD HH:mm:ss"
-                placeholder="选择时间"
-              />
-            </el-form-item>
-          </el-col>
         </el-row>
-        <el-form-item label="标签">
+         <el-form-item label="标签">
           <el-select
             v-model="form.tags"
             multiple
             filterable
             allow-create
             default-first-option
-            placeholder="输入后按回车新建标签"
+            placeholder="添加标签"
             style="width: 100%"
           />
         </el-form-item>
@@ -363,7 +299,10 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, watch } from 'vue'
-import { List, CircleCheck, Clock, WarningFilled } from '@element-plus/icons-vue'
+import { 
+  Plus, Search, RefreshRight, Operation, Grid, Calendar, PieChart, 
+  Check, MoreFilled, ArrowRight
+} from '@element-plus/icons-vue'
 import {
   createTask as apiCreate,
   updateTask as apiUpdate,
@@ -417,15 +356,12 @@ async function refresh() {
   try {
     await refetch()
   } finally {
-    // 等待 DOM 更新后强制重建 + 自适应
     await nextTick()
     refreshTick.value++
     requestAnimationFrame(() => window.dispatchEvent(new Event('resize')))
-    setTimeout(() => window.dispatchEvent(new Event('resize')), 100)
   }
 }
 
-// 当任务数据数量变化时，保证图表跟随重建一次
 watch(
   () => (tasks.value as any[]).length,
   () => {
@@ -435,16 +371,29 @@ watch(
   { flush: 'post' },
 )
 
-// 当切换到“统计”标签页时，强制重建并触发自适应，避免隐藏状态初始化导致尺寸过小
 watch(tab, (val) => {
   if (val === 'stats') {
     nextTick().then(() => {
       refreshTick.value++
       requestAnimationFrame(() => window.dispatchEvent(new Event('resize')))
-      setTimeout(() => window.dispatchEvent(new Event('resize')), 80)
     })
   }
 })
+
+function toggleTaskStatus(row: Task) {
+  const newStatus = row.status === 'done' ? 'todo' : 'done'
+  apiUpdate(row.id!, { status: newStatus }).then(refresh)
+}
+
+function handleCommand(command: string, t: Task) {
+  if (command === 'edit') edit(t)
+  if (command === 'delete') remove(t)
+}
+
+function isOverdue(t: Task) {
+  if (!t.dueDate || t.status === 'done') return false
+  return new Date(t.dueDate) < new Date()
+}
 
 function resetForm() {
   form.value = {
@@ -469,25 +418,11 @@ function edit(t: Task) {
   isEdit.value = true
   form.value = {
     ...t,
-    startDate: t.startDate
-      ? t.startDate.includes('T')
-        ? t.startDate.slice(0, 10)
-        : t.startDate
-      : '',
-    dueDate: t.dueDate ? (t.dueDate.includes('T') ? t.dueDate.slice(0, 10) : t.dueDate) : '',
+    startDate: t.startDate?.includes('T') ? t.startDate.slice(0, 10) : (t.startDate || ''),
+    dueDate: t.dueDate?.includes('T') ? t.dueDate.slice(0, 10) : (t.dueDate || ''),
     remindAt: t.remindAt ? t.remindAt.replace('T', ' ').slice(0, 19) : '',
   }
   dialogVisible.value = true
-}
-
-function history(_t: Task) {
-  window.alert('请在后续“历史抽屉”中查看（此处先占位）。')
-}
-
-function share(t: Task) {
-  const uid = window.prompt('分享给用户ID')
-  if (!uid) return
-  fetch(`/api/tasks/${t.id}/share?userId=${uid}&role=VIEW`, { method: 'POST' }).then(refresh)
 }
 
 function remove(t: Task) {
@@ -496,40 +431,28 @@ function remove(t: Task) {
 }
 
 function saveTask() {
-  if (!form.value.title || !form.value.title.trim()) {
-    return
-  }
+  if (!form.value.title || !form.value.title.trim()) return
   const payload: any = { ...form.value }
-  if (payload.startDate === '') delete payload.startDate
-  if (payload.dueDate === '') delete payload.dueDate
-  if (payload.remindAt === '') delete payload.remindAt
-  if (typeof payload.startDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(payload.startDate)) {
+  // 清理字段
+  if (!payload.startDate) delete payload.startDate
+  if (!payload.dueDate) delete payload.dueDate
+  if (!payload.remindAt) delete payload.remindAt
+  
+  if (payload.startDate && /^\d{4}-\d{2}-\d{2}$/.test(payload.startDate)) {
     payload.startDate = `${payload.startDate}T00:00:00`
   }
-  if (typeof payload.dueDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(payload.dueDate)) {
+  if (payload.dueDate && /^\d{4}-\d{2}-\d{2}$/.test(payload.dueDate)) {
     payload.dueDate = `${payload.dueDate}T00:00:00`
   }
-  if (
-    typeof payload.remindAt === 'string' &&
-    /^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}$/.test(payload.remindAt)
-  ) {
-    payload.remindAt = payload.remindAt.replace(' ', 'T')
-  }
-  // 清理空字符串字段，避免后端 LocalDateTime 解析报错
-  Object.keys(payload).forEach((k) => {
-    if (payload[k] === '') delete payload[k]
+
+  const action = isEdit.value && form.value.id 
+    ? apiUpdate(form.value.id, payload) 
+    : apiCreate(payload)
+
+  action.then(() => {
+    dialogVisible.value = false
+    refresh()
   })
-  if (isEdit.value && form.value.id) {
-    apiUpdate(form.value.id, payload).then(() => {
-      dialogVisible.value = false
-      refresh()
-    })
-  } else {
-    apiCreate(payload).then(() => {
-      dialogVisible.value = false
-      refresh()
-    })
-  }
 }
 
 function nextStatus(s: string) {
@@ -539,90 +462,44 @@ function nextStatus(s: string) {
   return 'done'
 }
 
-function setStatus(t: Task, s: string) {
-  apiUpdate(t.id!, { status: s }).then(refresh)
-}
-
-function statusText(s?: string) {
-  if (s === 'todo') return '待办'
-  if (s === 'in_progress') return '进行中'
-  if (s === 'blocked') return '阻塞'
-  if (s === 'done') return '已完成'
-  return '未知'
-}
-function statusType(s?: string) {
-  if (s === 'todo') return ''
-  if (s === 'in_progress') return 'warning'
-  if (s === 'blocked') return 'danger'
-  if (s === 'done') return 'success'
-  return ''
-}
 function priorityText(p?: string) {
   if (p === 'low') return '低'
   if (p === 'med') return '中'
   if (p === 'high') return '高'
   if (p === 'urgent') return '紧急'
-  return '未设'
+  return '-'
 }
 function priorityType(p?: string) {
-  if (p === 'low') return ''
-  if (p === 'med') return 'info'
+  if (p === 'low') return 'info'
+  if (p === 'med') return 'primary'
   if (p === 'high') return 'warning'
   if (p === 'urgent') return 'danger'
   return ''
 }
+function statusType(s?: string) {
+  if (s === 'done') return 'success'
+  if (s === 'in_progress') return 'warning'
+  if (s === 'blocked') return 'danger'
+  return 'primary'
+}
 
 const statusPieOption = computed(() => {
   const ds = ['todo', 'in_progress', 'blocked', 'done'].map((s) => ({
-    name: statusText(s),
+    name: s === 'todo' ? '待办' : s === 'in_progress' ? '进行中' : s === 'blocked' ? '阻塞' : '完成',
     value: (tasks.value as any[]).filter((x) => x.status === s).length,
   }))
-
-  const colors = ['#909399', '#409eff', '#f56c6c', '#67c23a']
-
+  const colors = ['#94a3b8', '#3b82f6', '#ef4444', '#10b981']
   return {
-    tooltip: {
-      trigger: 'item',
-      formatter: '{b}: {c} ({d}%)',
-    },
-    legend: { bottom: 0, left: 'center' },
+    tooltip: { trigger: 'item' },
+    legend: { bottom: 0 },
     color: colors,
-    series: [
-      {
-        type: 'pie',
-        center: ['50%', '46%'],
-        radius: ['60%', '80%'],
-        avoidLabelOverlap: true,
-        itemStyle: {
-          borderRadius: 8,
-          borderColor: '#fff',
-          borderWidth: 2,
-        },
-        label: {
-          show: true,
-          formatter: '{b}\n{c} ({d}%)',
-          fontSize: 13,
-          fontWeight: 600,
-          color: '#303133',
-        },
-        labelLine: {
-          show: true,
-          length: 12,
-          length2: 10,
-          smooth: true,
-        },
-        emphasis: {
-          scale: true,
-          scaleSize: 10,
-          itemStyle: {
-            shadowBlur: 12,
-            shadowOffsetX: 0,
-            shadowColor: 'rgba(0, 0, 0, 0.3)',
-          },
-        },
-        data: ds,
-      },
-    ],
+    series: [{
+      type: 'pie',
+      radius: ['50%', '70%'],
+      avoidLabelOverlap: false,
+      label: { show: false },
+      data: ds,
+    }],
   }
 })
 
@@ -638,18 +515,14 @@ const priorityPieOption = computed(() => {
     value: (tasks.value as any[]).filter((x) => x.priority === p.key).length,
   }))
   return {
-    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
-    legend: { bottom: 0, left: 'center' },
-    series: [
-      {
-        type: 'pie',
-        center: ['50%', '46%'],
-        radius: ['60%', '80%'],
-        label: { show: true, formatter: '{b}\n{c} ({d}%)', fontSize: 13 },
-        labelLine: { length: 12, length2: 10 },
-        data: ds,
-      },
-    ],
+    tooltip: { trigger: 'item' },
+    legend: { bottom: 0 },
+    series: [{
+      type: 'pie',
+      radius: ['50%', '70%'],
+      label: { show: false },
+      data: ds,
+    }],
   }
 })
 
@@ -658,283 +531,252 @@ refresh()
 
 <style scoped>
 .tasks-page {
-  padding: 12px;
-}
-.toolbar-card {
-  margin-bottom: 12px;
-}
-.toolbar-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-/* 看板样式 */
-.kanban {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+/* Header */
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.page-title h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--app-text);
+  margin: 0;
+}
+
+/* Toolbar */
+.toolbar-container {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
   gap: 12px;
 }
-.kanban-col {
-  background: #fafafa;
-  border: 1px solid #eee;
-  border-radius: 6px;
-  min-height: 120px;
-}
-.kanban-header {
-  padding: 10px;
-  font-weight: 600;
-  border-bottom: 1px solid #eee;
+
+.filters {
   display: flex;
-  justify-content: space-between;
+  gap: 12px;
+  flex: 1;
+}
+
+.search-input {
+  width: 240px;
+}
+.filter-select {
+  width: 120px;
+}
+
+/* Custom Table */
+.custom-table {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  --el-table-header-bg-color: #f8fafc;
+}
+
+.custom-checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--text-light);
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
   align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
 }
-.kanban-header .count {
-  color: #909399;
-  font-size: 12px;
+
+.custom-checkbox:hover {
+  border-color: var(--primary);
 }
-.kanban-list {
-  padding: 10px;
+
+.custom-checkbox.checked {
+  background-color: var(--success);
+  border-color: var(--success);
+  color: white;
+}
+
+.task-cell-main {
   display: flex;
   flex-direction: column;
-  gap: 10px;
 }
-.kanban-card .card-header {
+
+.task-title {
+  font-weight: 500;
+  color: var(--app-text);
+  font-size: 14px;
+}
+
+.task-title.done {
+  text-decoration: line-through;
+  color: var(--text-light);
+}
+
+.task-meta {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+  flex-wrap: wrap;
 }
-.kanban-card .title {
+
+.meta-item {
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.meta-item.overdue {
+  color: var(--danger);
   font-weight: 600;
 }
-.kanban-card .meta {
-  color: #909399;
+
+.meta-tag {
+  font-size: 11px;
+}
+
+.priority-indicator {
   font-size: 12px;
-  margin-bottom: 6px;
-}
-.kanban-card .actions {
-  text-align: right;
-}
-
-/* 甘特图样式 */
-.gantt {
-  padding: 8px 0;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  display: inline-block;
 }
 
-/* 统计页面样式 */
+.priority-indicator.low { color: var(--text-secondary); background: var(--app-bg); }
+.priority-indicator.med { color: var(--secondary); background: var(--secondary-light); }
+.priority-indicator.high { color: var(--warning); background: var(--warning-light); }
+.priority-indicator.urgent { color: var(--danger); background: var(--danger-light); }
+
+/* Kanban View */
+.kanban-view {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 20px;
+}
+
+.kanban-column {
+  background: #f1f5f9;
+  border-radius: var(--radius-md);
+  padding: 12px;
+  min-width: 240px;
+}
+
+.column-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.col-count {
+  background: rgba(0,0,0,0.05);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.kanban-card {
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.kanban-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.k-card-top {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.k-card-title {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 12px;
+  line-height: 1.4;
+  color: var(--app-text);
+}
+
+.k-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.due-date.overdue {
+  color: var(--danger);
+}
+
+/* Stats View */
 .stats-overview {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.stat-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 8px;
-  transition: all 0.3s;
-  cursor: pointer;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-}
-
-.stat-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  flex-shrink: 0;
-}
-
-.stat-icon.total {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
-}
-
-.stat-icon.success {
-  background: linear-gradient(135deg, #67c23a 0%, #85ce61 100%);
-  color: #fff;
-}
-
-.stat-icon.warning {
-  background: linear-gradient(135deg, #e6a23c 0%, #f0c78a 100%);
-  color: #fff;
-}
-
-.stat-icon.danger {
-  background: linear-gradient(135deg, #f56c6c 0%, #f89898 100%);
-  color: #fff;
-}
-
-.stat-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.stat-value {
-  font-size: 24px;
-  font-weight: 700;
-  color: #303133;
-  line-height: 1;
-  margin-bottom: 0;
-}
-
-.stat-label {
-  font-size: 13px;
-  color: #909399;
-  margin-top: 2px;
-}
-
-/* 横向布局变体：当空间足够时，或者用户希望更紧凑时 */
-.stat-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 8px;
-  transition: all 0.3s;
-  cursor: pointer;
-}
-
-.stat-info {
-  flex: 1;
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  flex-direction: row; /* 改为横向排列 */
-}
-
-/* 图表网格 */
-.charts-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  margin-bottom: 20px;
-}
-
-.chart-card {
-  border-radius: 12px;
-  overflow: visible;
-  min-height: 580px;
-}
-
-.chart-container {
-  width: 100%;
-  min-height: 480px;
-  height: 480px;
-  padding: 12px 12px 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.chart-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.chart-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #303133;
-}
-
-/* 详细统计 */
-.detail-stats {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-}
-
-.stat-tags {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
-  padding: 8px 0;
+  margin-bottom: 24px;
 }
 
-.stat-tag-item {
+.stat-box {
+  background: white;
+  padding: 20px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
+.stat-box .num { font-size: 28px; font-weight: 800; }
+.stat-box .txt { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+.stat-box.total .num { color: var(--app-text); }
+.stat-box.done .num { color: var(--success); }
+.stat-box.progress .num { color: var(--secondary); }
+.stat-box.urgent .num { color: var(--danger); }
+
+.charts-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: #f5f7fa;
-  border-radius: 8px;
-  transition: all 0.3s;
+  gap: 24px;
 }
-
-.stat-tag-item:hover {
-  background: #e4e7ed;
-  transform: translateX(4px);
+.chart-box {
+  flex: 1;
+  background: white;
+  border-radius: var(--radius-md);
+  padding: 20px;
+  border: 1px solid var(--border);
 }
+.chart-box h3 { margin: 0 0 20px 0; font-size: 16px; }
 
-.stat-tag-count {
-  font-size: 20px;
-  font-weight: 700;
-  color: #303133;
-}
-
-/* 响应式 */
-@media (max-width: 1400px) {
-  .charts-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 992px) {
-  .stats-overview {
+/* Responsive */
+@media (max-width: 1024px) {
+  .kanban-view {
     grid-template-columns: repeat(2, 1fr);
   }
-}
-
-@media (max-width: 1200px) {
-  .kanban {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .detail-stats {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 768px) {
-  .stats-overview {
-    grid-template-columns: 1fr;
-  }
-
-  .stat-card {
-    padding: 16px;
-  }
-
-  .stat-icon {
-    width: 48px;
-    height: 48px;
-    font-size: 24px;
-  }
-
-  .stat-value {
-    font-size: 24px;
-  }
-
-  .stat-tags {
-    grid-template-columns: 1fr;
-  }
+  .charts-row { flex-direction: column; }
 }
 
 @media (max-width: 640px) {
-  .kanban {
-    grid-template-columns: 1fr;
-  }
+  .kanban-view { grid-template-columns: 1fr; }
+  .stats-overview { grid-template-columns: repeat(2, 1fr); }
+  .filters { flex-direction: column; }
+  .search-input { width: 100%; }
 }
 </style>
