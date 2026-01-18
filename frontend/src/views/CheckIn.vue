@@ -10,12 +10,12 @@
         <el-button type="primary" size="large" :disabled="hasCheckedIn" @click="handleCheckIn">
           {{ hasCheckedIn ? '今日已打卡' : '立即打卡' }}
         </el-button>
-        <div class="stats" style="margin-top: 20px">
+        <div class="stats" style="margin-top: 24px">
           <el-statistic title="连续打卡天数" :value="consecutiveDays" />
           <el-statistic title="总打卡天数" :value="totalDays" />
           <el-statistic v-if="todayHeatValue > 0" title="今日热力值" :value="todayHeatValue" />
         </div>
-        <div v-if="hasCheckedIn" class="heat-info" style="margin-top: 20px">
+        <div v-if="hasCheckedIn" class="heat-info" style="margin-top: 24px">
           <el-alert
             :title="`✨ 今日热力值: ${todayHeatValue} | 构成: 打卡+${pomodoroCount}*番茄(×2)+${wordCount}*单词(×1)+${taskCount}*任务(×3)`"
             type="success"
@@ -24,7 +24,7 @@
         </div>
       </div>
     </el-card>
-    <el-card style="margin-top: 20px">
+    <el-card style="margin-top: 24px">
       <template #header>
         <div class="card-header">
           <h3>年度打卡热力图</h3>
@@ -134,7 +134,8 @@ const loadCalendar = async () => {
       },
       calendar: {
         range: `${year}`,
-        cellSize: ['auto', 18],
+        // 使用固定方形单元格，确保热力块在单元格中居中显示
+        cellSize: [30, 30],
         splitLine: { show: false },
         itemStyle: { borderWidth: 0.5, borderColor: '#f0f0f0' },
         yearLabel: { show: false },
@@ -146,6 +147,10 @@ const loadCalendar = async () => {
           type: 'heatmap',
           coordinateSystem: 'calendar',
           data,
+          // 让热力块有圆角并确保填充单元格中心
+          itemStyle: {
+            borderRadius: 6,
+          },
         },
       ],
     }

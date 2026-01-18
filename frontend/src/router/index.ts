@@ -80,6 +80,11 @@ const routes = [
         name: 'Tasks',
         component: () => import('@/views/Tasks.vue'),
       },
+      {
+        path: 'plugins',
+        name: 'Plugins',
+        component: () => import('@/views/Plugins.vue'),
+      },
     ],
   },
 ]

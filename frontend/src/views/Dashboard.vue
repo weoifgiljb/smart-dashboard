@@ -16,16 +16,16 @@
           开始专注
         </el-button>
         <div class="date-filter">
-      <el-date-picker
-        v-model="dateRange"
-        type="daterange"
+          <el-date-picker
+            v-model="dateRange"
+            type="daterange"
             range-separator="-"
             start-placeholder="开始"
             end-placeholder="结束"
-        :shortcuts="shortcuts"
-        size="default"
+            :shortcuts="shortcuts"
+            size="default"
             style="width: 240px"
-      />
+          />
         </div>
       </div>
     </div>
@@ -87,7 +87,7 @@
     </el-row>
 
     <!-- Charts Row -->
-    <el-row :gutter="20" style="margin-top: 20px">
+    <el-row :gutter="20" style="margin-top: 24px">
       <el-col :span="8">
         <el-card class="chart-card">
           <template #header>
@@ -132,7 +132,7 @@
     </el-row>
 
     <!-- Bottom Row: Today Tasks & Recent Activity -->
-    <el-row :gutter="20" style="margin-top: 20px">
+    <el-row :gutter="20" style="margin-top: 24px">
       <el-col :span="12">
         <el-card class="list-card">
           <template #header>
@@ -144,18 +144,22 @@
           <div class="tasks-list">
             <div class="task-item" :class="{ completed: todayTasks.hasCheckedIn }">
               <div class="task-icon-wrapper">
-              <el-icon><Calendar /></el-icon>
+                <el-icon><Calendar /></el-icon>
               </div>
               <div class="task-info">
                 <span class="task-title">每日打卡</span>
                 <span class="task-desc">记录今天的成长足迹</span>
               </div>
-              <el-tag v-if="todayTasks.hasCheckedIn" type="success" size="small" effect="dark">已完成</el-tag>
-              <el-button v-else type="primary" link size="small" @click="router.push('/calendar')">去打卡</el-button>
+              <el-tag v-if="todayTasks.hasCheckedIn" type="success" size="small" effect="dark"
+                >已完成</el-tag
+              >
+              <el-button v-else type="primary" link size="small" @click="router.push('/calendar')"
+                >去打卡</el-button
+              >
             </div>
             <div class="task-item">
               <div class="task-icon-wrapper">
-              <el-icon><Reading /></el-icon>
+                <el-icon><Reading /></el-icon>
               </div>
               <div class="task-info">
                 <span class="task-title">学习单词</span>
@@ -165,13 +169,15 @@
             </div>
             <div class="task-item">
               <div class="task-icon-wrapper">
-              <el-icon><Timer /></el-icon>
+                <el-icon><Timer /></el-icon>
               </div>
               <div class="task-info">
                 <span class="task-title">番茄专注</span>
                 <span class="task-desc">保持高效工作节奏</span>
               </div>
-              <el-tag type="warning" size="small">今日 {{ todayTasks.todayPomodoroCount }} 个</el-tag>
+              <el-tag type="warning" size="small"
+                >今日 {{ todayTasks.todayPomodoroCount }} 个</el-tag
+              >
             </div>
           </div>
         </el-card>
@@ -215,17 +221,17 @@
           </template>
         </el-table-column>
         <el-table-column prop="tag" label="标签">
-           <template #default="{ row }">
-             <el-tag size="small" v-if="row.tag">{{ row.tag }}</el-tag>
-             <span v-else>-</span>
-           </template>
+          <template #default="{ row }">
+            <el-tag v-if="row.tag" size="small">{{ row.tag }}</el-tag>
+            <span v-else>-</span>
+          </template>
         </el-table-column>
       </el-table>
       <el-table v-else :data="dialogData" style="width: 100%" stripe>
         <el-table-column prop="word" label="单词" width="180">
-           <template #default="{ row }">
-             <span style="font-weight: bold; color: var(--primary)">{{ row.word }}</span>
-           </template>
+          <template #default="{ row }">
+            <span style="font-weight: bold; color: var(--primary)">{{ row.word }}</span>
+          </template>
         </el-table-column>
         <el-table-column prop="meaning" label="释义" />
         <el-table-column prop="createTime" label="添加时间" width="180">
@@ -568,11 +574,11 @@ const buildHeatValueOption = (historyWithHeat: any[], calAgg: Record<string, any
       data: labels,
       axisTick: { show: false },
       axisLine: { show: false },
-      axisLabel: { 
+      axisLabel: {
         show: true,
         interval: 6, // 每隔6天显示一个
         color: '#9ca3af',
-        fontSize: 10
+        fontSize: 10,
       },
     },
     yAxis: {
@@ -720,7 +726,7 @@ const buildWordsOption = (words: any[], start?: Date, end?: Date) => {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
   padding-bottom: 24px;
   border-bottom: 1px solid var(--border);
 }
@@ -846,7 +852,8 @@ const buildWordsOption = (words: any[], start?: Date, end?: Date) => {
   height: 100%;
 }
 
-.tasks-list, .activities-list {
+.tasks-list,
+.activities-list {
   padding: 8px 0;
 }
 
@@ -947,21 +954,242 @@ const buildWordsOption = (words: any[], start?: Date, end?: Date) => {
   color: var(--text-light);
 }
 
-@media (max-width: 768px) {
+/* 响应式布局 - 平板 */
+@media (max-width: 1024px) {
+  .dashboard {
+    padding: 20px;
+  }
+
   .welcome-section {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
   }
-  
+
   .action-buttons {
     width: 100%;
-    flex-wrap: wrap;
+    justify-content: flex-start;
   }
-  
-  .el-col {
+
+  .date-filter {
+    width: 100%;
+  }
+
+  .date-filter :deep(.el-date-editor) {
     width: 100% !important;
+  }
+}
+
+/* 响应式布局 - 手机 */
+@media (max-width: 768px) {
+  .dashboard {
+    padding: 16px;
+  }
+
+  .welcome-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+  }
+
+  .welcome-text h2 {
+    font-size: 24px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+  }
+
+  .action-buttons {
+    width: 100%;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .date-filter {
+    width: 100%;
+  }
+
+  .date-filter :deep(.el-date-editor) {
+    width: 100% !important;
+  }
+
+  /* KPI卡片 - 2列布局 */
+  .kpi-row :deep(.el-col) {
+    width: 50% !important;
+    max-width: 50% !important;
+    flex: 0 0 50%;
     margin-bottom: 16px;
+  }
+
+  .kpi-card {
+    margin-bottom: 0;
+  }
+
+  .kpi-body {
+    flex-direction: column;
+    padding: 16px 12px;
+    text-align: center;
+  }
+
+  .kpi-icon {
+    margin-right: 0;
+    margin-bottom: 12px;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+
+  .stat-value {
+    font-size: 24px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+  }
+
+  /* 图表卡片 - 单列布局 */
+  .chart-card {
+    margin-bottom: 16px;
+  }
+
+  :deep(.el-row .el-col) {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 100%;
+  }
+
+  /* 列表卡片 */
+  .list-card {
+    margin-bottom: 16px;
+  }
+
+  .task-item {
+    padding: 12px 0;
+  }
+
+  .task-icon-wrapper {
+    width: 36px;
+    height: 36px;
+    margin-right: 12px;
+  }
+
+  .task-title {
+    font-size: 14px;
+  }
+
+  .task-desc {
+    font-size: 11px;
+  }
+
+  .activity-item {
+    padding: 10px 0;
+  }
+
+  .activity-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
+  }
+
+  .activity-title {
+    font-size: 13px;
+  }
+
+  .activity-time {
+    font-size: 11px;
+  }
+}
+
+/* 响应式布局 - 小屏手机 */
+@media (max-width: 480px) {
+  .dashboard {
+    padding: 12px;
+  }
+
+  .welcome-text h2 {
+    font-size: 20px;
+  }
+
+  .subtitle {
+    font-size: 12px;
+  }
+
+  .welcome-section {
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+  }
+
+  .action-buttons {
+    gap: 8px;
+  }
+
+  /* KPI卡片 - 单列布局 */
+  .kpi-row :deep(.el-col) {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 100%;
+    margin-bottom: 12px;
+  }
+
+  .kpi-body {
+    flex-direction: row;
+    padding: 14px 12px;
+    text-align: left;
+  }
+
+  .kpi-icon {
+    margin-right: 12px;
+    margin-bottom: 0;
+    width: 44px;
+    height: 44px;
+    font-size: 22px;
+  }
+
+  .kpi-info {
+    flex: 1;
+  }
+
+  .stat-value {
+    font-size: 22px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+  }
+
+  .card-header {
+    font-size: 14px;
+  }
+
+  .card-header :deep(.el-tag) {
+    font-size: 11px;
+  }
+
+  /* 缩小图表高度 */
+  :deep(.chart-card .base-chart) {
+    height: 180px !important;
+  }
+
+  .task-item {
+    padding: 10px 0;
+  }
+
+  .task-icon-wrapper {
+    width: 32px;
+    height: 32px;
+  }
+
+  .activity-icon {
+    width: 26px;
+    height: 26px;
   }
 }
 </style>

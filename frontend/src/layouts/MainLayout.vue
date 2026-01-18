@@ -24,7 +24,7 @@
       </div>
     </el-header>
     <el-container>
-      <el-aside :width="isCollapse ? '64px' : '240px'" class="aside">
+      <el-aside :width="isCollapse ? '64px' : '240px'" class="aside" :class="{ show: showSidebar }">
         <div class="logo-container">
           <h2 v-show="!isCollapse" class="app-title">自律组件</h2>
           <h2 v-show="isCollapse" class="app-title">自</h2>
@@ -35,6 +35,7 @@
           :collapse-transition="false"
           router
           class="menu"
+          @select="handleMenuClick"
         >
           <el-menu-item index="/">
             <el-icon><House /></el-icon>
@@ -68,8 +69,18 @@
             <el-icon><Reading /></el-icon>
             <span>书籍推送</span>
           </el-menu-item>
+          <el-menu-item index="/plugins">
+            <el-icon><Grid /></el-icon>
+            <span>组件展示</span>
+          </el-menu-item>
         </el-menu>
       </el-aside>
+      <!-- 移动端遮罩层 -->
+      <div
+        v-if="isMobile && showSidebar"
+        class="sidebar-overlay"
+        @click="showSidebar = false"
+      ></div>
       <el-main class="main">
         <router-view v-slot="{ Component }">
           <Suspense>
@@ -89,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { ElMessage } from 'element-plus'
@@ -106,6 +117,7 @@ import {
   Notebook,
   Fold,
   Expand,
+  Grid,
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -113,8 +125,32 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const isCollapse = ref(false)
+const isMobile = ref(false)
+const showSidebar = ref(false)
+
+// 检测屏幕尺寸
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+  if (isMobile.value) {
+    isCollapse.value = false
+  }
+}
+
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
+
 const toggleCollapse = () => {
-  isCollapse.value = !isCollapse.value
+  if (isMobile.value) {
+    showSidebar.value = !showSidebar.value
+  } else {
+    isCollapse.value = !isCollapse.value
+  }
 }
 
 const activeMenu = computed(() => route.path)
@@ -131,6 +167,13 @@ const toggleTheme = () => {
   const theme = isDark.value ? 'dark' : 'light'
   document.documentElement.setAttribute('data-theme', theme)
   localStorage.setItem('theme', theme)
+}
+
+// 移动端点击菜单后关闭侧边栏
+const handleMenuClick = () => {
+  if (isMobile.value) {
+    showSidebar.value = false
+  }
 }
 </script>
 
@@ -222,5 +265,139 @@ const toggleTheme = () => {
   background: var(--app-bg);
   padding: 24px;
   overflow-y: auto;
+}
+
+.sidebar-overlay {
+  position: fixed;
+  top: 56px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 1024px) {
+  .header {
+    padding: 0 20px;
+  }
+
+  .main {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 0 16px;
+    height: 56px;
+  }
+
+  .header-left :deep(.el-button) {
+    margin-right: 8px !important;
+  }
+
+  .header-right {
+    gap: 8px;
+  }
+
+  .header-right span {
+    display: none;
+  }
+
+  .header-right :deep(.el-switch) {
+    margin-right: 8px !important;
+  }
+
+  .aside {
+    position: fixed;
+    left: 0;
+    top: 56px;
+    bottom: 0;
+    z-index: 1000;
+    width: 240px !important;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .aside.show {
+    transform: translateX(0);
+  }
+
+  .main {
+    padding: 16px;
+    margin-left: 0 !important;
+  }
+
+  .logo-container {
+    height: 56px;
+  }
+
+  .app-title {
+    font-size: 18px;
+  }
+
+  :deep(.el-menu-item) {
+    height: 48px;
+    line-height: 48px;
+  }
+
+  .sidebar-overlay {
+    top: 56px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 0 12px;
+    height: 52px;
+  }
+
+  .logo-container {
+    height: 52px;
+  }
+
+  .app-title {
+    font-size: 16px;
+  }
+
+  .main {
+    padding: 12px;
+  }
+
+  :deep(.el-menu-item) {
+    height: 44px;
+    line-height: 44px;
+    font-size: 14px;
+  }
+
+  :deep(.el-menu-item .el-icon) {
+    font-size: 16px;
+  }
+
+  .aside {
+    top: 52px;
+  }
+
+  .sidebar-overlay {
+    top: 52px;
+  }
+
+  .header-right :deep(.el-button) {
+    font-size: 13px;
+    padding: 6px 12px;
+  }
 }
 </style>

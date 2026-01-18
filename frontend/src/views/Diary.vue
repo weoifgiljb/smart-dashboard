@@ -484,4 +484,176 @@ onMounted(() => {
   display: flex;
   gap: 10px;
 }
+
+/* 响应式布局 - 平板 */
+@media (max-width: 1024px) {
+  .diary-page {
+    max-width: 100%;
+    padding: 0 20px;
+  }
+}
+
+/* 响应式布局 - 手机 */
+@media (max-width: 768px) {
+  .diary-page {
+    padding: 0 16px;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .page-title h2 {
+    font-size: 18px;
+  }
+
+  .subtitle {
+    font-size: 11px;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .actions :deep(.el-button) {
+    flex: 0 0 auto;
+  }
+
+  .diary-item-card {
+    font-size: 14px;
+  }
+
+  .diary-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .diary-meta {
+    width: 100%;
+  }
+
+  .diary-actions {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .diary-content {
+    font-size: 14px;
+  }
+
+  .diary-tags {
+    flex-wrap: wrap;
+  }
+
+  /* 对话框全屏 */
+  :deep(.el-dialog) {
+    width: 95% !important;
+    margin: 0 auto;
+  }
+
+  :deep(.el-form-item__label) {
+    font-size: 13px;
+  }
+
+  :deep(.monaco-editor) {
+    height: 300px !important;
+  }
+}
+
+/* 响应式布局 - 小屏手机 */
+@media (max-width: 480px) {
+  .diary-page {
+    padding: 0 12px;
+  }
+
+  .toolbar-card {
+    margin-bottom: 16px;
+  }
+
+  .toolbar {
+    gap: 12px;
+  }
+
+  .page-title h2 {
+    font-size: 16px;
+  }
+
+  .subtitle {
+    font-size: 10px;
+  }
+
+  .actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .actions :deep(.el-button) {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .diary-content {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .diary-content :deep(h1) {
+    font-size: 18px;
+  }
+
+  .diary-content :deep(h2) {
+    font-size: 16px;
+  }
+
+  .diary-content :deep(h3) {
+    font-size: 15px;
+  }
+
+  .diary-image :deep(.el-image) {
+    max-height: 150px !important;
+  }
+
+  /* 对话框几乎全屏 */
+  :deep(.el-dialog) {
+    width: 100% !important;
+    margin: 10px;
+  }
+
+  :deep(.el-dialog__header) {
+    padding: 15px;
+  }
+
+  :deep(.el-dialog__body) {
+    padding: 15px;
+  }
+
+  :deep(.el-form-item) {
+    margin-bottom: 16px;
+  }
+
+  :deep(.el-form-item__label) {
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+
+  :deep(.monaco-editor) {
+    height: 250px !important;
+  }
+
+  :deep(.el-radio-group) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  :deep(.el-radio-button) {
+    flex: 0 0 auto;
+  }
+}
 </style>
