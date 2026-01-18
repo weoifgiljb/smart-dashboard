@@ -521,7 +521,7 @@ const getComponentPreview = (id: string) => {
 <style scoped>
 .plugins-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary);
   padding: 0;
 }
 
@@ -530,7 +530,7 @@ const getComponentPreview = (id: string) => {
   position: relative;
   padding: 80px 40px 60px;
   overflow: hidden;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary);
 }
 
 .hero-content {
@@ -560,7 +560,7 @@ const getComponentPreview = (id: string) => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #10b981;
+  background: var(--primary);
   animation: pulse 2s ease infinite;
 }
 
@@ -574,10 +574,7 @@ const getComponentPreview = (id: string) => {
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #fff 0%, #a8b9ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #fff;
 }
 
 .hero-description {
@@ -730,23 +727,23 @@ const getComponentPreview = (id: string) => {
 }
 
 .icon-dashboard {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--secondary);
+  color: #fff;
 }
 
 .icon-common {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white;
+  background: var(--primary);
+  color: #fff;
 }
 
 .icon-ui {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  color: white;
+  background: var(--info);
+  color: #fff;
 }
 
 .icon-charts {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-  color: white;
+  background: var(--success);
+  color: #fff;
 }
 
 .component-name {
