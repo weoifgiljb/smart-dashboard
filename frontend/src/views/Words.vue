@@ -143,19 +143,25 @@
       <el-col :span="8">
         <el-card class="chart-card">
           <template #header>
-            <div class="card-header">
-              <span>学习趋势</span>
-              <el-tag size="small" effect="plain">近7天</el-tag>
-            </div>
+            <CardHeader>
+              <template #left>
+                <span>学习趋势</span>
+              </template>
+              <template #right>
+                <el-tag size="small" effect="plain">近7天</el-tag>
+              </template>
+            </CardHeader>
           </template>
           <BaseChart :option="trendOption" height="240px" />
         </el-card>
 
         <el-card class="books-card" style="margin-top: 24px">
           <template #header>
-            <div class="card-header">
-              <span>我的词库</span>
-            </div>
+            <CardHeader>
+              <template #left>
+                <span>我的词库</span>
+              </template>
+            </CardHeader>
           </template>
           <div class="books-list">
             <div v-for="(book, idx) in books" :key="idx" class="book-item">
@@ -283,6 +289,7 @@ import {
   importDefaultWords,
 } from '@/api/words'
 import BaseChart from '@/components/charts/BaseChart.vue'
+import CardHeader from '@/components/ui/CardHeader.vue'
 import { generateWordImage } from '@/api/ai'
 import { getState as getSm2State } from '@/utils/sm2'
 
