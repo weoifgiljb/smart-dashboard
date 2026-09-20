@@ -27,6 +27,14 @@ test.describe('authenticated smoke', () => {
     await seedAuthenticatedSession(page)
   })
 
+  test('year heatmap shows a full-year contribution grid', async ({ page }) => {
+    await page.goto('/calendar')
+    await expect(page.locator('.layout-container')).toBeVisible({ timeout: 15000 })
+    await expect(page.getByText('年度活动热力')).toBeVisible()
+    await expect(page.getByText(/天有活动/)).toBeVisible()
+    await expect(page.getByTitle('2026-09-20：热力 9')).toBeVisible()
+  })
+
   test('sidebar visits every main page', async ({ page }) => {
     await page.goto('/')
     await expect(page.locator('.layout-container')).toBeVisible({ timeout: 15000 })

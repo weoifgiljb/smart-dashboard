@@ -36,26 +36,31 @@
           </div>
           <el-divider direction="vertical" />
           <div class="stat-box">
-            <div class="value year-status">
-              <span v-if="yearHeatmapAvailable" class="active">●</span>
-              <span v-else class="loading">○</span>
-            </div>
-            <div class="label">热力图就绪</div>
+            <div class="value">{{ yearActiveDays }}<span class="unit">天</span></div>
+            <div class="label">本年活跃</div>
           </div>
         </div>
       </div>
 
       <!-- 热力图区 -->
       <div class="bento-item heatmap-card" style="grid-area: heatmap">
-        <div class="card-title">
-          <span>年度活动热力</span>
-          <el-tooltip content="颜色深浅代表综合活跃度：打卡+番茄+单词+任务" placement="top">
-            <el-icon class="info-icon"><InfoFilled /></el-icon>
-          </el-tooltip>
-        </div>
-        <div class="chart-wrapper">
-          <BaseChart :option="calendarOption" height="180px" />
-        </div>
+        <YearHeatmap
+          :year="heatmapYear"
+          :activity="yearActivity"
+          :week-starts-on="firstDayOfWeek"
+          :today-key="todayKey"
+          @select="openDay"
+        >
+          <template #title>
+            <span>年度活动热力</span>
+            <el-tooltip
+              content="颜色深浅代表综合活跃度：打卡×1 + 番茄×2 + 单词×1 + 完成任务×3"
+              placement="top"
+            >
+              <el-icon class="info-icon"><InfoFilled /></el-icon>
+            </el-tooltip>
+          </template>
+        </YearHeatmap>
       </div>
 
       <!-- 月历区 -->
@@ -181,8 +186,9 @@ import { ElMessage, ElNotification } from 'element-plus'
 import { ArrowLeft, ArrowRight, InfoFilled, Calendar, Check } from '@element-plus/icons-vue'
 import { getCalendarData, getCalendarDay } from '@/api/calendar'
 import { checkIn, getCheckInStats } from '@/api/checkin'
-import BaseChart from '@/components/charts/BaseChart.vue'
+import YearHeatmap from '@/components/YearHeatmap.vue'
 import { chartPalette } from '@/utils/themeTokens'
+import { dayHeat, type DayActivity } from '@/utils/yearHeatmap'
 
 // Avoid conflict with local component registration
 const CalendarIcon = Calendar
@@ -207,8 +213,11 @@ const stats = ref<StatsMap>({})
 const hasCheckedIn = ref(false)
 const consecutiveDays = ref(0)
 const totalDays = ref(0)
-const calendarOption = ref<any>({})
-const yearHeatmapAvailable = ref(false)
+const yearActivity = ref<Record<string, DayActivity>>({})
+const heatmapYear = computed(() => currentYear.value)
+const yearActiveDays = computed(
+  () => Object.values(yearActivity.value).filter((day) => dayHeat(day) > 0).length,
+)
 
 const weekLabels = computed(() => {
   const sunFirst = ['日', '一', '二', '三', '四', '五', '六']
@@ -284,6 +293,7 @@ const handleCheckIn = async () => {
     try {
       await loadCheckInStats()
       await loadRange()
+      await loadYearHeatmap()
     } catch (e) {
       console.warn('刷新日历数据失败', e)
     }
@@ -305,95 +315,32 @@ const loadCheckInStats = async () => {
   }
 }
 
-// 加载打卡热力图
-const loadCheckinHeatmap = async () => {
+const loadYearHeatmap = async () => {
   try {
-    const { getCheckInHistoryWithHeatValue } = await import('@/api/checkin')
-    const { getCalendarData } = await import('@/api/calendar')
-
-    const year = new Date().getFullYear()
+    const year = heatmapYear.value
     const start = `${year}-01-01`
     const end = `${year}-12-31`
-    const [historyResp, calendarAgg]: any[] = await Promise.all([
-      getCheckInHistoryWithHeatValue(),
-      getCalendarData({ start, end }),
-    ])
-    const historyData = historyResp?.data || historyResp || []
-    const agg = calendarAgg || {}
-
-    let maxHeat = 10
-    const data = (Array.isArray(historyData) ? historyData : []).map((c: any) => {
-      const key = c.checkInDate
-      const raw = Number(c.heatValue) || 0
-      const day = agg?.[key] || {}
-      const fallback =
-        1 +
-        (Number(day.pomodoro) || 0) * 2 +
-        (Number(day.word) || 0) * 1 +
-        (Number(day.task) || 0) * 3
-      const heatValue = raw > 0 ? raw : fallback > 0 ? fallback : 0
-      maxHeat = Math.max(maxHeat, heatValue)
-      return [key, heatValue]
-    })
-
-    calendarOption.value = {
-      tooltip: {
-        formatter: (p: any) => {
-          const date = p.data?.[0]
-          const heat = p.data?.[1]
-          return heat ? `${date}：热力值 ${heat}` : `${date}：未打卡`
-        },
-      },
-      visualMap: {
-        show: false, // 隐藏图例以节省空间，颜色已足够说明
-        min: 0,
-        max: maxHeat,
-        inRange: {
-          color: [
-            chartPalette().border,
-            chartPalette().primary,
-            chartPalette().success,
-            chartPalette().primary,
-            chartPalette().secondary,
-          ],
-        },
-      },
-      calendar: {
-        top: 25,
-        left: 30,
-        right: 30,
-        range: `${year}`,
-        cellSize: ['auto', 14],
-        splitLine: { show: false },
-        itemStyle: { borderWidth: 3, borderColor: chartPalette().bg },
-        yearLabel: { show: false },
-        monthLabel: { nameMap: 'cn', fontSize: 10, color: chartPalette().text },
-        dayLabel: { nameMap: 'cn', fontSize: 10, color: chartPalette().text },
-      },
-      series: [
-        {
-          type: 'heatmap',
-          coordinateSystem: 'calendar',
-          data,
-          itemStyle: {
-            borderRadius: 2,
-          },
-        },
-      ],
-    }
-    yearHeatmapAvailable.value = true
+    const calendarAgg = ((await getCalendarData({ start, end })) || {}) as unknown as Record<
+      string,
+      DayActivity
+    >
+    yearActivity.value = calendarAgg
   } catch (error) {
     console.error('获取打卡热力图失败', error)
   }
 }
 
-watch([current, firstDayOfWeek], async () => {
+watch(current, async () => {
   await loadRange()
+})
+
+watch(heatmapYear, async () => {
+  await loadYearHeatmap()
 })
 
 onMounted(async () => {
   await loadCheckInStats()
-  await loadCheckinHeatmap()
+  await loadYearHeatmap()
   await loadRange()
 })
 
@@ -552,12 +499,12 @@ function formatTime(s?: string | null) {
 /* Bento Grid */
 .bento-grid {
   display: grid;
-  grid-template-columns: 300px 1fr;
-  grid-template-rows: auto auto;
+  grid-template-columns: minmax(240px, 300px) 1fr;
   grid-template-areas:
     'stats main'
-    'heatmap main';
+    'heatmap heatmap';
   gap: 24px;
+  align-items: start;
 }
 
 .bento-item {
@@ -566,6 +513,10 @@ function formatTime(s?: string | null) {
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border);
   overflow: hidden;
+}
+
+.heatmap-card {
+  overflow: visible;
 }
 
 /* Stats Card */
@@ -607,33 +558,10 @@ function formatTime(s?: string | null) {
   margin-top: 4px;
 }
 
-.year-status .active {
-  color: var(--success);
-}
-.year-status .loading {
-  color: var(--text-light);
-  animation: blink 1s infinite;
-}
-
-@keyframes blink {
-  50% {
-    opacity: 0.5;
-  }
-}
-
 /* Heatmap Card */
 .heatmap-card {
-  padding: 20px;
-}
-
-.card-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--app-text);
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  padding: 20px 24px 18px;
+  min-width: 0;
 }
 
 .info-icon {

@@ -1,0 +1,52 @@
+---
+description: CSS 变量主题切换规范。改颜色、暗色、Less token、Element Plus 桥接或图表配色时必须遵守。
+globs: frontend/**/*.{vue,css,less,ts,html}
+alwaysApply: false
+---
+
+# CSS 变量主题（本仓库）
+
+金句：**Less 编默认 token，CSS 变量运行时覆盖；就近覆盖 + 继承。**
+
+## 分层
+
+| 层 | 文件 | 时机 |
+| --- | --- | --- |
+| 调色板 | `frontend/src/styles/palette.less` 的 `@*` | 编译期，禁止写进组件 |
+| 运行时 token | `theme.less` 的 `:root` / `[data-theme='dark']` / `prefers-color-scheme` | 运行时 |
+| 组件库桥 | `element-bridge.less` 把 `--el-*` 接到 `--color-*` | 运行时 |
+| 切换 | `useTheme.ts`：`data-theme` + `html.dark` + `localStorage.theme` | JS |
+| 画布读色 | `themeTokens.ts` 的 `cssVar('--color-x', fallback)` | 读计算值 |
+
+整站切换只改 `document.documentElement` 的 `data-theme`（`applyTheme`）。不要为暗色再打一份组件 CSS。
+
+## 必须
+
+- UI 颜色用 `var(--color-bg)`、`var(--color-text)`、`var(--color-primary)` 等；需要回退时 `var(--color-primary, #10b981)`。
+- 新 token：先加 `@*` 到 `palette.less`，再映射进 `theme.less` 的 `:root` **和** `[data-theme='dark']`（系统暗色那段同步）。
+- 局部主题（侧栏已是）：在容器上覆盖变量，子元素 `var()` 取最近祖先。侧栏用 `--sidebar-local-*`，不要把整站 `--color-bg` 改成侧栏色。
+- 图表/Canvas：用 `chartPalette()`；主题变化后重读（已有 `data-theme` observer 的保持）。
+- 首屏防闪白：`index.html` 内联脚本按 `localStorage.theme` 或 `prefers-color-scheme` 先设 `data-theme`，再等 `main.ts`。
+
+```css
+.preview-dark {
+  --color-bg: #141414;
+  --color-text: #f5f5f5;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+```
+
+## 禁止
+
+- 组件里写死 `#fff` / `rgb()` 当背景或正文色（装饰性固定色除外）。
+- 组件里直接用 `@primary-light` 等 Less 变量当运行时色。
+- 每帧 JS 改大量内联 style；主题切换只改 `:root` 上几个变量。
+- 绕过 `--el-*` 去改 Element Plus 内部硬编码色；走 `element-bridge.less`。
+
+## 切完颜色没变时
+
+1. 是否硬编码而非 `var()`。
+2. Element Plus 是否走了 `--el-*`。
+3. 图表/图标是否独立取色。
+4. `transition` 自定义属性需 `@property` 声明；不支持则直接切换。

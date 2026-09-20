@@ -1,0 +1,41 @@
+---
+description: 前端 TS/Vue：靠推断、禁止 any、闭集用枚举、模板不用 v-for。新写或改 Vue/TS 时必须遵守。
+globs: frontend/**/*.{vue,ts,tsx}
+alwaysApply: false
+---
+
+# 前端类型与模板
+
+## 类型
+
+- **能推断就别标**：`const n = 1`，不要 `const n: number = 1`。只在函数入参、公有返回、收窄失败时写类型。
+- **禁止 `any` / `as any`**。未知数据用 `unknown` 再收窄；对象用接口或泛型；索引用 `Record<Enum | string, T>`。
+- **闭集用 `enum`**（主题、热力档、任务状态、番茄类型），不要散落 `'dark' | 'light'` 字符串。`switch` 必须穷尽，`default` 用 `never`。
+
+```ts
+enum ThemeName {
+  Light = 'light',
+  Dark = 'dark',
+}
+
+function applyTheme(theme: ThemeName) {
+  document.documentElement.dataset.theme = theme
+}
+```
+
+## 模板禁止 `v-for`
+
+- 不要写 `v-for`。固定少量节点在模板里写死。
+- 动态列表：在 `<script>` 里对**已类型化**的数组 `.map` 成 `h(Comp, props)`，或拆成具名子组件由父级逐个放置。
+- 禁止 `v-for` + `v-if` 写在同一元素上（即便以后有人加回列表指令也不许这样写）。
+
+```ts
+// ✅ 迭代留在 TS，模板只挂节点
+const weekdayNodes = weekdayLabels.map((label) => h('span', { class: 'weekday' }, label))
+```
+
+```vue
+<template>
+  <div class="weekday-col">{{ weekdayNodes }}</div>
+</template>
+```

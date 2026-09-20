@@ -87,6 +87,18 @@ function payloadFor(url: URL, method: string) {
   }
   if (/\/books\/[^/]+$/.test(path) && !path.includes('/books/random')) return SAMPLE_BOOK
   if (path.includes('/books')) return { content: [SAMPLE_BOOK], totalElements: 1 }
+  if ((path === '/calendar' || path.endsWith('/calendar')) && method === 'GET') {
+    return {
+      '2026-01-05': { checkin: 1 },
+      '2026-02-14': { checkin: 1, pomodoro: 2 },
+      '2026-03-08': { checkin: 1, word: 4 },
+      '2026-04-21': { checkin: 1, pomodoro: 1, task: 1 },
+      '2026-06-11': { pomodoro: 3 },
+      '2026-09-18': { checkin: 1, word: 2 },
+      '2026-09-19': { checkin: 1, pomodoro: 2, word: 1 },
+      '2026-09-20': { checkin: 1, pomodoro: 2, word: 1, task: 1 },
+    }
+  }
   if (method === 'GET') {
     if (path.includes('stats') || path.includes('/calendar')) return {}
     return []
