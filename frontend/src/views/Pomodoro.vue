@@ -71,6 +71,22 @@
           <span class="label">休息时长</span>
           <el-input-number v-model="breakMinutes" :min="1" :max="60" controls-position="right" />
         </div>
+        <div v-if="timerType === 'work'" class="config-item config-item-wide">
+          <span class="label">绑定任务（可选）</span>
+          <el-select
+            v-model="selectedTaskId"
+            clearable
+            filterable
+            placeholder="不绑定，自由专注"
+          >
+            <el-option
+              v-for="task in openTasks"
+              :key="task.id"
+              :label="taskLabel(task)"
+              :value="task.id"
+            />
+          </el-select>
+        </div>
       </div>
 
       <div class="stats-block">
@@ -107,17 +123,47 @@
         <BaseChart :option="fluctuationOption" height="192px" />
       </el-card>
     </div>
+
+    <el-dialog
+      v-model="reviewVisible"
+      title="专注后的 2 分钟微复习"
+      width="420px"
+      align-center
+      :close-on-click-modal="false"
+    >
+      <div v-if="currentReviewWord" class="micro-review">
+        <p class="micro-progress">{{ reviewIndex + 1 }} / {{ reviewQueue.length }}</p>
+        <button type="button" class="micro-card" @click="reviewFlipped = true">
+          <strong>{{ currentReviewWord.word }}</strong>
+          <span v-if="reviewFlipped">{{ currentReviewWord.translation || '暂无释义' }}</span>
+          <span v-else class="micro-hint">点击看释义</span>
+        </button>
+        <div class="micro-actions">
+          <el-button @click="skipReviewWord">跳过</el-button>
+          <el-button type="primary" :disabled="!reviewFlipped" @click="markReviewKnown">
+            认识了
+          </el-button>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { VideoPlay, VideoPause, Refresh } from '@element-plus/icons-vue'
 import { startPomodoro, getPomodoroStats, getPomodoroHistory } from '@/api/pomodoro'
+import { listTasks } from '@/api/tasks'
+import { getTodayWords, reviewWord } from '@/api/words'
+import type { Task } from '@/types/task'
 import BaseChart from '@/components/charts/BaseChart.vue'
 import { chartPalette } from '@/utils/themeTokens'
 
+type ReviewWord = { id: string; word: string; translation?: string }
+
+const route = useRoute()
 const workMinutes = ref(25)
 const breakMinutes = ref(5)
 const timeLeft = ref(workMinutes.value * 60) // 单位：秒
@@ -128,6 +174,14 @@ const todayCount = ref(0)
 const totalCount = ref(0)
 const weeklyOption = ref<any>({})
 const fluctuationOption = ref<any>({})
+const selectedTaskId = ref('')
+const openTasks = ref<Task[]>([])
+const reviewVisible = ref(false)
+const reviewQueue = ref<ReviewWord[]>([])
+const reviewIndex = ref(0)
+const reviewFlipped = ref(false)
+
+const currentReviewWord = computed(() => reviewQueue.value[reviewIndex.value] || null)
 
 // 进度计算（基于当前模式总秒数与剩余秒数）
 const totalSeconds = computed(() =>
@@ -174,6 +228,8 @@ onMounted(async () => {
   await loadStats()
   await loadWeekly()
   await loadFluctuation()
+  applyTaskQuery(route.query.taskId)
+  await loadOpenTasks()
 })
 
 onUnmounted(() => {
@@ -182,6 +238,47 @@ onUnmounted(() => {
     worker = null
   }
 })
+
+watch(
+  () => route.query.taskId,
+  async (taskId) => {
+    applyTaskQuery(taskId)
+    await loadOpenTasks()
+  },
+)
+
+const applyTaskQuery = (taskId: unknown) => {
+  const id = Array.isArray(taskId) ? taskId[0] : taskId
+  if (typeof id === 'string' && id) {
+    selectedTaskId.value = id
+  }
+}
+
+const taskLabel = (task: Task) => {
+  const minutes = task.actualMinutes ? ` · 已专注 ${task.actualMinutes} 分钟` : ''
+  return `${task.title}${minutes}`
+}
+
+const loadOpenTasks = async () => {
+  try {
+    const list = (await listTasks({})) as Task[]
+    openTasks.value = (list || []).filter((task): task is Task & { id: string } => {
+      const status = String(task.status || '').toLowerCase()
+      return (status === 'in_progress' || status === 'todo') && Boolean(task.id)
+    })
+    if (
+      selectedTaskId.value &&
+      !openTasks.value.some((task) => task.id === selectedTaskId.value)
+    ) {
+      openTasks.value = [
+        { id: selectedTaskId.value, title: '当前任务' },
+        ...openTasks.value,
+      ]
+    }
+  } catch (error) {
+    console.error('获取可绑定任务失败', error)
+  }
+}
 
 const loadStats = async () => {
   try {
@@ -367,19 +464,71 @@ const resetTimer = () => {
 
 const finishTimer = async () => {
   pauseTimer()
+  const finishedType = timerType.value
   try {
     await startPomodoro({
-      duration: timerType.value === 'work' ? workMinutes.value : breakMinutes.value,
-      type: timerType.value,
+      duration: finishedType === 'work' ? workMinutes.value : breakMinutes.value,
+      type: finishedType,
+      ...(finishedType === 'work' && selectedTaskId.value
+        ? { taskId: selectedTaskId.value }
+        : {}),
     })
-    ElMessage.success('番茄钟完成！')
+    ElMessage.success(
+      finishedType === 'work' && selectedTaskId.value
+        ? '专注完成，任务耗时已更新'
+        : '番茄钟完成！',
+    )
     await loadStats()
     await loadWeekly()
     await loadFluctuation()
+    await loadOpenTasks()
     resetTimer()
+    if (finishedType === 'work') {
+      await openMicroReview()
+    }
   } catch (error: any) {
     ElMessage.error(error.response?.data?.message || '保存失败')
   }
+}
+
+const openMicroReview = async () => {
+  try {
+    const list = (await getTodayWords()) as ReviewWord[]
+    reviewQueue.value = (list || []).filter((word) => word?.id && word?.word).slice(0, 3)
+    if (!reviewQueue.value.length) {
+      return
+    }
+    reviewIndex.value = 0
+    reviewFlipped.value = false
+    reviewVisible.value = true
+  } catch {
+    // 到期词拉取失败时不打断主流程
+  }
+}
+
+const skipReviewWord = () => {
+  advanceReview()
+}
+
+const markReviewKnown = async () => {
+  const word = currentReviewWord.value
+  if (!word) return
+  try {
+    await reviewWord(word.id)
+    advanceReview()
+  } catch {
+    ElMessage.error('复习保存失败')
+  }
+}
+
+const advanceReview = () => {
+  reviewFlipped.value = false
+  if (reviewIndex.value + 1 >= reviewQueue.value.length) {
+    reviewVisible.value = false
+    ElMessage.success('微复习完成，今天又接上了一小段。')
+    return
+  }
+  reviewIndex.value += 1
 }
 </script>
 
@@ -528,6 +677,14 @@ const finishTimer = async () => {
   border-radius: var(--radius-md);
 }
 
+.config-item-wide {
+  grid-column: 1 / -1;
+}
+
+.config-item-wide :deep(.el-select) {
+  width: 100%;
+}
+
 .config-item {
   display: flex;
   flex-direction: column;
@@ -621,6 +778,49 @@ const finishTimer = async () => {
   border-radius: 6px;
   background: var(--color-primary-soft);
   color: var(--color-primary);
+}
+
+.micro-review {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+}
+
+.micro-progress {
+  margin: 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.micro-card {
+  min-height: 140px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-muted);
+  color: var(--color-text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.micro-card strong {
+  font-size: 28px;
+}
+
+.micro-hint {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.micro-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 @media (max-width: 720px) {

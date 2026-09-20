@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.selfdiscipline.dto.RhythmResponse;
+
 import java.util.List;
 import java.util.Map;
 
@@ -34,6 +36,11 @@ public class DashboardController {
     public ResponseEntity<List<Map<String, Object>>> getRecentActivities(Authentication authentication) {
         List<Map<String, Object>> activities = dashboardService.getRecentActivities(authentication.getName());
         return ResponseEntity.ok(activities);
+    }
+
+    @GetMapping("/rhythm")
+    public ResponseEntity<RhythmResponse> getRhythm(Authentication authentication) {
+        return ResponseEntity.ok(dashboardService.getRhythm(authentication.getName()));
     }
 }
 

@@ -1,3 +1,4 @@
+/** 仅供测试与对照。真实复习间隔以后端艾宾浩斯 dueDate 为准，不要再把 SM-2 写入 localStorage 作为调度依据。 */
 export type Sm2State = {
   repetition: number
   interval: number

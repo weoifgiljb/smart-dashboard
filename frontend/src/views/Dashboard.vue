@@ -1,33 +1,50 @@
 <template>
   <div class="dashboard">
-    <!-- Welcome & Actions Row -->
-    <div class="welcome-section">
-      <div class="welcome-text">
-        <h2>自律即自由</h2>
-        <p class="subtitle">每一天都是成长的契机。</p>
-      </div>
-      <div class="action-buttons">
-        <el-button type="primary" size="large" class="action-btn" @click="router.push('/calendar')">
-          <el-icon class="el-icon--left"><Calendar /></el-icon>
-          立即打卡
-        </el-button>
-        <el-button type="success" size="large" class="action-btn" @click="router.push('/pomodoro')">
-          <el-icon class="el-icon--left"><Timer /></el-icon>
-          开始专注
-        </el-button>
-        <div class="date-filter">
-          <el-date-picker
-            v-model="dateRange"
-            type="daterange"
-            range-separator="-"
-            start-placeholder="开始"
-            end-placeholder="结束"
-            :shortcuts="shortcuts"
-            size="default"
-            style="width: 240px"
-          />
+    <section class="rhythm-card">
+      <div class="rhythm-top">
+        <div class="rhythm-main">
+          <p class="rhythm-kicker">今日节律</p>
+          <h2>{{ rhythm.ctaLabel }}</h2>
+          <p class="subtitle">{{ rhythm.reason }}</p>
+          <el-button type="primary" size="large" class="action-btn" @click="goRhythm">
+            <el-icon class="el-icon--left">
+              <Calendar v-if="rhythm.nextAction === 'CHECK_IN'" />
+              <Reading v-else-if="rhythm.nextAction === 'REVIEW_WORDS'" />
+              <Timer v-else />
+            </el-icon>
+            {{ rhythm.ctaLabel }}
+          </el-button>
+        </div>
+        <div class="heat-total">
+          <strong>{{ rhythm.heat.total }}</strong>
+          <span>今日热力</span>
         </div>
       </div>
+      <div class="heat-list">
+        <div v-for="part in heatParts" :key="part.key" class="heat-row">
+          <div class="heat-heading">
+            <span class="heat-label">{{ part.label }}</span>
+            <span class="heat-score">{{ part.score }}</span>
+          </div>
+          <div class="heat-track">
+            <div class="heat-fill" :style="{ width: heatWidth(part.score) }" />
+          </div>
+          <span class="heat-hint">{{ part.hint }}</span>
+        </div>
+      </div>
+      <p class="heat-formula">打卡×1 + 番茄×2 + 单词×1 + 任务×3</p>
+    </section>
+    <div class="chart-toolbar">
+      <el-date-picker
+        v-model="dateRange"
+        type="daterange"
+        range-separator="-"
+        start-placeholder="开始"
+        end-placeholder="结束"
+        :shortcuts="shortcuts"
+        size="default"
+        style="width: 240px"
+      />
     </div>
 
     <!-- KPI Cards -->
@@ -150,12 +167,10 @@
                 <span class="task-title">每日打卡</span>
                 <span class="task-desc">记录今天的成长足迹</span>
               </div>
-              <el-tag v-if="todayTasks.hasCheckedIn" type="success" size="small" effect="dark"
+              <el-tag v-if="todayTasks.hasCheckedIn || rhythm.hasCheckedIn" type="success" size="small" effect="dark"
                 >已完成</el-tag
               >
-              <el-button v-else type="primary" link size="small" @click="router.push('/calendar')"
-                >去打卡</el-button
-              >
+              <el-tag v-else size="small" type="info">未完成</el-tag>
             </div>
             <div class="task-item">
               <div class="task-icon-wrapper">
@@ -165,18 +180,20 @@
                 <span class="task-title">学习单词</span>
                 <span class="task-desc">今日需复习与新学单词</span>
               </div>
-              <el-tag type="primary" size="small">{{ todayTasks.todayWordCount }} 个待学</el-tag>
+              <el-tag type="primary" size="small">{{ rhythm.dueWordCount }} 个到期</el-tag>
             </div>
             <div class="task-item">
               <div class="task-icon-wrapper">
                 <el-icon><Timer /></el-icon>
               </div>
               <div class="task-info">
-                <span class="task-title">番茄专注</span>
-                <span class="task-desc">保持高效工作节奏</span>
+                <span class="task-title">{{ rhythm.focusTask ? '绑任务专注' : '番茄专注' }}</span>
+                <span class="task-desc">{{
+                  rhythm.focusTask ? rhythm.focusTask.title : '保持高效工作节奏'
+                }}</span>
               </div>
               <el-tag type="warning" size="small"
-                >今日 {{ todayTasks.todayPomodoroCount }} 个</el-tag
+                >今日 {{ rhythm.heat.pomodoroCount || todayTasks.todayPomodoroCount }} 个</el-tag
               >
             </div>
           </div>
@@ -245,6 +262,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Calendar, Reading, Timer, Trophy, DataLine } from '@element-plus/icons-vue'
 import BaseChart from '@/components/charts/BaseChart.vue'
@@ -254,6 +272,7 @@ const router = useRouter()
 const {
   stats,
   todayTasks,
+  rhythm,
   recentActivities,
   heatValueOption,
   pomodoroOption,
@@ -267,6 +286,43 @@ const {
   handleChartClick,
   formatActivityTime,
 } = useDashboard()
+
+const heatParts = computed(() => [
+  {
+    key: 'checkIn',
+    label: '打卡',
+    score: rhythm.value.heat.checkIn,
+    hint: rhythm.value.hasCheckedIn ? '已记下起点' : '还未打卡',
+  },
+  {
+    key: 'pomodoro',
+    label: '番茄',
+    score: rhythm.value.heat.pomodoro,
+    hint: `${rhythm.value.heat.pomodoroCount} 枚 ×2`,
+  },
+  {
+    key: 'word',
+    label: '单词',
+    score: rhythm.value.heat.word,
+    hint: `${rhythm.value.heat.wordCount} 个 ×1`,
+  },
+  {
+    key: 'task',
+    label: '任务',
+    score: rhythm.value.heat.task,
+    hint: `${rhythm.value.heat.taskCount} 项 ×3`,
+  },
+])
+
+const heatMax = computed(() =>
+  Math.max(1, ...heatParts.value.map((part) => part.score), rhythm.value.heat.total),
+)
+
+const heatWidth = (score: number) => `${Math.round((score / heatMax.value) * 100)}%`
+
+const goRhythm = () => {
+  router.push(rhythm.value.ctaPath || '/calendar')
+}
 </script>
 
 <style scoped lang="less">
@@ -275,16 +331,31 @@ const {
   margin: 0 auto;
 }
 
-.welcome-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: 32px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid var(--color-bg-muted);
+.rhythm-card {
+  margin-bottom: 16px;
+  padding: 24px;
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
-.welcome-text h2 {
+.rhythm-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.rhythm-kicker {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+.rhythm-main h2 {
   font-size: 28px;
   font-weight: 700;
   color: var(--color-text);
@@ -293,21 +364,100 @@ const {
 }
 
 .subtitle {
-  margin: 0;
+  margin: 0 0 20px;
   color: var(--color-text-secondary);
   font-size: 14px;
-}
-
-.action-buttons {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  line-height: 1.6;
 }
 
 .action-btn {
   font-weight: 600;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
+}
+
+.rhythm-heat {
+  padding: 4px 0;
+}
+
+.heat-total {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.heat-total strong {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+.heat-total span {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.heat-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.heat-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  min-width: 0;
+}
+
+.heat-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.heat-label {
+  color: var(--color-text);
+}
+
+.heat-score {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.heat-track {
+  height: 6px;
+  border-radius: 99px;
+  background: var(--color-bg-muted);
+  overflow: hidden;
+}
+
+.heat-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-primary);
+}
+
+.heat-hint {
+  color: var(--color-text-muted);
+}
+
+.heat-formula {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.chart-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
 }
 
 .kpi-row {
@@ -505,16 +655,6 @@ const {
 }
 
 @media (max-width: 768px) {
-  .welcome-section {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-
-  .action-buttons {
-    width: 100%;
-    flex-wrap: wrap;
-  }
 
   .kpi-row,
   .chart-row,

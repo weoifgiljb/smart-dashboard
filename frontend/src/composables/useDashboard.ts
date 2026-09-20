@@ -1,5 +1,5 @@
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
-import { getDashboardStats, getTodayTasks, getRecentActivities } from '@/api/dashboard'
+import { getDashboardStats, getTodayTasks, getRecentActivities, getTodayRhythm } from '@/api/dashboard'
 import { getCheckInHistory, getCheckInHistoryWithHeatValue } from '@/api/checkin'
 import { getCalendarData } from '@/api/calendar'
 import { getPomodoroHistory } from '@/api/pomodoro'
@@ -17,6 +17,29 @@ export interface TodayTaskSummary {
   hasCheckedIn: boolean
   todayWordCount: number
   todayPomodoroCount: number
+}
+
+export type RhythmNextAction = 'CHECK_IN' | 'REVIEW_WORDS' | 'FOCUS_TASK' | 'FOCUS_FREE'
+
+export interface TodayRhythm {
+  nextAction: RhythmNextAction
+  reason: string
+  ctaLabel: string
+  ctaPath: string
+  hasCheckedIn: boolean
+  dueWordCount: number
+  heat: {
+    checkIn: number
+    pomodoro: number
+    word: number
+    task: number
+    total: number
+    pomodoroCount: number
+    wordCount: number
+    taskCount: number
+  }
+  dueWords: Array<{ id: string; word: string; translation?: string }>
+  focusTask: { id: string; title: string } | null
 }
 
 export interface ActivityItem {
@@ -43,6 +66,27 @@ export function useDashboard() {
     hasCheckedIn: false,
     todayWordCount: 0,
     todayPomodoroCount: 0,
+  })
+
+  const rhythm = ref<TodayRhythm>({
+    nextAction: 'CHECK_IN',
+    reason: '今天还没打卡，先记下这一天的起点。',
+    ctaLabel: '立即打卡',
+    ctaPath: '/calendar',
+    hasCheckedIn: false,
+    dueWordCount: 0,
+    heat: {
+      checkIn: 0,
+      pomodoro: 0,
+      word: 0,
+      task: 0,
+      total: 0,
+      pomodoroCount: 0,
+      wordCount: 0,
+      taskCount: 0,
+    },
+    dueWords: [],
+    focusTask: null,
   })
 
   const recentActivities = ref<ActivityItem[]>([])
@@ -349,6 +393,7 @@ export function useDashboard() {
         statsData,
         tasksData,
         activitiesData,
+        rhythmData,
         checkins,
         historyWithHeat,
         calAgg,
@@ -359,6 +404,7 @@ export function useDashboard() {
         getDashboardStats(),
         getTodayTasks(),
         getRecentActivities(),
+        getTodayRhythm(),
         getCheckInHistory({ page: 0, size: 400 }),
         getCheckInHistoryWithHeatValue(),
         getCalendarData({ start: toKey(start), end: toKey(today) }),
@@ -371,6 +417,15 @@ export function useDashboard() {
       rawWords.value = asData<Array<Record<string, unknown>>>(words) || []
       stats.value = asData<DashboardStats>(statsData)
       todayTasks.value = asData<TodayTaskSummary>(tasksData)
+      const loadedRhythm = asData<TodayRhythm>(rhythmData)
+      if (loadedRhythm?.nextAction) {
+        rhythm.value = {
+          ...rhythm.value,
+          ...loadedRhythm,
+          heat: { ...rhythm.value.heat, ...(loadedRhythm.heat || {}) },
+          dueWords: loadedRhythm.dueWords || [],
+        }
+      }
       if (Array.isArray(todayWords)) {
         todayTasks.value.todayWordCount = todayWords.length
       }
@@ -451,6 +506,7 @@ export function useDashboard() {
   return {
     stats,
     todayTasks,
+    rhythm,
     recentActivities,
     heatValueOption,
     pomodoroOption,

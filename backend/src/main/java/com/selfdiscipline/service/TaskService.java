@@ -98,6 +98,16 @@ public class TaskService {
         return applyFilters(all, filters);
     }
 
+    public void addActualMinutes(@NonNull String userId, @NonNull String taskId, int minutes) {
+        if (minutes <= 0) {
+            return;
+        }
+        Task task = getTask(userId, taskId);
+        assertCanEdit(userId, task);
+        int current = task.getActualMinutes() == null ? 0 : task.getActualMinutes();
+        updateTask(userId, taskId, Map.of("actualMinutes", current + minutes));
+    }
+
     private List<Task> applyFilters(List<Task> input, Map<String, Object> filters) {
         if (filters == null || filters.isEmpty()) return input;
         return input.stream().filter(t -> {

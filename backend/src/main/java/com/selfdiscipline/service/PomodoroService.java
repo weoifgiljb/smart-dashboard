@@ -8,6 +8,7 @@ import com.selfdiscipline.repository.PomodoroRepository;
 import com.selfdiscipline.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -25,6 +26,9 @@ public class PomodoroService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private TaskService taskService;
+
     public Pomodoro startPomodoro(String username, PomodoroRequest request) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> ApiException.notFound("用户不存在"));
@@ -34,8 +38,15 @@ public class PomodoroService {
         pomodoro.setDuration(request.getDuration());
         pomodoro.setType(request.getType());
         pomodoro.setEndTime(pomodoro.getStartTime().plusMinutes(request.getDuration()));
+        if (StringUtils.hasText(request.getTaskId())) {
+            pomodoro.setTaskId(request.getTaskId());
+        }
 
-        return pomodoroRepository.save(pomodoro);
+        Pomodoro saved = pomodoroRepository.save(pomodoro);
+        if ("work".equalsIgnoreCase(request.getType()) && StringUtils.hasText(request.getTaskId())) {
+            taskService.addActualMinutes(username, request.getTaskId(), request.getDuration());
+        }
+        return saved;
     }
 
     public Map<String, Object> getStats(String username) {

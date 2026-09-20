@@ -314,7 +314,6 @@ import {
 import BaseChart from '@/components/charts/BaseChart.vue'
 import VirtualList from '@/components/virtual/VirtualList.vue'
 import { generateWordImage } from '@/api/ai'
-import { getState as getSm2State } from '@/utils/sm2'
 import { chartPalette } from '@/utils/themeTokens'
 
 interface WordItem {
@@ -322,6 +321,9 @@ interface WordItem {
   word: string
   translation?: string
   image?: string
+  dueDate?: string
+  status?: string
+  reviewCount?: number
 }
 
 const router = useRouter()
@@ -613,11 +615,18 @@ const nextStage = (w: any) => {
   return n > 9 ? 9 : n
 }
 
-const nextIntervalText = (w: any) => {
-  const st = getSm2State(w.id)
-  if (!st) return '待学习'
-  const days = Math.max(1, Math.round(st.interval))
-  return `约 ${days} 天后`
+const nextIntervalText = (w: WordItem) => {
+  if (w?.status === 'done') return '已掌握'
+  if (!w?.dueDate) return '待安排'
+  const due = new Date(w.dueDate)
+  if (Number.isNaN(due.getTime())) return '待安排'
+  const diffMs = due.getTime() - Date.now()
+  if (diffMs <= 0) return '今日到期'
+  const minutes = Math.round(diffMs / 60000)
+  if (minutes < 60) return `${minutes} 分钟后`
+  const hours = Math.round(minutes / 60)
+  if (hours < 24) return `${hours} 小时后`
+  return `${Math.round(hours / 24)} 天后`
 }
 
 const startNewReview = () => {

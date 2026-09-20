@@ -14,6 +14,7 @@ public class Pomodoro {
     private String type; // work or break
     private LocalDateTime startTime;
     private LocalDateTime endTime;
+    private String taskId;
 
     public Pomodoro() {
         this.startTime = LocalDateTime.now();
@@ -65,6 +66,14 @@ public class Pomodoro {
 
     public void setEndTime(LocalDateTime endTime) {
         this.endTime = endTime;
+    }
+
+    public String getTaskId() {
+        return taskId;
+    }
+
+    public void setTaskId(String taskId) {
+        this.taskId = taskId;
     }
 }
 
