@@ -37,6 +37,7 @@
         <!-- 认识/不认识模式 -->
         <div
           v-if="reviewMode === 'recognize'"
+          :key="`${currentWord.id}-${currentIndex}`"
           class="flip-card-wrapper"
           :class="{ flipped: isFlipped }"
           @click="!isFlipped && flipCard()"
@@ -69,7 +70,7 @@
                     <span class="label">不认识</span>
                     <span class="sub">1分钟后</span>
                   </button>
-                  <button class="review-btn vague" @click.stop="markAsKnown">
+                  <button class="review-btn vague" @click.stop="markAsVague">
                     <span class="icon">?</span>
                     <span class="label">模糊</span>
                     <span class="sub">10分钟后</span>
@@ -191,7 +192,7 @@ import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, Setting, Headset, Check, Close, Trophy } from '@element-plus/icons-vue'
-import { getTodayWords, getWords, reviewWord } from '@/api/words'
+import { getTodayWords, getWords, reviewWord, WordReviewResult } from '@/api/words'
 
 type WordItem = {
   id: string
@@ -290,23 +291,34 @@ const playAudio = () => {
   window.speechSynthesis.speak(u)
 }
 
-const markAsKnown = async () => {
+const gradeCurrent = async (result: WordReviewResult) => {
   if (!currentWord.value) return
   try {
-    await reviewWord(currentWord.value.id)
-    summary.value.correct++
+    await reviewWord(currentWord.value.id, result)
+    switch (result) {
+      case WordReviewResult.Known:
+        summary.value.correct++
+        break
+      case WordReviewResult.Vague:
+        break
+      case WordReviewResult.Unknown:
+        summary.value.wrong++
+        nextQueue.value.push(currentWord.value)
+        break
+      default: {
+        const _never: never = result
+        return _never
+      }
+    }
     nextWord()
   } catch {
     ElMessage.error('网络错误')
   }
 }
 
-const markAsUnknown = () => {
-  if (!currentWord.value) return
-  summary.value.wrong++
-  nextQueue.value.push(currentWord.value)
-  nextWord()
-}
+const markAsKnown = () => gradeCurrent(WordReviewResult.Known)
+const markAsVague = () => gradeCurrent(WordReviewResult.Vague)
+const markAsUnknown = () => gradeCurrent(WordReviewResult.Unknown)
 
 const nextWord = () => {
   isFlipped.value = false
@@ -335,7 +347,7 @@ const submitAnswer = async () => {
     resultType.value = 'correct'
     showResult.value = true
     if (settings.value.autoPlayAudio) playAudio()
-    await reviewWord(currentWord.value.id)
+    await reviewWord(currentWord.value.id, WordReviewResult.Known)
     summary.value.correct++
     setTimeout(nextWord, 1000)
   } else {

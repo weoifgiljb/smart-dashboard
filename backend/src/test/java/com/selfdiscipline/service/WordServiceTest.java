@@ -1,5 +1,6 @@
 package com.selfdiscipline.service;
 
+import com.selfdiscipline.dto.WordReviewResult;
 import com.selfdiscipline.exception.ApiException;
 import com.selfdiscipline.model.User;
 import com.selfdiscipline.model.Word;
@@ -13,7 +14,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,7 +50,7 @@ class WordServiceTest {
     }
 
     @Test
-    void firstSuccessfulReviewSchedulesFiveMinutesLater() {
+    void knownReviewLeavesTodayQueue() {
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
         Word word = ownedWord("w1");
         word.setReviewCount(0);
@@ -55,13 +58,51 @@ class WordServiceTest {
         when(wordRepository.save(any(Word.class))).thenAnswer(inv -> inv.getArgument(0));
 
         LocalDateTime before = LocalDateTime.now();
-        Word saved = wordService.reviewWord("alice", "w1");
+        Word saved = wordService.reviewWord("alice", "w1", WordReviewResult.KNOWN);
         LocalDateTime after = LocalDateTime.now();
+        LocalDateTime endOfToday = LocalDate.now().atTime(LocalTime.MAX);
 
         assertEquals("todo", saved.getStatus());
         assertEquals(1, saved.getReviewCount());
-        assertTrue(!saved.getDueDate().isBefore(before.plusMinutes(5).minusSeconds(2)));
-        assertTrue(!saved.getDueDate().isAfter(after.plusMinutes(5).plusSeconds(2)));
+        assertTrue(saved.getDueDate().isAfter(endOfToday));
+        assertTrue(!saved.getDueDate().isBefore(before.plusDays(1).minusSeconds(2)));
+        assertTrue(!saved.getDueDate().isAfter(after.plusDays(1).plusSeconds(2)));
+    }
+
+    @Test
+    void vagueReviewStaysDueInTenMinutes() {
+        when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
+        Word word = ownedWord("w1");
+        word.setReviewCount(2);
+        when(wordRepository.findById("w1")).thenReturn(Optional.of(word));
+        when(wordRepository.save(any(Word.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        LocalDateTime before = LocalDateTime.now();
+        Word saved = wordService.reviewWord("alice", "w1", WordReviewResult.VAGUE);
+        LocalDateTime after = LocalDateTime.now();
+
+        assertEquals("todo", saved.getStatus());
+        assertEquals(2, saved.getReviewCount());
+        assertTrue(!saved.getDueDate().isBefore(before.plusMinutes(10).minusSeconds(2)));
+        assertTrue(!saved.getDueDate().isAfter(after.plusMinutes(10).plusSeconds(2)));
+    }
+
+    @Test
+    void unknownReviewResetsAndDueInOneMinute() {
+        when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
+        Word word = ownedWord("w1");
+        word.setReviewCount(4);
+        when(wordRepository.findById("w1")).thenReturn(Optional.of(word));
+        when(wordRepository.save(any(Word.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        LocalDateTime before = LocalDateTime.now();
+        Word saved = wordService.reviewWord("alice", "w1", WordReviewResult.UNKNOWN);
+        LocalDateTime after = LocalDateTime.now();
+
+        assertEquals("todo", saved.getStatus());
+        assertEquals(0, saved.getReviewCount());
+        assertTrue(!saved.getDueDate().isBefore(before.plusMinutes(1).minusSeconds(2)));
+        assertTrue(!saved.getDueDate().isAfter(after.plusMinutes(1).plusSeconds(2)));
     }
 
     @Test
@@ -111,6 +152,12 @@ class WordServiceTest {
         verify(wordRepository).findByUserIdAndStatusNotAndDueDateLessThanEqualOrderByDueDateAsc(
                 eq("u1"), eq("done"), any()
         );
+    }
+
+    @Test
+    void reviewResultRejectsInvalidToken() {
+        ApiException ex = assertThrows(ApiException.class, () -> WordReviewResult.from("maybe"));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
     }
 
     private static Word ownedWord(String id) {

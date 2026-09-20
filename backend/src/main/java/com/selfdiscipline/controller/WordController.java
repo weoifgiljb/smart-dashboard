@@ -1,7 +1,9 @@
 package com.selfdiscipline.controller;
 
-import com.selfdiscipline.dto.WordRequest;
 import com.selfdiscipline.dto.WordImportRequest;
+import com.selfdiscipline.dto.WordRequest;
+import com.selfdiscipline.dto.WordReviewRequest;
+import com.selfdiscipline.dto.WordReviewResult;
 import com.selfdiscipline.dto.WordStatusRequest;
 import com.selfdiscipline.model.Word;
 import com.selfdiscipline.service.WordService;
@@ -71,8 +73,12 @@ public class WordController {
     }
 
     @PostMapping("/{id}/review")
-    public ResponseEntity<Word> reviewWord(@PathVariable @NonNull String id, Authentication authentication) {
-        Word word = wordService.reviewWord(authentication.getName(), id);
+    public ResponseEntity<Word> reviewWord(
+            @PathVariable @NonNull String id,
+            @RequestBody(required = false) WordReviewRequest req,
+            Authentication authentication) {
+        WordReviewResult result = WordReviewResult.from(req == null ? null : req.getResult());
+        Word word = wordService.reviewWord(authentication.getName(), id, result);
         return ResponseEntity.ok(word);
     }
 }

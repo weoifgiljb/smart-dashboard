@@ -2,6 +2,7 @@ package com.selfdiscipline.service;
 
 import com.selfdiscipline.dto.WordRequest;
 import com.selfdiscipline.dto.WordImportRequest;
+import com.selfdiscipline.dto.WordReviewResult;
 import com.selfdiscipline.dto.WordStatusRequest;
 import com.selfdiscipline.exception.ApiException;
 import com.selfdiscipline.model.User;
@@ -76,6 +77,10 @@ public class WordService {
     }
 
     public Word reviewWord(String username, @NonNull String wordId) {
+        return reviewWord(username, wordId, WordReviewResult.KNOWN);
+    }
+
+    public Word reviewWord(String username, @NonNull String wordId, WordReviewResult result) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> ApiException.notFound("用户不存在"));
 
@@ -88,8 +93,15 @@ public class WordService {
             throw ApiException.forbidden("无权复习此单词");
         }
 
-        // 成功复习一次，进入下一阶段并根据艾宾浩斯间隔设置下次 dueDate
-        applySuccessfulReviewSchedule(word);
+        WordReviewResult grade = result == null ? WordReviewResult.KNOWN : result;
+        switch (grade) {
+            case UNKNOWN -> applyFailedReviewReset(word);
+            case VAGUE -> applyVagueReview(word);
+            case KNOWN -> applySuccessfulReviewSchedule(word);
+            default -> {
+                throw new IllegalStateException("Unhandled review result: " + grade);
+            }
+        }
         return wordRepository.save(word);
     }
 
@@ -214,6 +226,10 @@ public class WordService {
             5, 30, 12 * 60L, 24 * 60L, 2 * 24 * 60L, 4 * 24 * 60L, 7 * 24 * 60L, 15 * 24 * 60L, 30 * 24 * 60L
     };
 
+    private static final long ONE_DAY_MINUTES = 24 * 60L;
+    private static final long VAGUE_RETRY_MINUTES = 10;
+    private static final long UNKNOWN_RETRY_MINUTES = 1;
+
     private void applySuccessfulReviewSchedule(Word word) {
         int currentCount = word.getReviewCount() == null ? 0 : word.getReviewCount();
         int nextIndex = currentCount; // 第一次成功（current=0）使用 intervals[0]
@@ -229,6 +245,9 @@ public class WordService {
         }
 
         long minutes = EBBINGHAUS_INTERVALS_MINUTES[nextIndex];
+        if (minutes < ONE_DAY_MINUTES) {
+            minutes = ONE_DAY_MINUTES;
+        }
         LocalDateTime nextDue = now.plus(Duration.ofMinutes(minutes));
         word.setDueDate(nextDue);
         word.setReviewCount(currentCount + 1);
@@ -236,12 +255,18 @@ public class WordService {
         word.setStatus("todo");
     }
 
+    private void applyVagueReview(Word word) {
+        LocalDateTime now = LocalDateTime.now();
+        word.setLastReviewTime(now);
+        word.setDueDate(now.plus(Duration.ofMinutes(VAGUE_RETRY_MINUTES)));
+        word.setStatus("todo");
+    }
+
     private void applyFailedReviewReset(Word word) {
-        // 遗忘或失败：回退到第一阶段，5分钟后再次安排
         LocalDateTime now = LocalDateTime.now();
         word.setLastReviewTime(now);
         word.setReviewCount(0);
-        word.setDueDate(now.plus(Duration.ofMinutes(EBBINGHAUS_INTERVALS_MINUTES[0])));
+        word.setDueDate(now.plus(Duration.ofMinutes(UNKNOWN_RETRY_MINUTES)));
         word.setStatus("todo");
     }
 

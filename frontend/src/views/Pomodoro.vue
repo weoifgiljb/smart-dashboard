@@ -73,12 +73,7 @@
         </div>
         <div v-if="timerType === 'work'" class="config-item config-item-wide">
           <span class="label">绑定任务（可选）</span>
-          <el-select
-            v-model="selectedTaskId"
-            clearable
-            filterable
-            placeholder="不绑定，自由专注"
-          >
+          <el-select v-model="selectedTaskId" clearable filterable placeholder="不绑定，自由专注">
             <el-option
               v-for="task in openTasks"
               :key="task.id"
@@ -156,7 +151,7 @@ import { ElMessage } from 'element-plus'
 import { VideoPlay, VideoPause, Refresh } from '@element-plus/icons-vue'
 import { startPomodoro, getPomodoroStats, getPomodoroHistory } from '@/api/pomodoro'
 import { listTasks } from '@/api/tasks'
-import { getTodayWords, reviewWord } from '@/api/words'
+import { getTodayWords, reviewWord, WordReviewResult } from '@/api/words'
 import type { Task } from '@/types/task'
 import BaseChart from '@/components/charts/BaseChart.vue'
 import { chartPalette } from '@/utils/themeTokens'
@@ -266,14 +261,8 @@ const loadOpenTasks = async () => {
       const status = String(task.status || '').toLowerCase()
       return (status === 'in_progress' || status === 'todo') && Boolean(task.id)
     })
-    if (
-      selectedTaskId.value &&
-      !openTasks.value.some((task) => task.id === selectedTaskId.value)
-    ) {
-      openTasks.value = [
-        { id: selectedTaskId.value, title: '当前任务' },
-        ...openTasks.value,
-      ]
+    if (selectedTaskId.value && !openTasks.value.some((task) => task.id === selectedTaskId.value)) {
+      openTasks.value = [{ id: selectedTaskId.value, title: '当前任务' }, ...openTasks.value]
     }
   } catch (error) {
     console.error('获取可绑定任务失败', error)
@@ -469,14 +458,10 @@ const finishTimer = async () => {
     await startPomodoro({
       duration: finishedType === 'work' ? workMinutes.value : breakMinutes.value,
       type: finishedType,
-      ...(finishedType === 'work' && selectedTaskId.value
-        ? { taskId: selectedTaskId.value }
-        : {}),
+      ...(finishedType === 'work' && selectedTaskId.value ? { taskId: selectedTaskId.value } : {}),
     })
     ElMessage.success(
-      finishedType === 'work' && selectedTaskId.value
-        ? '专注完成，任务耗时已更新'
-        : '番茄钟完成！',
+      finishedType === 'work' && selectedTaskId.value ? '专注完成，任务耗时已更新' : '番茄钟完成！',
     )
     await loadStats()
     await loadWeekly()
@@ -514,7 +499,7 @@ const markReviewKnown = async () => {
   const word = currentReviewWord.value
   if (!word) return
   try {
-    await reviewWord(word.id)
+    await reviewWord(word.id, WordReviewResult.Known)
     advanceReview()
   } catch {
     ElMessage.error('复习保存失败')

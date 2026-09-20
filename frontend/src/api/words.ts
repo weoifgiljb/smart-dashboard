@@ -12,8 +12,14 @@ export const deleteWord = (id: string) => {
   return request.delete(`/words/${id}`) as Promise<any>
 }
 
-export const reviewWord = (id: string) => {
-  return request.post(`/words/${id}/review`) as Promise<any>
+export enum WordReviewResult {
+  Unknown = 'unknown',
+  Vague = 'vague',
+  Known = 'known',
+}
+
+export const reviewWord = (id: string, result: WordReviewResult = WordReviewResult.Known) => {
+  return request.post(`/words/${id}/review`, { result }) as Promise<unknown>
 }
 
 export const getTodayWords = () => {
