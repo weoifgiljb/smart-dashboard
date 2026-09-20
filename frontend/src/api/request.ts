@@ -73,7 +73,8 @@ function onPublicAuthPage() {
 function expireSession(config: InternalAxiosRequestConfig) {
   clearAuthTokens()
   if (!isSilentAuthProbe(config) && !onPublicAuthPage()) {
-    router.push('/login')
+    const redirect = router.currentRoute.value.fullPath
+    router.push({ path: '/login', query: redirect && redirect !== '/login' ? { redirect } : {} })
     ElMessage.error('登录已过期，请重新登录')
   }
 }

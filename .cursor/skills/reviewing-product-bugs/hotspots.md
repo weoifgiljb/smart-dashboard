@@ -21,7 +21,7 @@
 | 子任务扫描 | `TaskRepository.findByOwnerUserIdAndParentId`；`getSubtasks` 不再 `findAll` |
 | 无主单词认领 | `ImageService.generateWordImage` 对空 owner / 非本人 403，不认领 |
 | 弱注册密码 | `RegisterRequest` `@Size(min=8)`；`AuthService.register` 拒绝不足 8 位 |
-| JWT 存储 | `AuthCookies` 用 `ResponseCookie` 写 `HttpOnly; Path=/; SameSite=Lax`；Vite `/api` 代理 `cookieDomainRewrite` 去掉 Domain，避免刷新后 cookie 留在 8080 |
+| JWT 存储 | `authTokens.ts` 用 sessionStorage 恢复同标签刷新；`AuthCookies` 用 `ResponseCookie`+`SameSite=Lax`；Vite `cookieDomainRewrite`；守卫用 `routeRequiresAuth`；通配路由在子路由最后 |
 | 日记 owner | `DiaryService` 写入 `user.getId()`，列表/删除兼容旧 username 行 |
 | 日记 VNode JSON | `DiaryTimeline` / `DiaryTags` 为 setup 返回 render；禁止 `{{ h(ElTag) }}` / `:is="h(ElTimelineItem)"` |
 | 日记历史回看 | `Diary.vue` 默认列出全部；`全部`/`上一月`/`本月`/`查看某一天` 筛选，不默认藏过去月份 |
@@ -32,7 +32,7 @@
 
 去看：`JwtConfig`、`JwtUtil`、`SecurityConfig`、`frontend/src/api/request.ts`、`frontend/src/store/user.ts`。
 
-典型坑：仓库内置可伪造密钥；短密钥被 padding；`permitAll` 过宽。token 已改为 httpOnly cookie + 内存，不要再报 localStorage JWT。日记 XSS 已消过毒后不要升成 P0。
+典型坑：仓库内置可伪造密钥；短密钥被 padding；`permitAll` 过宽。JWT 禁止 `localStorage`；同标签刷新靠 `sessionStorage` + `/auth/me`，通配路由须在子路由最后。`ResponseCookie` + Vite `cookieDomainRewrite` 仍在时不要再报刷新掉登录。日记 XSS 已消过毒后不要升成 P0。
 
 ## 身份与租户
 

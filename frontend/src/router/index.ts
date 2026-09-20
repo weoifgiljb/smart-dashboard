@@ -1,88 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/store/user'
-
-const routes = [
-  {
-    path: '/login',
-    name: 'Login',
-    component: () => import('@/views/Login.vue'),
-    meta: { requiresAuth: false },
-  },
-  {
-    path: '/register',
-    name: 'Register',
-    component: () => import('@/views/Register.vue'),
-    meta: { requiresAuth: false },
-  },
-  {
-    path: '/',
-    component: () => import('@/layouts/MainLayout.vue'),
-    meta: { requiresAuth: true },
-    children: [
-      {
-        path: '/:pathMatch(.*)*',
-        name: 'NotFound',
-        component: () => import('@/views/NotFound.vue'),
-      },
-      {
-        path: '',
-        name: 'Dashboard',
-        component: () => import('@/views/Dashboard.vue'),
-      },
-      {
-        path: 'calendar',
-        name: 'Calendar',
-        component: () => import('@/views/Calendar.vue'),
-      },
-      {
-        path: 'checkin',
-        name: 'CheckIn',
-        redirect: '/calendar',
-      },
-      {
-        path: 'words',
-        name: 'Words',
-        component: () => import('@/views/Words.vue'),
-      },
-      {
-        path: 'vocabulary/review',
-        name: 'VocabularyReview',
-        component: () => import('@/views/VocabularyReview.vue'),
-      },
-      {
-        path: 'pomodoro',
-        name: 'Pomodoro',
-        component: () => import('@/views/Pomodoro.vue'),
-      },
-      {
-        path: 'ai-chat',
-        name: 'AIChat',
-        component: () => import('@/views/AIChat.vue'),
-      },
-      {
-        path: 'books',
-        name: 'Books',
-        component: () => import('@/views/Books.vue'),
-      },
-      {
-        path: 'books/:id',
-        name: 'BookDetail',
-        component: () => import('@/views/BookDetail.vue'),
-        props: true,
-      },
-      {
-        path: 'diary',
-        name: 'Diary',
-        component: () => import('@/views/Diary.vue'),
-      },
-      {
-        path: 'tasks',
-        name: 'Tasks',
-        component: () => import('@/views/Tasks.vue'),
-      },
-    ],
-  },
-]
+import { safeRedirect } from '@/utils/safeRedirect'
+import { isAuthEntryPath, routeRequiresAuth } from '@/router/authGuard'
+import { routes } from '@/router/routes'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -95,17 +15,18 @@ const router = createRouter({
   },
 })
 
-router.beforeEach(async (to, _from, next) => {
+router.beforeEach(async (to) => {
   const userStore = useUserStore()
   await userStore.ensureSession()
-  if (to.meta.requiresAuth && !userStore.isAuthenticated) {
-    next({ path: '/login', query: { redirect: to.fullPath } })
-  } else if ((to.path === '/login' || to.path === '/register') && userStore.isAuthenticated) {
-    const redirect = (to.query.redirect as string) || '/'
-    next(redirect)
-  } else {
-    next()
+  if (isAuthEntryPath(to.path)) {
+    if (userStore.isAuthenticated) return safeRedirect(to.query.redirect)
+    return true
   }
+  if (routeRequiresAuth(to) && !userStore.isAuthenticated) {
+    return { path: '/login', query: { redirect: to.fullPath } }
+  }
+  return true
 })
 
 export default router
+export { routes }

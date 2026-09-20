@@ -1,0 +1,34 @@
+---
+description: 刷新后会话与路由守卫。改登录、路由、token 存储或 axios 401 时必须遵守，避免刷新掉登录。
+globs: "{frontend/src/router/**/*.ts,frontend/src/api/auth*.ts,frontend/src/api/authTokens.ts,frontend/src/api/request.ts,frontend/src/store/user.ts,frontend/vite.config.ts,backend/**/AuthCookies.java,backend/**/JwtAuthenticationFilter.java}"
+alwaysApply: false
+---
+
+# 刷新后仍保持登录
+
+### 刷新跳回登录页
+
+**现象**：已登录刷新（如 `/diary`）变成 `/login?redirect=/diary`。控制台 `GET /api/auth/me 401`、`POST /api/auth/refresh 401`。
+
+**原因**：
+
+1. **守卫过早判定未登录**：token 只在内存，刷新后 `isAuthenticated === false`，`beforeEach` 在 `/auth/me` 失败后立刻 `next(/login)`。
+2. **通配路由写在子路由最前且是绝对路径** `/:pathMatch(.*)*`，会和登录/日记抢匹配。
+3. **cookie 续期不可靠**：HttpOnly cookie 经 Vite 代理到 8080 时 Domain/SameSite 易写丢，刷新没有 Bearer 也没有 cookie。
+4. 拦截器 `router.push('/login')` 不带 `redirect`，当前页路径丢失。
+
+**解决**：
+
+- 通配 `path: ':pathMatch(.*)*'` 放在 **MainLayout 子路由最后**，不要加前导 `/`。
+- 守卫：登录/注册页永不 `requiresAuth`；其它页用 `to.matched.some(r => r.meta.requiresAuth)`。用 `return` 不要混用 `next()`。
+- `authTokens` 把 access/refresh 写入 **sessionStorage**（同标签刷新能恢复 Bearer）。仍禁止 `localStorage` 存 JWT。
+- `hydrateAuthTokens()` 在模块加载时执行，这样 `ensureSession` → `/auth/me` 能带 Authorization。
+- 后端 cookie 仍用 `ResponseCookie` + `SameSite=Lax`；代理 `cookieDomainRewrite: ''`。401 跳登录要带 `query.redirect`。
+
+```ts
+// ❌ 通配放第一个；只看 to.meta.requiresAuth；token 只放内存
+{ path: '/:pathMatch(.*)*', name: 'NotFound' }
+
+// ✅ 通配相对路径放最后；sessionStorage 恢复后再 ensureSession
+{ path: ':pathMatch(.*)*', name: 'NotFound' }
+```
