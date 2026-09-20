@@ -3,7 +3,14 @@
     <el-page-header content="书籍详情" @back="goShelf" />
     <el-card v-if="book" class="detail-card">
       <div class="detail-header">
-        <img :src="book.cover || fallbackCover" class="detail-cover" @error="onImgError" />
+        <img
+          v-if="showCover"
+          :src="book.cover"
+          class="detail-cover"
+          alt=""
+          @error="coverFailed = true"
+        />
+        <div v-else class="detail-cover detail-fallback">暂无封面</div>
         <div class="detail-meta">
           <h2 class="title">{{ book.title }}</h2>
           <p class="author">作者：{{ book.author || '佚名' }}</p>
@@ -16,7 +23,13 @@
             </el-button>
             <el-button @click="goShelf">返回书架</el-button>
           </div>
-          <el-button class="github-link" link type="primary" :disabled="!book.title" @click="openGithubSearch">
+          <el-button
+            class="github-link"
+            link
+            type="primary"
+            :disabled="!book.title"
+            @click="openGithubSearch"
+          >
             在 GitHub 查找相关仓库
           </el-button>
         </div>
@@ -40,19 +53,20 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getBookById } from '@/api/books'
 import { useUserStore } from '@/store/user'
-import { normalizeBook, type BookItem } from '@/utils/bookDisplay'
+import { isDisplayableCover, normalizeBook, type BookItem } from '@/utils/bookDisplay'
 import { loadFavoriteIds, saveFavoriteIds, toggleFavoriteId } from '@/utils/bookFavorites'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
-const fallbackCover = '/no-cover.svg'
 const book = ref<BookItem | null>(null)
 const favoriteIds = ref(new Set<string>())
 const loaded = ref(false)
+const coverFailed = ref(false)
 
 const ownerKey = computed(() => userStore.user?.id || userStore.user?.username || 'anon')
 const favorited = computed(() => Boolean(book.value && favoriteIds.value.has(book.value.id)))
+const showCover = computed(() => isDisplayableCover(book.value?.cover) && !coverFailed.value)
 const rateValue = computed(() => {
   const rating = book.value?.rating
   if (rating == null) return 0
@@ -61,12 +75,6 @@ const rateValue = computed(() => {
 
 function goShelf() {
   router.push('/books')
-}
-
-function onImgError(e: Event) {
-  const target = e.target as HTMLImageElement
-  target.onerror = null
-  target.src = fallbackCover
 }
 
 function stateBook() {
@@ -103,6 +111,13 @@ function openGithubSearch() {
 }
 
 watch(
+  () => book.value?.cover,
+  () => {
+    coverFailed.value = false
+  },
+)
+
+watch(
   ownerKey,
   (key) => {
     favoriteIds.value = new Set(loadFavoriteIds(key))
@@ -135,7 +150,15 @@ onMounted(async () => {
   height: 320px;
   object-fit: cover;
   border-radius: var(--radius-md);
-  background: var(--color-bg);
+  background: var(--color-bg-muted);
+  flex-shrink: 0;
+}
+
+.detail-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
 }
 
 .detail-meta {

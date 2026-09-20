@@ -94,7 +94,7 @@ public class BookImportService {
                         book.setTitle(title);
                         book.setAuthor(author.isEmpty() ? "Unknown Author" : author);
                         book.setCategory(category.isEmpty() ? "General" : category);
-                        book.setCover(coverUrl.isEmpty() ? "/no-cover.svg" : coverUrl);
+                        book.setCover(coverUrl.isEmpty() ? "" : coverUrl);
                         book.setDescription("From Book32 dataset - " + category);
                         book.setSource("Book32-Real");
                         book.setCreateTime(LocalDateTime.now());
@@ -128,7 +128,7 @@ public class BookImportService {
         book.setTitle(title);
         book.setAuthor(author);
         book.setCategory(category);
-        book.setCover("/no-cover.svg");
+        book.setCover("");
         book.setDescription("示例书架 · " + category);
         book.setSource(SAMPLE_SOURCE);
         book.setRating(4.4);

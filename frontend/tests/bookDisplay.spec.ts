@@ -3,6 +3,8 @@ import {
   BookEmptyKind,
   BookSort,
   bookEmptyCopy,
+  isDisplayableCover,
+  normalizeBook,
   parseBookSort,
   parseBooksPayload,
   readPayloadMessage,
@@ -31,6 +33,12 @@ describe('bookDisplay', () => {
     )
   })
 
+  it('hides placeholder and no-cover images', () => {
+    expect(isDisplayableCover('/no-cover.svg')).toBe(false)
+    expect(isDisplayableCover('https://example.com/cover.jpg')).toBe(true)
+    expect(normalizeBook({ id: 'b1', title: 'X', cover: '/no-cover.svg' })?.cover).toBe('')
+  })
+
   it('parses random list and paged payload', () => {
     expect(parseBooksPayload([{ id: 'b1', title: 'Deep Work' }]).books[0]?.title).toBe('Deep Work')
     expect(
@@ -39,7 +47,9 @@ describe('bookDisplay', () => {
   })
 
   it('reads import payload message', () => {
-    expect(readPayloadMessage({ message: '已放入 8 本示例书' }, 'fallback')).toBe('已放入 8 本示例书')
+    expect(readPayloadMessage({ message: '已放入 8 本示例书' }, 'fallback')).toBe(
+      '已放入 8 本示例书',
+    )
     expect(readPayloadMessage(null, 'fallback')).toBe('fallback')
   })
 

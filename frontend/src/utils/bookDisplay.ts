@@ -90,7 +90,7 @@ export function normalizeBook(raw: unknown): BookItem | null {
     if (!cover.startsWith('http')) cover = author
     author = ''
   }
-  if (cover.includes('placeholder')) cover = ''
+  if (cover.includes('placeholder') || cover.includes('no-cover')) cover = ''
   return {
     id,
     title,
@@ -100,6 +100,14 @@ export function normalizeBook(raw: unknown): BookItem | null {
     rating: asNumber(rec.rating),
     category,
   }
+}
+
+export function isDisplayableCover(cover?: string) {
+  if (!cover) return false
+  const value = cover.trim()
+  if (!value) return false
+  if (value.includes('placeholder') || value.includes('no-cover')) return false
+  return true
 }
 
 export function parseBooksPayload(data: unknown) {

@@ -2,7 +2,8 @@
   <div class="book-card-wrapper">
     <div class="book-card" @click="emit('open', book)">
       <div class="cover-image">
-        <img :src="book.cover || fallbackCover" loading="lazy" @error="onImgError" />
+        <img v-if="showCover" :src="book.cover" alt="" @error="onImgError" />
+        <div v-else class="cover-fallback">暂无封面</div>
         <div class="cover-overlay">
           <el-button type="primary" round size="small">查看详情</el-button>
         </div>
@@ -41,12 +42,11 @@
 </template>
 
 <script setup lang="ts">
+import { computed, ref, watch } from 'vue'
 import { MagicStick, Star, StarFilled } from '@element-plus/icons-vue'
-import type { BookItem } from '@/utils/bookDisplay'
+import { isDisplayableCover, type BookItem } from '@/utils/bookDisplay'
 
-const fallbackCover = '/no-cover.svg'
-
-defineProps<{
+const props = defineProps<{
   book: BookItem
   favorited: boolean
   generating: boolean
@@ -58,10 +58,18 @@ const emit = defineEmits<{
   generate: [book: BookItem]
 }>()
 
-function onImgError(e: Event) {
-  const target = e.target as HTMLImageElement
-  target.onerror = null
-  target.src = fallbackCover
+const coverFailed = ref(false)
+const showCover = computed(() => isDisplayableCover(props.book.cover) && !coverFailed.value)
+
+watch(
+  () => props.book.cover,
+  () => {
+    coverFailed.value = false
+  },
+)
+
+function onImgError() {
+  coverFailed.value = true
 }
 </script>
 
@@ -83,7 +91,7 @@ function onImgError(e: Event) {
   border: 1px solid transparent;
 }
 
-.book-card:hover {
+.book-card-wrapper:hover .book-card {
   transform: translateY(-4px);
   box-shadow: var(--shadow-md);
   border-color: var(--color-border);
@@ -96,13 +104,25 @@ function onImgError(e: Event) {
   background: var(--color-bg-muted);
 }
 
-.cover-image img {
+.cover-image img,
+.cover-fallback {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
+}
+
+.cover-image img {
   object-fit: cover;
+}
+
+.cover-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-size: 13px;
 }
 
 .cover-overlay {
@@ -114,9 +134,10 @@ function onImgError(e: Event) {
   justify-content: center;
   opacity: 0;
   transition: opacity 0.2s;
+  pointer-events: none;
 }
 
-.book-card:hover .cover-overlay {
+.book-card-wrapper:hover .cover-overlay {
   opacity: 1;
 }
 
