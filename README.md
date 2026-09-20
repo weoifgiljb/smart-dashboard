@@ -27,6 +27,7 @@
 ## 技术栈与架构
 
 ### 技术选型
+
 - **前端**：Vue 3.5、TypeScript 5.8、Vite 6、Pinia、Vue Router、Axios、Element Plus
 - **后端**：Spring Boot 3.5、Java 21、Spring Security、WebClient、JWT、Spring Data MongoDB
 - **AI**：Ollama (本地大模型，优先)、阿里云通义千问 (云端回退)
@@ -37,24 +38,24 @@
 ```mermaid
 graph TD
     Client["客户端 (Browser)"]
-    
+
     subgraph Frontend ["前端 (Vue 3 + TypeScript)"]
         View["页面视图 (Views)"]
         Store["状态管理 (Pinia)"]
         API["API 请求层 (Axios)"]
     end
-    
+
     subgraph Backend ["后端 (Spring Boot 3)"]
         Web["Web 层 (Controller)"]
         Biz["业务层 (Service)"]
         Auth["认证授权 (Security/JWT)"]
         DataLayer["数据层 (Repository)"]
     end
-    
+
     subgraph Database ["数据存储"]
         Mongo[("MongoDB")]
     end
-    
+
     subgraph AI_Services ["AI 服务"]
         LocalAI["本地模型 (Ollama)"]
         CloudAI["云端模型 (通义千问)"]
@@ -64,13 +65,13 @@ graph TD
     View --> Store
     Store --> API
     API -->|"RESTful API"| Web
-    
+
     Web --> Auth
     Web --> Biz
-    
+
     Biz -->|"读写"| DataLayer
     DataLayer --> Mongo
-    
+
     Biz -->|"AI 对话/RAG"| LocalAI
     LocalAI -.->|"服务不可用"| CloudAI
 ```
@@ -82,12 +83,12 @@ graph TD
 - Maven 3.6+
 - MongoDB 4.4+（本地或云端 Atlas 皆可）
 
-
 ## 二、快速启动（推荐）
 
 提供跨平台启动脚本：
 
 ### Windows
+
 ```powershell
 # 启动后端
 .\start-backend.bat
@@ -97,6 +98,7 @@ graph TD
 ```
 
 ### Linux / macOS
+
 ```bash
 # 启动后端
 ./start-backend.sh
@@ -107,10 +109,10 @@ graph TD
 
 > 如遇 Java/MongoDB 环境缺失，请参考“环境准备”。
 
-
 ## 三、手动启动（可选）
 
 ### 1）准备 MongoDB
+
 ```bash
 # Windows（服务方式或直接 mongod）
 mongod
@@ -120,6 +122,7 @@ sudo systemctl start mongod
 ```
 
 ### 2）启动后端
+
 ```bash
 cd backend
 mvn clean compile -DskipTests
@@ -128,6 +131,7 @@ mvn spring-boot:run
 ```
 
 ### 3）启动前端
+
 ```bash
 cd frontend
 npm install
@@ -135,18 +139,20 @@ npm run dev
 # 访问 http://localhost:3000
 ```
 
-
 ## 四、环境准备与配置
 
 ### 1）Java 21 安装（必要）
+
 - Windows 推荐：Eclipse Temurin 21 或 Microsoft OpenJDK 21（安装并勾选 JAVA_HOME 与 PATH）
 - 验证：`java -version` 应显示 21
 
 ### 2）MongoDB 安装
+
 - 本地安装或使用 MongoDB Atlas 云服务
 - 验证端口：`27017` 可连通
 
 ### 3）后端配置（backend/src/main/resources/application.yml）
+
 ```yaml
 spring:
   data:
@@ -160,9 +166,9 @@ jwt:
 （如使用 Atlas，请将 uri 替换为云端连接字符串）
 
 ### 4）前端开发代理（vite.config.ts，已配置）
+
 - 默认将以 `/api` 代理到 `http://localhost:8080`
 - Axios 已启用 `withCredentials: true`
-
 
 ## 五、常见问题（快速排查）
 
@@ -174,7 +180,6 @@ jwt:
   - 确认后端已启动、MongoDB 正常、接口路径以 `/api` 开头
 
 更多详尽排障与 CORS 最佳实践见《工作日志》相关章节。
-
 
 ## 六、项目结构（简要）
 
@@ -189,12 +194,10 @@ jwt:
 └── README.md
 ```
 
-
 ## 七、参考与延伸
 
 - 功能使用与说明：见《用户手册.md》
 - 历史记录与技术沉淀：见《工作日志.md》
-
 
 ## 附：Ollama 本地启动与配置（可选，用于本地大模型）
 
@@ -210,6 +213,7 @@ jwt:
   - 或到官网下载安装包：`https://ollama.com`
 
 - macOS（Homebrew）
+
   ```bash
   brew install ollama
   ```
@@ -253,14 +257,15 @@ ollama:
 ```
 
 说明：
+
 - `ollama.base-url` 指向你本地或远程的 Ollama 服务地址
 - `ollama.model` 为你已 `pull` 的模型名称
 
 完成后重启后端：
+
 ```bash
 cd backend
 mvn spring-boot:run
 ```
 
 最后更新：2025-11-21
-
