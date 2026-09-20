@@ -112,6 +112,23 @@ class CalendarServiceTest {
         assertEquals(1, day.get("task"));
     }
 
+    @Test
+    void restPomodorosDoNotCountTowardHeat() {
+        when(checkInRepository.findByUserIdOrderByCheckInDateDesc("u1")).thenReturn(List.of());
+        when(wordRepository.findByUserIdOrderByCreateTimeDesc("u1")).thenReturn(List.of());
+        when(taskRepository.findByOwnerUserId("u1")).thenReturn(List.of());
+
+        Pomodoro work = pomodoro(today.atTime(9, 0));
+        Pomodoro rest = pomodoro(today.atTime(10, 0));
+        rest.setType("break");
+        Pomodoro legacy = pomodoro(today.atTime(11, 0));
+        legacy.setType(null);
+        when(pomodoroRepository.findByUserIdOrderByStartTimeDesc("u1")).thenReturn(List.of(work, rest, legacy));
+
+        Map<String, Integer> day = calendarService.getCalendarData("alice", today, today).get("2026-09-20");
+        assertEquals(2, day.get("pomodoro"));
+    }
+
     private void stubSources(LocalDate inRange, LocalDate outOfRange) {
         CheckIn todayCheck = new CheckIn();
         todayCheck.setCheckInDate(inRange);

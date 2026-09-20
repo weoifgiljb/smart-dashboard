@@ -12,3 +12,7 @@ export const register = (data: RegisterRequest): Promise<AuthResponse> => {
 export const getUserInfo = (): Promise<User> => {
   return request.get('/auth/me')
 }
+
+export const logout = (): Promise<void> => {
+  return request.post('/auth/logout')
+}

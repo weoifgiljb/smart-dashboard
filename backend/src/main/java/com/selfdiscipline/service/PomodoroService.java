@@ -56,8 +56,9 @@ public class PomodoroService {
         LocalDateTime startOfDay = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
         LocalDateTime endOfDay = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
 
-        long todayCount = pomodoroRepository.countByUserIdAndStartTimeBetween(user.getId(), startOfDay, endOfDay);
-        long totalCount = pomodoroRepository.countByUserId(user.getId());
+        long todayCount = pomodoroRepository.countByUserIdAndTypeAndStartTimeBetween(
+                user.getId(), "work", startOfDay, endOfDay);
+        long totalCount = pomodoroRepository.countByUserIdAndType(user.getId(), "work");
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("todayCount", todayCount);
@@ -72,6 +73,6 @@ public class PomodoroService {
     }
 
     public int getTotalCount(String userId) {
-        return (int) pomodoroRepository.countByUserId(userId);
+        return (int) pomodoroRepository.countByUserIdAndType(userId, "work");
     }
 }

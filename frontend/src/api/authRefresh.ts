@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getRefreshToken, setAuthTokens } from '@/api/authTokens'
 
 const apiBase = (import.meta as { env?: { VITE_API_BASE?: string } }).env?.VITE_API_BASE || '/api'
 
@@ -8,21 +9,20 @@ export interface RefreshResult {
 }
 
 export async function refreshAuthToken(): Promise<RefreshResult | null> {
-  const refreshToken = localStorage.getItem('refreshToken')
-  if (!refreshToken) return null
+  const refreshToken = getRefreshToken()
   try {
     const res = await axios.post(
       `${apiBase}/auth/refresh`,
-      { refreshToken },
-      { headers: { 'Refresh-Token': refreshToken } },
+      refreshToken ? { refreshToken } : {},
+      {
+        withCredentials: true,
+        headers: refreshToken ? { 'Refresh-Token': refreshToken } : {},
+      },
     )
     const data = res.data || {}
     const newToken = (data.token || data.accessToken) as string | undefined
     if (!newToken) return null
-    localStorage.setItem('token', newToken)
-    if (data.refreshToken) {
-      localStorage.setItem('refreshToken', data.refreshToken)
-    }
+    setAuthTokens(newToken, data.refreshToken)
     return { token: newToken, refreshToken: data.refreshToken }
   } catch {
     return null

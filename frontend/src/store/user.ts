@@ -1,42 +1,57 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { login, register, getUserInfo } from '@/api/auth'
+import { login, register, getUserInfo, logout as logoutRequest } from '@/api/auth'
+import { clearAuthTokens, getAccessToken, setAuthTokens } from '@/api/authTokens'
 import type { LoginRequest, RegisterRequest, User } from '@/types/user'
 
 export const useUserStore = defineStore('user', () => {
   const user = ref<User | null>(null)
-  const token = ref<string | null>(localStorage.getItem('token'))
-
-  const isAuthenticated = ref(!!token.value)
+  const token = ref<string | null>(getAccessToken())
+  const isAuthenticated = ref(false)
+  let sessionPromise: Promise<void> | null = null
 
   const setUser = (userData: User) => {
     user.value = userData
   }
 
+  const applyTokens = (access?: string | null, refresh?: string | null) => {
+    setAuthTokens(access, refresh)
+    token.value = getAccessToken()
+  }
+
   const setToken = (newToken: string) => {
-    token.value = newToken
-    localStorage.setItem('token', newToken)
+    applyTokens(newToken, undefined)
     isAuthenticated.value = true
   }
 
   const setRefreshToken = (refreshToken?: string) => {
     if (refreshToken) {
-      localStorage.setItem('refreshToken', refreshToken)
+      applyTokens(undefined, refreshToken)
     }
   }
 
-  const logout = () => {
+  const clearSession = () => {
     user.value = null
     token.value = null
-    localStorage.removeItem('token')
-    localStorage.removeItem('refreshToken')
     isAuthenticated.value = false
+    clearAuthTokens()
+    sessionPromise = null
+  }
+
+  const logout = async () => {
+    try {
+      await logoutRequest()
+    } catch {
+      // Cookie 清理由服务端尽力完成；本地会话仍要丢掉
+    }
+    clearSession()
   }
 
   const loginUser = async (loginData: LoginRequest) => {
     const response = await login(loginData)
-    setToken(response.token)
-    setRefreshToken(response.refreshToken)
+    applyTokens(response.token, response.refreshToken)
+    isAuthenticated.value = true
+    sessionPromise = Promise.resolve()
     if (response.user) {
       setUser(response.user)
     } else {
@@ -47,8 +62,9 @@ export const useUserStore = defineStore('user', () => {
 
   const registerUser = async (registerData: RegisterRequest) => {
     const response = await register(registerData)
-    setToken(response.token)
-    setRefreshToken(response.refreshToken)
+    applyTokens(response.token, response.refreshToken)
+    isAuthenticated.value = true
+    sessionPromise = Promise.resolve()
     if (response.user) {
       setUser(response.user)
     } else {
@@ -58,18 +74,23 @@ export const useUserStore = defineStore('user', () => {
   }
 
   const fetchUserInfo = async () => {
-    if (token.value) {
-      try {
-        const userData = await getUserInfo()
-        setUser(userData)
-      } catch {
-        logout()
-      }
+    try {
+      const userData = await getUserInfo()
+      setUser(userData)
+      isAuthenticated.value = true
+    } catch {
+      clearSession()
     }
   }
 
-  if (token.value) {
-    fetchUserInfo()
+  const ensureSession = () => {
+    if (isAuthenticated.value && user.value) {
+      return Promise.resolve()
+    }
+    if (!sessionPromise) {
+      sessionPromise = fetchUserInfo()
+    }
+    return sessionPromise
   }
 
   return {
@@ -83,5 +104,6 @@ export const useUserStore = defineStore('user', () => {
     loginUser,
     registerUser,
     fetchUserInfo,
+    ensureSession,
   }
 })

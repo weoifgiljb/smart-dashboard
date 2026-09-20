@@ -93,15 +93,18 @@ class PomodoroServiceTest {
     }
 
     @Test
-    void statsReturnsTodayAndTotalCounts() {
+    void statsReturnsTodayAndTotalWorkCounts() {
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
-        when(pomodoroRepository.countByUserIdAndStartTimeBetween(eq("u1"), any(), any())).thenReturn(3L);
-        when(pomodoroRepository.countByUserId("u1")).thenReturn(10L);
+        when(pomodoroRepository.countByUserIdAndTypeAndStartTimeBetween(eq("u1"), eq("work"), any(), any()))
+                .thenReturn(3L);
+        when(pomodoroRepository.countByUserIdAndType("u1", "work")).thenReturn(10L);
 
         Map<String, Object> stats = pomodoroService.getStats("alice");
 
         assertEquals(3L, stats.get("todayCount"));
         assertEquals(10L, stats.get("totalCount"));
+        verify(pomodoroRepository).countByUserIdAndTypeAndStartTimeBetween(eq("u1"), eq("work"), any(), any());
+        verify(pomodoroRepository).countByUserIdAndType("u1", "work");
     }
 
     private static PomodoroRequest request(int duration, String type, String taskId) {

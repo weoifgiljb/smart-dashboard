@@ -25,6 +25,9 @@ public class AuthService {
     }
 
     public AuthResponse register(RegisterRequest request) {
+        if (request.getPassword() == null || request.getPassword().length() < 8) {
+            throw ApiException.badRequest("密码至少 8 位");
+        }
         if (userRepository.existsByUsername(request.getUsername())) {
             throw ApiException.conflict("用户名已存在");
         }

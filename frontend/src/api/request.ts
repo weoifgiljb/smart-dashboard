@@ -3,6 +3,7 @@ import { ElMessage } from 'element-plus'
 import router from '@/router'
 import { enqueue } from '@/utils/offlineQueue'
 import { refreshAuthToken } from '@/api/authRefresh'
+import { clearAuthTokens, getAccessToken } from '@/api/authTokens'
 
 const apiBase = (import.meta as { env?: { VITE_API_BASE?: string } }).env?.VITE_API_BASE || '/api'
 
@@ -19,15 +20,42 @@ let refreshPromise: Promise<string | null> | null = null
 
 interface RetryConfig extends InternalAxiosRequestConfig {
   __retryCount?: number
+  __retriedAfterRefresh?: boolean
 }
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+function requestUrl(config: InternalAxiosRequestConfig) {
+  return String(config.url || '')
+}
+
+function isAuthRefreshRequest(config: InternalAxiosRequestConfig) {
+  return requestUrl(config).includes('/auth/refresh')
+}
+
+function isSilentAuthProbe(config: InternalAxiosRequestConfig) {
+  const url = requestUrl(config)
+  return url.includes('/auth/me') || url.includes('/auth/logout')
+}
+
+function onPublicAuthPage() {
+  const path = router.currentRoute.value.path
+  return path === '/login' || path === '/register'
+}
+
+function expireSession(config: InternalAxiosRequestConfig) {
+  clearAuthTokens()
+  if (!isSilentAuthProbe(config) && !onPublicAuthPage()) {
+    router.push('/login')
+    ElMessage.error('登录已过期，请重新登录')
+  }
+}
+
 request.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token')
+    const token = getAccessToken()
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -45,6 +73,10 @@ request.interceptors.response.use(
     const status = error.response?.status
 
     if (status === 401) {
+      if (isAuthRefreshRequest(config) || config.__retriedAfterRefresh) {
+        expireSession(config)
+        return Promise.reject(error)
+      }
       if (!isRefreshing) {
         isRefreshing = true
         refreshPromise = refreshAuthToken()
@@ -55,14 +87,12 @@ request.interceptors.response.use(
       }
       const newToken = await (refreshPromise as Promise<string | null>)
       if (newToken) {
+        config.__retriedAfterRefresh = true
         config.headers = config.headers || {}
         config.headers.Authorization = `Bearer ${newToken}`
         return request(config)
       }
-      localStorage.removeItem('token')
-      localStorage.removeItem('refreshToken')
-      router.push('/login')
-      ElMessage.error('登录已过期，请重新登录')
+      expireSession(config)
       return Promise.reject(error)
     }
 

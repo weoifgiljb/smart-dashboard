@@ -2,6 +2,8 @@ package com.selfdiscipline.service;
 
 import com.selfdiscipline.dto.RhythmResponse;
 import com.selfdiscipline.exception.ApiException;
+import com.selfdiscipline.model.CheckIn;
+import com.selfdiscipline.model.Pomodoro;
 import com.selfdiscipline.model.Task;
 import com.selfdiscipline.model.User;
 import com.selfdiscipline.model.Word;
@@ -18,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -202,13 +206,43 @@ class DashboardServiceTest {
         stubUser();
         when(checkInRepository.existsByUserIdAndCheckInDate("u1", LocalDate.now())).thenReturn(true);
         stubDueWords(List.of(word("w1", "apple"), word("w2", "banana")));
-        when(pomodoroRepository.countByUserIdAndStartTimeBetween(eq("u1"), any(), any())).thenReturn(4L);
+        when(pomodoroRepository.countByUserIdAndTypeAndStartTimeBetween(eq("u1"), eq("work"), any(), any()))
+                .thenReturn(4L);
 
         Map<String, Object> tasks = dashboardService.getTodayTasks("alice");
 
         assertEquals(true, tasks.get("hasCheckedIn"));
         assertEquals(2, tasks.get("todayWordCount"));
         assertEquals(4L, tasks.get("todayPomodoroCount"));
+        verify(pomodoroRepository).countByUserIdAndTypeAndStartTimeBetween(eq("u1"), eq("work"), any(), any());
+    }
+
+    @Test
+    void recentActivitiesSurvivesNullTimestampsAndPomodoroType() {
+        stubUser();
+        CheckIn checkIn = new CheckIn();
+        checkIn.setCheckInDate(LocalDate.now());
+        checkIn.setCreateTime(null);
+
+        Pomodoro pomodoro = new Pomodoro();
+        pomodoro.setStartTime(LocalDateTime.now());
+        pomodoro.setType(null);
+        pomodoro.setDuration(null);
+
+        Word word = new Word();
+        word.setWord(null);
+        word.setCreateTime(null);
+        word.setLastReviewTime(null);
+
+        when(checkInRepository.findByUserIdOrderByCheckInDateDesc("u1")).thenReturn(List.of(checkIn));
+        when(pomodoroRepository.findByUserIdOrderByStartTimeDesc("u1")).thenReturn(List.of(pomodoro));
+        when(wordRepository.findByUserIdOrderByCreateTimeDesc("u1")).thenReturn(List.of(word));
+
+        List<Map<String, Object>> activities = dashboardService.getRecentActivities("alice");
+
+        assertEquals(2, activities.size());
+        assertEquals("完成打卡", activities.stream().filter(a -> "checkin".equals(a.get("type"))).findFirst().orElseThrow().get("title"));
+        assertEquals("完成工作番茄钟 (0分钟)", activities.stream().filter(a -> "pomodoro".equals(a.get("type"))).findFirst().orElseThrow().get("title"));
     }
 
     @Test

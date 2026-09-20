@@ -2,6 +2,8 @@ package com.selfdiscipline.service;
 
 import com.selfdiscipline.exception.ApiException;
 import com.selfdiscipline.model.Book;
+import com.selfdiscipline.model.User;
+import com.selfdiscipline.model.Word;
 import com.selfdiscipline.repository.BookRepository;
 import com.selfdiscipline.repository.UserRepository;
 import com.selfdiscipline.repository.WordRepository;
@@ -59,5 +61,38 @@ class ImageServiceTest {
         verify(imageRateLimiter).consumeOrThrow("user:alice");
         verify(bookRepository, never()).save(any());
         verify(webClient, never()).post();
+    }
+
+    @Test
+    void unownedWordImageIsForbidden() {
+        User alice = new User();
+        alice.setId("u1");
+        alice.setUsername("alice");
+        Word word = new Word();
+        word.setId("w1");
+        word.setUserId(null);
+        when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
+        when(wordRepository.findById("w1")).thenReturn(Optional.of(word));
+
+        ApiException ex = assertThrows(ApiException.class, () -> imageService.generateWordImage("alice", "w1"));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
+        verify(wordRepository, never()).save(any());
+        verify(webClient, never()).post();
+    }
+
+    @Test
+    void otherUsersWordImageIsForbidden() {
+        User alice = new User();
+        alice.setId("u1");
+        alice.setUsername("alice");
+        Word word = new Word();
+        word.setId("w1");
+        word.setUserId("someone-else");
+        when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
+        when(wordRepository.findById("w1")).thenReturn(Optional.of(word));
+
+        ApiException ex = assertThrows(ApiException.class, () -> imageService.generateWordImage("alice", "w1"));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
+        verify(wordRepository, never()).save(any());
     }
 }

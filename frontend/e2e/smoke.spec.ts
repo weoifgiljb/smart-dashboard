@@ -1,12 +1,9 @@
 import { expect, test } from '@playwright/test'
-import { seedAuthenticatedSession } from './helpers/auth'
+import { seedAnonymousSession, seedAuthenticatedSession } from './helpers/auth'
 
 test.describe('unauthenticated pages', () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.removeItem('token')
-      localStorage.removeItem('refreshToken')
-    })
+    await seedAnonymousSession(page)
   })
 
   test('register page shows account fields', async ({ page }) => {

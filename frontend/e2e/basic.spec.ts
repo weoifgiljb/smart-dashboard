@@ -1,10 +1,8 @@
 import { test, expect } from '@playwright/test'
+import { seedAnonymousSession } from './helpers/auth'
 
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('refreshToken')
-  })
+  await seedAnonymousSession(page)
 })
 
 test('home redirects to login when unauthenticated', async ({ page }) => {

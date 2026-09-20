@@ -81,7 +81,8 @@ public class DashboardService {
         );
         tasks.put("todayWordCount", dueToday.size());
         // 今日完成的番茄钟数
-        long todayPomodoroCount = pomodoroRepository.countByUserIdAndStartTimeBetween(userId, startOfDay, endOfDay);
+        long todayPomodoroCount = pomodoroRepository.countByUserIdAndTypeAndStartTimeBetween(
+                userId, "work", startOfDay, endOfDay);
         tasks.put("todayPomodoroCount", todayPomodoroCount);
 
         return tasks;
@@ -97,57 +98,58 @@ public class DashboardService {
 
         // 获取最近7天的打卡记录
         List<CheckIn> recentCheckIns = checkInRepository.findByUserIdOrderByCheckInDateDesc(userId).stream()
-                .filter(checkIn -> !checkIn.getCheckInDate().isBefore(sevenDaysAgo))
+                .filter(checkIn -> checkIn.getCheckInDate() != null && !checkIn.getCheckInDate().isBefore(sevenDaysAgo))
                 .collect(Collectors.toList());
         for (CheckIn checkIn : recentCheckIns) {
             Map<String, Object> activity = new HashMap<>();
             activity.put("type", "checkin");
             activity.put("title", "完成打卡");
             activity.put("date", checkIn.getCheckInDate().toString());
-            activity.put("time", checkIn.getCreateTime().toString());
+            activity.put("time", safeTime(checkIn.getCreateTime(), checkIn.getCheckInDate().atStartOfDay()));
             activities.add(activity);
         }
 
-        // 获取最近7天的番茄钟记录
         List<Pomodoro> recentPomodoros = pomodoroRepository.findByUserIdOrderByStartTimeDesc(userId).stream()
-                .filter(pomodoro -> !pomodoro.getStartTime().toLocalDate().isBefore(sevenDaysAgo))
+                .filter(pomodoro -> pomodoro.getStartTime() != null
+                        && !pomodoro.getStartTime().toLocalDate().isBefore(sevenDaysAgo))
                 .limit(10)
                 .collect(Collectors.toList());
         for (Pomodoro pomodoro : recentPomodoros) {
             Map<String, Object> activity = new HashMap<>();
+            boolean work = CalendarService.isFocusPomodoro(pomodoro);
+            String minutes = pomodoro.getDuration() == null ? "0" : String.valueOf(pomodoro.getDuration());
             activity.put("type", "pomodoro");
-            activity.put("title", "完成" + (pomodoro.getType().equals("work") ? "工作" : "休息") + "番茄钟 (" + pomodoro.getDuration() + "分钟)");
+            activity.put("title", "完成" + (work ? "工作" : "休息") + "番茄钟 (" + minutes + "分钟)");
             activity.put("date", pomodoro.getStartTime().toLocalDate().toString());
             activity.put("time", pomodoro.getStartTime().toString());
             activities.add(activity);
         }
 
-        // 获取最近7天的单词复习记录
         List<Word> recentWords = wordRepository.findByUserIdOrderByCreateTimeDesc(userId).stream()
                 .filter(word -> {
-                    LocalDate wordDate = word.getLastReviewTime() != null
-                            ? word.getLastReviewTime().toLocalDate()
-                            : word.getCreateTime().toLocalDate();
-                    return !wordDate.isBefore(sevenDaysAgo);
+                    LocalDateTime when = word.getLastReviewTime() != null ? word.getLastReviewTime() : word.getCreateTime();
+                    if (when == null) {
+                        return false;
+                    }
+                    return !when.toLocalDate().isBefore(sevenDaysAgo);
                 })
                 .limit(10)
                 .collect(Collectors.toList());
         for (Word word : recentWords) {
             Map<String, Object> activity = new HashMap<>();
             activity.put("type", "word");
-            activity.put("title", "学习单词: " + word.getWord());
-            LocalDate wordDate = word.getLastReviewTime() != null
-                    ? word.getLastReviewTime().toLocalDate()
-                    : word.getCreateTime().toLocalDate();
-            activity.put("date", wordDate.toString());
-            activity.put("time", (word.getLastReviewTime() != null ? word.getLastReviewTime() : word.getCreateTime()).toString());
+            activity.put("title", "学习单词: " + (word.getWord() == null ? "" : word.getWord()));
+            LocalDateTime when = word.getLastReviewTime() != null ? word.getLastReviewTime() : word.getCreateTime();
+            activity.put("date", when.toLocalDate().toString());
+            activity.put("time", when.toString());
             activities.add(activity);
         }
 
-        // 按时间倒序排序
         activities.sort((a, b) -> {
             String timeA = (String) a.get("time");
             String timeB = (String) b.get("time");
+            if (timeA == null) return 1;
+            if (timeB == null) return -1;
             return timeB.compareTo(timeA);
         });
 
@@ -244,6 +246,11 @@ public class DashboardService {
                 rhythm.setReason("今天该接的都接上了，自由专注也很好。");
             }
         }
+    }
+
+    private static String safeTime(LocalDateTime preferred, LocalDateTime fallback) {
+        LocalDateTime value = preferred != null ? preferred : fallback;
+        return value == null ? "" : value.toString();
     }
 }
 

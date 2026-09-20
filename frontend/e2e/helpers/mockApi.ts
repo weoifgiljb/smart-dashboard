@@ -95,12 +95,14 @@ function payloadFor(url: URL, method: string) {
 }
 
 export async function mockApi(page: Page) {
+  let sessionLive = true
   await page.route(isApiRequest, async (route) => {
     const url = new URL(route.request().url())
     if (url.hostname === 'api.github.com') {
       return json(route, { items: [] })
     }
-    if (route.request().method().toUpperCase() === 'OPTIONS') {
+    const method = route.request().method().toUpperCase()
+    if (method === 'OPTIONS') {
       return route.fulfill({
         status: 204,
         headers: {
@@ -110,6 +112,18 @@ export async function mockApi(page: Page) {
         },
       })
     }
-    return json(route, payloadFor(url, route.request().method().toUpperCase()))
+    const path = apiPath(url)
+    if (path.endsWith('/auth/logout') && method === 'POST') {
+      sessionLive = false
+      return route.fulfill({ status: 204, body: '' })
+    }
+    if (path.endsWith('/auth/me') && !sessionLive) {
+      return route.fulfill({
+        status: 401,
+        contentType: 'application/json; charset=utf-8',
+        body: JSON.stringify({ message: 'Unauthorized' }),
+      })
+    }
+    return json(route, payloadFor(url, method))
   })
 }

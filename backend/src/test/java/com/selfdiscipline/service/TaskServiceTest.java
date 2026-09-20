@@ -120,6 +120,44 @@ class TaskServiceTest {
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
     }
 
+    @Test
+    void getSubtasksQueriesByOwnerAndParent() {
+        Task parent = owned("p1", "alice");
+        Task child = owned("c1", "alice");
+        child.setParentId("p1");
+        when(taskRepository.findById("p1")).thenReturn(Optional.of(parent));
+        when(shareRepository.findByTaskId("p1")).thenReturn(List.of());
+        when(taskRepository.findByOwnerUserIdAndParentId("alice", "p1")).thenReturn(List.of(child));
+
+        List<Task> subs = taskService.getSubtasks("alice", "p1");
+
+        assertEquals(1, subs.size());
+        assertEquals("c1", subs.get(0).getId());
+        verify(taskRepository, never()).findAll();
+        verify(taskRepository).findByOwnerUserIdAndParentId("alice", "p1");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void kanbanAndStatsTreatNullStatusAndPriorityAsDefaults() {
+        Task orphan = owned("t1", "alice");
+        orphan.setStatus(null);
+        orphan.setPriority(null);
+        when(taskRepository.findByOwnerUserId("alice")).thenReturn(List.of(orphan));
+        when(shareRepository.findByTargetUserId("alice")).thenReturn(List.of());
+
+        List<Map<String, Object>> board = taskService.getKanban("alice");
+        assertEquals(1, board.size());
+        assertEquals("todo", board.get(0).get("status"));
+        assertEquals(1, ((List<Task>) board.get(0).get("items")).size());
+
+        Map<String, Object> stats = taskService.getStats("alice");
+        Map<String, Long> byStatus = (Map<String, Long>) stats.get("byStatus");
+        Map<String, Long> byPriority = (Map<String, Long>) stats.get("byPriority");
+        assertEquals(1L, byStatus.get("todo"));
+        assertEquals(1L, byPriority.get("med"));
+    }
+
     private static Task owned(String id, String owner) {
         Task task = new Task();
         task.setId(id);

@@ -92,11 +92,7 @@ public class ImageService {
                 .orElseThrow(() -> ApiException.notFound("单词不存在"));
         String currentUserId = user.getId();
         String ownerId = word.getUserId();
-        if (ownerId == null || ownerId.isBlank()) {
-            // 兼容旧数据：无 owner 时认领到当前用户
-            word.setUserId(currentUserId);
-            wordRepository.save(word);
-        } else if (!currentUserId.equals(ownerId)) {
+        if (ownerId == null || ownerId.isBlank() || !currentUserId.equals(ownerId)) {
             throw ApiException.forbidden("无权为该单词生成配图");
         }
         if (!force && word.getImage() != null && !word.getImage().isBlank()) {

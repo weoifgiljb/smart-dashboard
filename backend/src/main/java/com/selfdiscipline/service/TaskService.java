@@ -167,7 +167,7 @@ public class TaskService {
 
     public List<Task> getSubtasks(@NonNull String userId, @NonNull String taskId) {
         getTask(userId, taskId);
-        return taskRepository.findAll().stream().filter(x -> taskId.equals(x.getParentId())).toList();
+        return taskRepository.findByOwnerUserIdAndParentId(userId, taskId);
     }
 
     public Task addDependency(@NonNull String userId, @NonNull String taskId, @NonNull String depId) {
@@ -195,15 +195,19 @@ public class TaskService {
     public List<Map<String, Object>> getKanban(@NonNull String userId) {
         Map<String, Object> filters = new HashMap<>();
         List<Task> tasks = listTasks(userId, filters);
-        return tasks.stream().collect(Collectors.groupingBy(Task::getStatus)).entrySet().stream()
+        return tasks.stream()
+                .collect(Collectors.groupingBy(t -> blankToDefault(t.getStatus(), "todo")))
+                .entrySet().stream()
                 .map(e -> Map.of("status", e.getKey(), "items", e.getValue()))
                 .toList();
     }
 
     public Map<String, Object> getStats(@NonNull String userId) {
         List<Task> tasks = listTasks(userId, Map.of());
-        Map<String, Long> byStatus = tasks.stream().collect(Collectors.groupingBy(Task::getStatus, Collectors.counting()));
-        Map<String, Long> byPriority = tasks.stream().collect(Collectors.groupingBy(Task::getPriority, Collectors.counting()));
+        Map<String, Long> byStatus = tasks.stream().collect(Collectors.groupingBy(
+                t -> blankToDefault(t.getStatus(), "todo"), Collectors.counting()));
+        Map<String, Long> byPriority = tasks.stream().collect(Collectors.groupingBy(
+                t -> blankToDefault(t.getPriority(), "med"), Collectors.counting()));
         long overdue = tasks.stream().filter(t -> t.getDueDate() != null && t.getDueDate().isBefore(LocalDateTime.now()) && !"done".equalsIgnoreCase(t.getStatus())).count();
         return Map.of("byStatus", byStatus, "byPriority", byPriority, "overdue", overdue);
     }
@@ -386,6 +390,10 @@ public class TaskService {
                 Objects.requireNonNull(userId),
                 "EDIT");
         if (!(owner || canEdit)) throw ApiException.forbidden("无权编辑该任务");
+    }
+
+    private static String blankToDefault(String value, String fallback) {
+        return value == null || value.isBlank() ? fallback : value;
     }
 }
 

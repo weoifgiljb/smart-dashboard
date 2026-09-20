@@ -73,6 +73,7 @@ public class CalendarService {
         List<Pomodoro> pomodoros = pomodoroRepository.findByUserIdOrderByStartTimeDesc(userId);
         pomodoros.stream()
                 .filter(p -> p.getStartTime() != null)
+                .filter(CalendarService::isFocusPomodoro)
                 .filter(p -> within(p.getStartTime().toLocalDate(), startInclusive, endInclusive))
                 .forEach(pomodoro -> {
                     String dateKey = pomodoro.getStartTime().toLocalDate().format(DAY_KEY);
@@ -116,6 +117,14 @@ public class CalendarService {
                 });
 
         return result;
+    }
+
+    static boolean isFocusPomodoro(Pomodoro pomodoro) {
+        if (pomodoro == null) {
+            return false;
+        }
+        String type = pomodoro.getType();
+        return type == null || type.isBlank() || "work".equalsIgnoreCase(type);
     }
 
     public Map<String, Object> getDayDetails(String username, LocalDate date) {

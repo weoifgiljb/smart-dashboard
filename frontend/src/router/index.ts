@@ -95,8 +95,9 @@ const router = createRouter({
   },
 })
 
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to, _from, next) => {
   const userStore = useUserStore()
+  await userStore.ensureSession()
   if (to.meta.requiresAuth && !userStore.isAuthenticated) {
     next({ path: '/login', query: { redirect: to.fullPath } })
   } else if ((to.path === '/login' || to.path === '/register') && userStore.isAuthenticated) {

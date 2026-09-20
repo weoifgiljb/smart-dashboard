@@ -2,12 +2,14 @@ package com.selfdiscipline.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 public class RegisterRequest {
     @NotBlank(message = "用户名不能为空")
     private String username;
 
     @NotBlank(message = "密码不能为空")
+    @Size(min = 8, message = "密码至少 8 位")
     private String password;
 
     @NotBlank(message = "邮箱不能为空")

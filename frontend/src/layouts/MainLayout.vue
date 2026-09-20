@@ -120,8 +120,8 @@ const toggleCollapse = () => {
 
 const activeMenu = computed(() => route.path)
 
-const handleLogout = () => {
-  userStore.logout()
+const handleLogout = async () => {
+  await userStore.logout()
   ElMessage.success('已退出登录')
   router.push('/login')
 }

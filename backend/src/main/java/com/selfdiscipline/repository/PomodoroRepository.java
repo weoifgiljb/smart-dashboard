@@ -12,6 +12,8 @@ public interface PomodoroRepository extends MongoRepository<Pomodoro, String> {
     List<Pomodoro> findByUserIdOrderByStartTimeDesc(String userId);
     long countByUserId(String userId);
     long countByUserIdAndStartTimeBetween(String userId, LocalDateTime start, LocalDateTime end);
+    long countByUserIdAndType(String userId, String type);
+    long countByUserIdAndTypeAndStartTimeBetween(String userId, String type, LocalDateTime start, LocalDateTime end);
 }
 
 

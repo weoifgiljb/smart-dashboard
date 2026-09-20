@@ -91,10 +91,20 @@ class AuthServiceTest {
         when(userRepository.existsByUsername("alice")).thenReturn(true);
         RegisterRequest req = new RegisterRequest();
         req.setUsername("alice");
-        req.setPassword("secret");
+        req.setPassword("secret12");
         req.setEmail("a@example.com");
         ApiException ex = assertThrows(ApiException.class, () -> authService.register(req));
         assertEquals(HttpStatus.CONFLICT, ex.getStatus());
+    }
+
+    @Test
+    void registerRejectsPasswordShorterThanEight() {
+        RegisterRequest req = new RegisterRequest();
+        req.setUsername("bob");
+        req.setPassword("short");
+        req.setEmail("b@example.com");
+        ApiException ex = assertThrows(ApiException.class, () -> authService.register(req));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
     }
 
     @Test
@@ -109,7 +119,7 @@ class AuthServiceTest {
 
         RegisterRequest req = new RegisterRequest();
         req.setUsername("bob");
-        req.setPassword("secret");
+        req.setPassword("secret12");
         req.setEmail("b@example.com");
         AuthResponse res = authService.register(req);
         assertEquals("bob", res.getUser().getUsername());

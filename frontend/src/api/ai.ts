@@ -1,4 +1,5 @@
 import request from './request'
+import { getAccessToken } from './authTokens'
 
 export const sendChatMessage = (question: string) => {
   return request.post('/ai/chat', { question })
@@ -22,9 +23,10 @@ export async function streamChatMessage(
   onChunk: (text: string) => void,
 ): Promise<void> {
   const apiBase = (import.meta as any).env?.VITE_API_BASE || '/api'
-  const token = localStorage.getItem('token') || ''
+  const token = getAccessToken() || ''
   const res = await fetch(`${apiBase}/ai/chat/stream`, {
     method: 'POST',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       Accept: 'text/event-stream, text/plain, */*',

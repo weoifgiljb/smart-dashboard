@@ -6,6 +6,7 @@ import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.selfdiscipline.model.Diary;
+import com.selfdiscipline.util.RemoteUrlGuard;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
@@ -28,6 +29,21 @@ public class DiaryExportService {
         }
     }
 
+    private String safeRemoteImageUrl(String urlStr) {
+        if (urlStr == null || urlStr.isBlank()) {
+            return null;
+        }
+        if (urlStr.startsWith("data:image/")) {
+            return urlStr;
+        }
+        try {
+            RemoteUrlGuard.assertSafeHttpUrl(urlStr);
+            return encodeUrl(urlStr);
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
     public void exportToPdf(List<Diary> diaries, OutputStream out) throws IOException {
         Document document = new Document();
         try {
@@ -45,14 +61,15 @@ public class DiaryExportService {
                 
                 if (diary.getImageUrl() != null && !diary.getImageUrl().isEmpty()) {
                     try {
-                        String encodedUrl = encodeUrl(diary.getImageUrl());
-                        com.itextpdf.text.Image img = com.itextpdf.text.Image.getInstance(encodedUrl);
-                        // Scale to fit page width
-                        float maxWidth = document.getPageSize().getWidth() - document.leftMargin() - document.rightMargin();
-                        if (img.getScaledWidth() > maxWidth) {
-                            img.scaleToFit(maxWidth, img.getScaledHeight() * (maxWidth / img.getScaledWidth()));
+                        String encodedUrl = safeRemoteImageUrl(diary.getImageUrl());
+                        if (encodedUrl != null) {
+                            com.itextpdf.text.Image img = com.itextpdf.text.Image.getInstance(encodedUrl);
+                            float maxWidth = document.getPageSize().getWidth() - document.leftMargin() - document.rightMargin();
+                            if (img.getScaledWidth() > maxWidth) {
+                                img.scaleToFit(maxWidth, img.getScaledHeight() * (maxWidth / img.getScaledWidth()));
+                            }
+                            document.add(img);
                         }
-                        document.add(img);
                     } catch (Exception e) {
                         System.err.println("Failed to load image for PDF: " + e.getMessage());
                     }
@@ -83,7 +100,8 @@ public class DiaryExportService {
                 
                 if (diary.getImageUrl() != null && !diary.getImageUrl().isEmpty()) {
                     try {
-                        String encodedUrl = encodeUrl(diary.getImageUrl());
+                        String encodedUrl = safeRemoteImageUrl(diary.getImageUrl());
+                        if (encodedUrl != null) {
                         java.net.URL url = new java.net.URL(encodedUrl);
                         try (java.io.InputStream is = url.openStream()) {
                             byte[] bytes = is.readAllBytes();
@@ -112,6 +130,7 @@ public class DiaryExportService {
                                     imageRun.addPicture(new java.io.ByteArrayInputStream(bytes), format, "image", org.apache.poi.util.Units.toEMU(width), org.apache.poi.util.Units.toEMU(height));
                                 }
                             }
+                        }
                         }
                     } catch (Exception e) {
                         System.err.println("Failed to load image for Word: " + e.getMessage());
