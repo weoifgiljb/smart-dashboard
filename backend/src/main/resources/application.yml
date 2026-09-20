@@ -4,17 +4,19 @@ server:
 spring:
   data:
     mongodb:
-      uri: mongodb://localhost:27017/self_discipline
-      database: self_discipline
+      uri: ${MONGODB_URI:mongodb://localhost:27017/self_discipline}
+      database: ${MONGODB_DATABASE:self_discipline}
 
 jwt:
-  secret: self-discipline-secret-key-2024-very-long-secret-key-for-jwt-token-generation
-  expiration: 86400000
+  secret: ${JWT_SECRET:change-me-in-production-use-at-least-32-chars!!}
+  expiration: ${JWT_EXPIRATION:86400000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 
 aliyun:
   ai:
-    api-key: YOUR_API_KEY
-    api-url: https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation
+    api-key: ${ALIYUN_AI_API_KEY:}
+    api-url: ${ALIYUN_AI_API_URL:https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation}
+    model: ${ALIYUN_AI_MODEL:qwen-turbo}
 
 openai:
   api-key: ${OPENAI_API_KEY:}
@@ -22,14 +24,9 @@ openai:
   image-model: ${OPENAI_IMAGE_MODEL:dall-e-3}
   image-size: ${OPENAI_IMAGE_SIZE:512x512}
 
+ollama:
+  base-url: ${OLLAMA_BASE_URL:http://127.0.0.1:11434}
+  model: ${OLLAMA_MODEL:llama3.1}
+
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
-
-
-
-
-
-
-
-
-

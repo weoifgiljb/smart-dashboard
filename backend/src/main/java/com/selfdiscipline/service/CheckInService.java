@@ -1,5 +1,6 @@
 package com.selfdiscipline.service;
 
+import com.selfdiscipline.exception.ApiException;
 import com.selfdiscipline.model.CheckIn;
 import com.selfdiscipline.model.User;
 import com.selfdiscipline.repository.CheckInRepository;
@@ -26,11 +27,11 @@ public class CheckInService {
 
     public Map<String, Object> checkIn(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> ApiException.notFound("用户不存在"));
 
         LocalDate today = LocalDate.now();
         if (checkInRepository.existsByUserIdAndCheckInDate(user.getId(), today)) {
-            throw new RuntimeException("今日已打卡");
+            throw ApiException.conflict("今日已打卡");
         }
 
         CheckIn checkIn = new CheckIn();
@@ -75,7 +76,7 @@ public class CheckInService {
 
     public Map<String, Object> getStats(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> ApiException.notFound("用户不存在"));
 
         LocalDate today = LocalDate.now();
         boolean hasCheckedInToday = checkInRepository.existsByUserIdAndCheckInDate(user.getId(), today);
@@ -134,7 +135,7 @@ public class CheckInService {
 
     public List<CheckIn> getHistory(String username, int page, int size) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> ApiException.notFound("用户不存在"));
         List<CheckIn> checkIns = checkInRepository.findByUserIdOrderByCheckInDateDesc(user.getId());
         int start = page * size;
         int end = Math.min(start + size, checkIns.size());
@@ -147,7 +148,7 @@ public class CheckInService {
      */
     public List<Map<String, Object>> getCheckInHistoryWithHeatValue(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> ApiException.notFound("用户不存在"));
         List<CheckIn> checkIns = checkInRepository.findByUserIdOrderByCheckInDateDesc(user.getId());
         
         List<Map<String, Object>> result = new java.util.ArrayList<>();

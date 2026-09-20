@@ -3,6 +3,7 @@ package com.selfdiscipline.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.selfdiscipline.config.OpenAIConfig;
+import com.selfdiscipline.exception.ApiException;
 import com.selfdiscipline.exception.ImageGenerationException;
 import com.selfdiscipline.model.Book;
 import com.selfdiscipline.model.User;
@@ -54,7 +55,7 @@ public class ImageService {
     public Book generateBookCover(String bookId, boolean force) {
         imageRateLimiter.consumeOrThrow("book:" + bookId);
         Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new RuntimeException("书籍不存在"));
+                .orElseThrow(() -> ApiException.notFound("书籍不存在"));
         if (!force && book.getCover() != null && !book.getCover().isBlank()) {
             return book;
         }
@@ -83,9 +84,9 @@ public class ImageService {
     public Word generateWordImage(String username, String wordId, boolean force) {
         imageRateLimiter.consumeOrThrow("user:" + username);
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> ApiException.notFound("用户不存在"));
         Word word = wordRepository.findById(wordId)
-                .orElseThrow(() -> new RuntimeException("单词不存在"));
+                .orElseThrow(() -> ApiException.notFound("单词不存在"));
         String currentUserId = user.getId();
         String ownerId = word.getUserId();
         if (ownerId == null || ownerId.isBlank()) {
@@ -93,7 +94,7 @@ public class ImageService {
             word.setUserId(currentUserId);
             wordRepository.save(word);
         } else if (!currentUserId.equals(ownerId)) {
-            throw new RuntimeException("无权为该单词生成配图");
+            throw ApiException.forbidden("无权为该单词生成配图");
         }
         if (!force && word.getImage() != null && !word.getImage().isBlank()) {
             return word;

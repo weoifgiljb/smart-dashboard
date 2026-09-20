@@ -19,24 +19,41 @@ export const useUserStore = defineStore('user', () => {
     isAuthenticated.value = true
   }
 
+  const setRefreshToken = (refreshToken?: string) => {
+    if (refreshToken) {
+      localStorage.setItem('refreshToken', refreshToken)
+    }
+  }
+
   const logout = () => {
     user.value = null
     token.value = null
     localStorage.removeItem('token')
+    localStorage.removeItem('refreshToken')
     isAuthenticated.value = false
   }
 
   const loginUser = async (loginData: LoginRequest) => {
     const response = await login(loginData)
     setToken(response.token)
-    await fetchUserInfo()
+    setRefreshToken(response.refreshToken)
+    if (response.user) {
+      setUser(response.user)
+    } else {
+      await fetchUserInfo()
+    }
     return response
   }
 
   const registerUser = async (registerData: RegisterRequest) => {
     const response = await register(registerData)
     setToken(response.token)
-    await fetchUserInfo()
+    setRefreshToken(response.refreshToken)
+    if (response.user) {
+      setUser(response.user)
+    } else {
+      await fetchUserInfo()
+    }
     return response
   }
 
@@ -45,7 +62,7 @@ export const useUserStore = defineStore('user', () => {
       try {
         const userData = await getUserInfo()
         setUser(userData)
-      } catch (error) {
+      } catch {
         logout()
       }
     }
@@ -61,6 +78,7 @@ export const useUserStore = defineStore('user', () => {
     isAuthenticated,
     setUser,
     setToken,
+    setRefreshToken,
     logout,
     loginUser,
     registerUser,

@@ -1,5 +1,6 @@
 package com.selfdiscipline.service;
 
+import com.selfdiscipline.exception.ApiException;
 import com.selfdiscipline.model.CheckIn;
 import com.selfdiscipline.model.Pomodoro;
 import com.selfdiscipline.model.Task;
@@ -46,7 +47,7 @@ public class CalendarService {
 
     public Map<String, Map<String, Integer>> getCalendarData(String username, LocalDate start, LocalDate end) {
         String userId = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在")).getId();
+                .orElseThrow(() -> ApiException.notFound("用户不存在")).getId();
 
         Map<String, Map<String, Integer>> result = new HashMap<>();
         LocalDate s = start;
@@ -118,7 +119,7 @@ public class CalendarService {
 
     public Map<String, Object> getDayDetails(String username, LocalDate date) {
         String userId = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在")).getId();
+                .orElseThrow(() -> ApiException.notFound("用户不存在")).getId();
         Map<String, Object> res = new HashMap<>();
         // Check-ins
         List<CheckIn> checkIns = checkInRepository.findByUserIdOrderByCheckInDateDesc(userId)

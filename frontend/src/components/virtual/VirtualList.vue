@@ -23,12 +23,12 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T">
 import { ref, computed, onMounted } from 'vue'
 
 const props = withDefaults(
   defineProps<{
-    items: any[]
+    items: T[]
     itemHeight: number
     height?: string
     overscan?: number

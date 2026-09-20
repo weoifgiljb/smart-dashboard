@@ -1,16 +1,19 @@
 package com.selfdiscipline.dto;
 
-import com.selfdiscipline.model.User;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class AuthResponse {
     private String token;
-    private User user;
+    private String refreshToken;
+    private UserPublicDto user;
 
     public AuthResponse() {
     }
 
-    public AuthResponse(String token, User user) {
+    public AuthResponse(String token, String refreshToken, UserPublicDto user) {
         this.token = token;
+        this.refreshToken = refreshToken;
         this.user = user;
     }
 
@@ -22,14 +25,19 @@ public class AuthResponse {
         this.token = token;
     }
 
-    public User getUser() {
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
+    public UserPublicDto getUser() {
         return user;
     }
 
-    public void setUser(User user) {
+    public void setUser(UserPublicDto user) {
         this.user = user;
     }
 }
-
-
-

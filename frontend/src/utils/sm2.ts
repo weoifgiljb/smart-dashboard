@@ -1,10 +1,15 @@
 export type Sm2State = {
-  repetition: number // 已复习次数
-  interval: number // 距离下次复习的天数
-  easeFactor: number // 记忆难度因子
+  repetition: number
+  interval: number
+  easeFactor: number
 }
 
-// 简化 SM-2：仅基于质量评分(0-5)调整 easeFactor 与 interval
+export type SM2State = {
+  repetitions: number
+  easeFactor: number
+  interval: number
+}
+
 export function sm2Next(state: Sm2State, quality: 0 | 1 | 2 | 3 | 4 | 5): Sm2State {
   let { repetition, interval, easeFactor } = state
   easeFactor = Math.max(1.3, easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)))
@@ -22,11 +27,6 @@ export function sm2Next(state: Sm2State, quality: 0 | 1 | 2 | 3 | 4 | 5): Sm2Sta
 
 export function initialSm2(): Sm2State {
   return { repetition: 0, interval: 1, easeFactor: 2.5 }
-}
-export type SM2State = {
-  repetitions: number
-  easeFactor: number
-  interval: number // days
 }
 
 const STORAGE_KEY = 'sm2State'
@@ -56,26 +56,20 @@ export function setState(id: string, state: SM2State) {
 }
 
 export function applyReview(id: string, isCorrect: boolean): SM2State {
-  const current: SM2State = getState(id) || { repetitions: 0, easeFactor: 2.5, interval: 0 }
-  // 简化打分：正确=4，错误/超时=2
-  const grade = isCorrect ? 4 : 2
-  if (grade >= 3) {
-    if (current.repetitions === 0) {
-      current.interval = 1
-    } else if (current.repetitions === 1) {
-      current.interval = 6
-    } else {
-      current.interval = Math.round(current.interval * current.easeFactor)
-    }
-    current.repetitions += 1
-  } else {
-    current.repetitions = 0
-    current.interval = 1
-  }
-  current.easeFactor = Math.max(
-    1.3,
-    current.easeFactor + (0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02)),
+  const current = getState(id) || { repetitions: 0, easeFactor: 2.5, interval: 0 }
+  const next = sm2Next(
+    {
+      repetition: current.repetitions,
+      interval: Math.max(current.interval, 1),
+      easeFactor: current.easeFactor,
+    },
+    isCorrect ? 4 : 2,
   )
-  setState(id, current)
-  return current
+  const state: SM2State = {
+    repetitions: next.repetition,
+    easeFactor: next.easeFactor,
+    interval: next.interval,
+  }
+  setState(id, state)
+  return state
 }

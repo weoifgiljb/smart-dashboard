@@ -17,7 +17,9 @@
           </div>
         </div>
         <div class="sidebar-footer">
-          <el-button link @click="exportChat"><el-icon><Download /></el-icon> 导出记录</el-button>
+          <el-button link @click="exportChat"
+            ><el-icon><Download /></el-icon> 导出记录</el-button
+          >
         </div>
       </div>
 
@@ -46,7 +48,7 @@
             <div class="welcome-icon">✨</div>
             <h2>你好，我是你的智能助手</h2>
             <p>我可以帮你解答问题、制定计划、翻译文本或提供建议。</p>
-            
+
             <div class="suggestions-grid">
               <div
                 v-for="(q, i) in presetQuestions"
@@ -60,7 +62,11 @@
           </div>
 
           <div v-else class="messages-list">
-            <div v-for="(msg, index) in filteredMessages" :key="index" :class="['message-row', msg.type]">
+            <div
+              v-for="(msg, index) in filteredMessages"
+              :key="index"
+              :class="['message-row', msg.type]"
+            >
               <div class="avatar">
                 <div class="avatar-img" :class="msg.type">
                   <el-icon v-if="msg.type === 'ai'"><Cpu /></el-icon>
@@ -68,12 +74,22 @@
                 </div>
               </div>
               <div class="message-bubble">
-                <div class="bubble-content markdown-body" v-html="renderMarkdown(msg.content)"></div>
+                <div
+                  class="bubble-content markdown-body"
+                  v-html="renderMarkdown(msg.content)"
+                ></div>
                 <div class="bubble-footer">
                   <span class="time">{{ formatTime(msg.time) }}</span>
                   <div class="actions">
-                    <el-icon class="action-icon" @click="copyText(msg.content)"><CopyDocument /></el-icon>
-                    <el-icon class="action-icon" v-if="msg.type === 'ai'" @click="regenerateResponse(index)"><Refresh /></el-icon>
+                    <el-icon class="action-icon" @click="copyText(msg.content)"
+                      ><CopyDocument
+                    /></el-icon>
+                    <el-icon
+                      v-if="msg.type === 'ai'"
+                      class="action-icon"
+                      @click="regenerateResponse(index)"
+                      ><Refresh
+                    /></el-icon>
                   </div>
                 </div>
               </div>
@@ -82,12 +98,12 @@
             <!-- Loading Indicator -->
             <div v-if="loading" class="message-row ai">
               <div class="avatar">
-                <div class="avatar-img ai"><el-icon><Cpu /></el-icon></div>
+                <div class="avatar-img ai">
+                  <el-icon><Cpu /></el-icon>
+                </div>
               </div>
               <div class="message-bubble loading-bubble">
-                <div class="typing-dots">
-                  <span></span><span></span><span></span>
-                </div>
+                <div class="typing-dots"><span></span><span></span><span></span></div>
               </div>
             </div>
           </div>
@@ -105,9 +121,9 @@
               @keydown.enter.exact.prevent="onEnter"
               @keydown.shift.enter.stop
             />
-            <el-button 
-              type="primary" 
-              circle 
+            <el-button
+              type="primary"
+              circle
               class="send-btn"
               :disabled="!inputMessage.trim() || loading"
               @click="sendMessage"
@@ -128,8 +144,14 @@
 import { ref, onMounted, nextTick, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
-  Plus, Download, ChatLineSquare, Cpu, User,
-  CopyDocument, Refresh, Promotion
+  Plus,
+  Download,
+  ChatLineSquare,
+  Cpu,
+  User,
+  CopyDocument,
+  Refresh,
+  Promotion,
 } from '@element-plus/icons-vue'
 import { sendChatMessage, getChatHistory, streamChatMessage } from '@/api/ai'
 
@@ -199,12 +221,14 @@ const typeStream = async (fullText: string, onChunk: (s: string) => void) => {
 const persist = () => {
   try {
     localStorage.setItem('aiChatMessages', JSON.stringify(messages.value))
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 const sendMessage = async () => {
   if (!inputMessage.value.trim()) return
-  
+
   const question = inputMessage.value
   inputMessage.value = ''
   messages.value.push({
@@ -224,7 +248,7 @@ const sendMessage = async () => {
     } as any
     messages.value.push(aiMsg)
     await scrollToBottom()
-    
+
     try {
       await streamChatMessage(question, async (chunk) => {
         aiMsg.content += chunk
@@ -234,7 +258,10 @@ const sendMessage = async () => {
       console.warn('Stream failed, falling back to normal request:', e)
       const response: any = await sendChatMessage(question)
       // 兼容多种返回格式
-      const ans = typeof response === 'string' ? response : (response.answer || response.text || response.content || '')
+      const ans =
+        typeof response === 'string'
+          ? response
+          : response.answer || response.text || response.content || ''
       await typeStream(String(ans), (chunk) => {
         aiMsg.content += chunk
       })
@@ -271,17 +298,14 @@ const applyPreset = (q: string) => {
   // remove emoji if present at start for cleaner input
   // 使用简单的 Unicode 范围匹配 Emoji，避免复杂的代理对问题
   if (/^[\u2000-\u3300]/.test(q) || /^[\uD83C-\uD83E]/.test(q)) {
-     // keep it or remove it, user preference. Let's keep it.
+    // keep it or remove it, user preference. Let's keep it.
   }
 }
 
 const renderMarkdown = (text: string) => {
   if (!text) return ''
-  let html = text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-  
+  let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
   // Code blocks
   html = html.replace(/```([\s\S]*?)```/g, (_, code) => `<pre><code>${code.trim()}</code></pre>`)
   // Inline code
@@ -306,16 +330,16 @@ const regenerateResponse = async (index: number) => {
   if (loading.value) return
   const userMsgIndex = index - 1
   if (userMsgIndex < 0 || messages.value[userMsgIndex].type !== 'user') return
-  
+
   const question = messages.value[userMsgIndex].content
   messages.value.splice(index, 1) // remove old
-  
+
   loading.value = true
   try {
     const aiMsg = { type: 'ai', content: '', time: new Date() } as any
     messages.value.splice(index, 0, aiMsg)
     await scrollToBottom()
-    
+
     // Logic same as sendMessage
     try {
       await streamChatMessage(question, async (chunk) => {
@@ -325,7 +349,10 @@ const regenerateResponse = async (index: number) => {
     } catch (e) {
       console.warn('Stream regeneration failed:', e)
       const response: any = await sendChatMessage(question)
-      const ans = typeof response === 'string' ? response : (response.answer || response.text || response.content || '')
+      const ans =
+        typeof response === 'string'
+          ? response
+          : response.answer || response.text || response.content || ''
       await typeStream(String(ans), (chunk) => {
         aiMsg.content += chunk
       })
@@ -335,7 +362,7 @@ const regenerateResponse = async (index: number) => {
     ElMessage.error('重新生成失败')
     // 恢复原来的空消息或删除
     if (!messages.value[index].content) {
-       messages.value.splice(index, 1)
+      messages.value.splice(index, 1)
     }
   } finally {
     loading.value = false
@@ -347,13 +374,15 @@ const clearChat = async () => {
     await ElMessageBox.confirm('确定清空对话吗？', '提示', { type: 'warning' })
     messages.value = []
     persist()
-  } catch { }
+  } catch {
+    // user cancelled confirm
+  }
 }
 
 const exportChat = () => {
   if (!messages.value.length) return
   let content = '# 对话记录\n\n'
-  messages.value.forEach(m => {
+  messages.value.forEach((m) => {
     content += `### ${m.type === 'user' ? 'User' : 'AI'}\n${m.content}\n\n`
   })
   const blob = new Blob([content], { type: 'text/markdown' })
@@ -580,7 +609,10 @@ const exportChat = () => {
   font-family: monospace;
 }
 
-.message-row.user .bubble-content :deep(a) { color: white; text-decoration: underline; }
+.message-row.user .bubble-content :deep(a) {
+  color: white;
+  text-decoration: underline;
+}
 
 .bubble-footer {
   display: flex;
@@ -621,13 +653,25 @@ const exportChat = () => {
   animation: typing 1.4s infinite both;
 }
 
-.typing-dots span:nth-child(1) { animation-delay: 0s; }
-.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+.typing-dots span:nth-child(1) {
+  animation-delay: 0s;
+}
+.typing-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.typing-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
 
 @keyframes typing {
-  0%, 80%, 100% { transform: scale(0); }
-  40% { transform: scale(1); }
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
 }
 
 /* Input Area */
@@ -643,7 +687,7 @@ const exportChat = () => {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 4px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
   transition: border-color 0.2s;
 }
 

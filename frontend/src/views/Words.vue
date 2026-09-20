@@ -6,7 +6,13 @@
         <p class="subtitle">积累词汇，点亮思维</p>
       </div>
       <div class="header-actions">
-        <el-button v-if="showDefaultBtn" type="success" plain :loading="defaultLoading" @click="handleImportDefault">
+        <el-button
+          v-if="showDefaultBtn"
+          type="success"
+          plain
+          :loading="defaultLoading"
+          @click="handleImportDefault"
+        >
           一键导入默认词库
         </el-button>
         <el-button @click="showImportDialog = true">
@@ -29,16 +35,26 @@
                   <el-badge :value="todayWords.length" class="tab-badge" type="primary" />
                 </span>
               </template>
-              
+
               <div class="tab-toolbar">
-                <el-button type="primary" size="large" class="start-review-btn" :disabled="todayWords.length === 0" @click="startNewReview">
+                <el-button
+                  type="primary"
+                  size="large"
+                  class="start-review-btn"
+                  :disabled="todayWords.length === 0"
+                  @click="startNewReview"
+                >
                   <el-icon class="el-icon--left"><VideoPlay /></el-icon>
                   开始复习 ({{ todayWords.length }})
                 </el-button>
               </div>
 
               <div class="word-list">
-                <el-empty v-if="todayWords.length === 0" description="今日任务已完成！" :image-size="100" />
+                <el-empty
+                  v-if="todayWords.length === 0"
+                  description="今日任务已完成！"
+                  :image-size="100"
+                />
                 <div v-else class="list-container">
                   <div v-for="word in pagedTodayWords" :key="word.id" class="word-item">
                     <div class="word-info">
@@ -46,12 +62,23 @@
                       <div class="word-trans">{{ word.translation }}</div>
                     </div>
                     <div class="word-meta">
-                      <el-tag size="small" effect="plain" type="info">第{{ nextStage(word) }}阶段</el-tag>
+                      <el-tag size="small" effect="plain" type="info"
+                        >第{{ nextStage(word) }}阶段</el-tag
+                      >
                       <span class="next-time">{{ nextIntervalText(word) }}</span>
                     </div>
                     <div class="word-actions">
-                      <el-button circle size="small" @click="handleReview(word)"><el-icon><VideoPlay /></el-icon></el-button>
-                      <el-button circle size="small" type="success" plain @click="handleDone(word.id)"><el-icon><Check /></el-icon></el-button>
+                      <el-button circle size="small" @click="handleReview(word)"
+                        ><el-icon><VideoPlay /></el-icon
+                      ></el-button>
+                      <el-button
+                        circle
+                        size="small"
+                        type="success"
+                        plain
+                        @click="handleDone(word.id)"
+                        ><el-icon><Check /></el-icon
+                      ></el-button>
                     </div>
                   </div>
                 </div>
@@ -74,13 +101,44 @@
                   <el-badge :value="words.length" class="tab-badge" type="info" />
                 </span>
               </template>
-              
+
               <div class="word-list">
-                <div class="list-container">
+                <VirtualList
+                  v-if="words.length > 50"
+                  :items="words"
+                  :item-height="80"
+                  height="480px"
+                >
+                  <template #default="{ item: word }">
+                    <div class="word-item">
+                      <div class="word-img-wrapper" @click="handleGenWordImage(word)">
+                        <img v-if="word.image" :src="word.image" loading="lazy" />
+                        <div v-else class="img-placeholder">
+                          <el-icon><Picture /></el-icon>
+                        </div>
+                      </div>
+                      <div class="word-info">
+                        <div class="word-text">{{ word.word }}</div>
+                        <div class="word-trans">{{ word.translation }}</div>
+                      </div>
+                      <div class="word-actions">
+                        <el-button link type="primary" @click="handleReview(word)">复习</el-button>
+                        <el-popconfirm title="确定删除吗？" @confirm="handleDelete(word.id)">
+                          <template #reference>
+                            <el-button link type="danger">删除</el-button>
+                          </template>
+                        </el-popconfirm>
+                      </div>
+                    </div>
+                  </template>
+                </VirtualList>
+                <div v-else class="list-container">
                   <div v-for="word in pagedWords" :key="word.id" class="word-item">
                     <div class="word-img-wrapper" @click="handleGenWordImage(word)">
                       <img v-if="word.image" :src="word.image" loading="lazy" />
-                      <div v-else class="img-placeholder"><el-icon><Picture /></el-icon></div>
+                      <div v-else class="img-placeholder">
+                        <el-icon><Picture /></el-icon>
+                      </div>
                     </div>
                     <div class="word-info">
                       <div class="word-text">{{ word.word }}</div>
@@ -96,7 +154,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="pagination-wrapper">
+                <div v-if="words.length <= 50" class="pagination-wrapper">
                   <el-pagination
                     v-model:current-page="currentPageAll"
                     :page-size="pageSize"
@@ -143,7 +201,13 @@
     </el-row>
 
     <!-- Dialogs -->
-    <el-dialog v-model="showAddDialog" title="添加单词" width="480px" align-center class="custom-dialog">
+    <el-dialog
+      v-model="showAddDialog"
+      title="添加单词"
+      width="480px"
+      align-center
+      class="custom-dialog"
+    >
       <el-form :model="wordForm" label-position="top">
         <el-form-item label="单词">
           <el-input v-model="wordForm.word" placeholder="输入英文单词" size="large" />
@@ -152,7 +216,12 @@
           <el-input v-model="wordForm.translation" placeholder="中文含义" />
         </el-form-item>
         <el-form-item label="例句">
-          <el-input v-model="wordForm.example" type="textarea" :rows="3" placeholder="辅助记忆的例句" />
+          <el-input
+            v-model="wordForm.example"
+            type="textarea"
+            :rows="3"
+            placeholder="辅助记忆的例句"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -161,10 +230,19 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="showImportDialog" title="导入词库" width="520px" align-center class="custom-dialog">
+    <el-dialog
+      v-model="showImportDialog"
+      title="导入词库"
+      width="520px"
+      align-center
+      class="custom-dialog"
+    >
       <el-form :model="importForm" label-position="top">
         <el-form-item label="词库链接 (GitHub Raw URL)">
-          <el-input v-model="importForm.sourceUrl" placeholder="https://raw.githubusercontent.com/..." />
+          <el-input
+            v-model="importForm.sourceUrl"
+            placeholder="https://raw.githubusercontent.com/..."
+          />
         </el-form-item>
         <el-row :gutter="16">
           <el-col :span="12">
@@ -174,12 +252,24 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="每日分区大小">
-              <el-input-number v-model="importForm.sectionSize" :min="10" :step="10" controls-position="right" style="width: 100%" />
+              <el-input-number
+                v-model="importForm.sectionSize"
+                :min="10"
+                :step="10"
+                controls-position="right"
+                style="width: 100%"
+              />
             </el-form-item>
           </el-col>
         </el-row>
         <el-form-item label="开始学习日期">
-          <el-date-picker v-model="importForm.startDate" type="date" placeholder="选择日期" style="width: 100%" value-format="YYYY-MM-DD" />
+          <el-date-picker
+            v-model="importForm.startDate"
+            type="date"
+            placeholder="选择日期"
+            style="width: 100%"
+            value-format="YYYY-MM-DD"
+          />
         </el-form-item>
         <div class="dialog-tip">
           <el-icon><InfoFilled /></el-icon>
@@ -188,7 +278,9 @@
       </el-form>
       <template #footer>
         <el-button @click="showImportDialog = false">取消</el-button>
-        <el-button type="primary" :loading="importLoading" @click="handleImport">开始导入</el-button>
+        <el-button type="primary" :loading="importLoading" @click="handleImport"
+          >开始导入</el-button
+        >
       </template>
     </el-dialog>
   </div>
@@ -198,9 +290,16 @@
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { 
-  Plus, Download, VideoPlay, Calendar, Collection, Picture, Check, 
-  Notebook, InfoFilled 
+import {
+  Plus,
+  Download,
+  VideoPlay,
+  Calendar,
+  Collection,
+  Picture,
+  Check,
+  Notebook,
+  InfoFilled,
 } from '@element-plus/icons-vue'
 import {
   getWords,
@@ -213,12 +312,20 @@ import {
   importDefaultWords,
 } from '@/api/words'
 import BaseChart from '@/components/charts/BaseChart.vue'
+import VirtualList from '@/components/virtual/VirtualList.vue'
 import { generateWordImage } from '@/api/ai'
 import { getState as getSm2State } from '@/utils/sm2'
 
+interface WordItem {
+  id: string
+  word: string
+  translation?: string
+  image?: string
+}
+
 const router = useRouter()
-const words = ref([])
-const todayWords = ref([])
+const words = ref<WordItem[]>([])
+const todayWords = ref<WordItem[]>([])
 const books = ref<any[]>([])
 const showAddDialog = ref(false)
 const showImportDialog = ref(false)
@@ -448,7 +555,13 @@ const buildTrendOption = () => {
   const reviewMax = niceMax(Math.max(...reviewVals, 0))
   trendOption.value = {
     grid: { left: 10, right: 10, top: 10, bottom: 20, containLabel: false },
-    xAxis: { type: 'category', data: labels, axisTick: { show: false }, axisLine: { show: false }, axisLabel: { fontSize: 10, color: '#999' } },
+    xAxis: {
+      type: 'category',
+      data: labels,
+      axisTick: { show: false },
+      axisLine: { show: false },
+      axisLabel: { fontSize: 10, color: '#999' },
+    },
     yAxis: [
       {
         type: 'value',
@@ -457,7 +570,7 @@ const buildTrendOption = () => {
         splitLine: { show: false },
         axisLine: { show: false },
         axisTick: { show: false },
-        axisLabel: { show: false }
+        axisLabel: { show: false },
       },
       {
         type: 'value',
@@ -466,7 +579,7 @@ const buildTrendOption = () => {
         splitLine: { show: false },
         axisLine: { show: false },
         axisTick: { show: false },
-        axisLabel: { show: false }
+        axisLabel: { show: false },
       },
     ],
     series: [
@@ -486,7 +599,7 @@ const buildTrendOption = () => {
         yAxisIndex: 1,
         data: reviewVals,
         itemStyle: { color: '#e5e7eb', borderRadius: 2 },
-        barWidth: '60%'
+        barWidth: '60%',
       },
     ],
     tooltip: { trigger: 'axis' },
@@ -507,7 +620,7 @@ const nextIntervalText = (w: any) => {
 }
 
 const startNewReview = () => {
-  const ids = todayWords.value.map((w:any) => w.id).join(',')
+  const ids = todayWords.value.map((w: any) => w.id).join(',')
   const encoded = encodeURIComponent(ids)
   router.push(`/vocabulary/review?ids=${encoded}`)
 }
@@ -527,8 +640,16 @@ const startNewReview = () => {
   align-items: center;
   margin-bottom: 24px;
 }
-.page-title h2 { margin: 0; font-size: 24px; color: var(--app-text); }
-.subtitle { margin: 4px 0 0; color: var(--text-secondary); font-size: 14px; }
+.page-title h2 {
+  margin: 0;
+  font-size: 24px;
+  color: var(--app-text);
+}
+.subtitle {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
 
 /* Tabs */
 .list-card {

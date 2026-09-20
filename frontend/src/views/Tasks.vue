@@ -34,15 +34,25 @@
           <el-option label="高" value="high" />
           <el-option label="紧急" value="urgent" />
         </el-select>
-        <el-button @click="refresh" circle><el-icon><RefreshRight /></el-icon></el-button>
+        <el-button circle @click="refresh"
+          ><el-icon><RefreshRight /></el-icon
+        ></el-button>
       </div>
-      
+
       <div class="view-switcher">
         <el-radio-group v-model="tab" size="default">
-          <el-radio-button label="table"><el-icon><Operation /></el-icon></el-radio-button>
-          <el-radio-button label="kanban"><el-icon><Grid /></el-icon></el-radio-button>
-          <el-radio-button label="gantt"><el-icon><Calendar /></el-icon></el-radio-button>
-          <el-radio-button label="stats"><el-icon><PieChart /></el-icon></el-radio-button>
+          <el-radio-button label="table"
+            ><el-icon><Operation /></el-icon
+          ></el-radio-button>
+          <el-radio-button label="kanban"
+            ><el-icon><Grid /></el-icon
+          ></el-radio-button>
+          <el-radio-button label="gantt"
+            ><el-icon><Calendar /></el-icon
+          ></el-radio-button>
+          <el-radio-button label="stats"
+            ><el-icon><PieChart /></el-icon
+          ></el-radio-button>
         </el-radio-group>
       </div>
     </div>
@@ -55,11 +65,11 @@
             <template #empty>
               <EmptyState title="暂无任务，开始规划你的一天吧" />
             </template>
-            
+
             <el-table-column width="48">
               <template #default="{ row }">
-                <div 
-                  class="custom-checkbox" 
+                <div
+                  class="custom-checkbox"
                   :class="{ checked: row.status === 'done' }"
                   @click="toggleTaskStatus(row)"
                 >
@@ -71,12 +81,21 @@
             <el-table-column label="任务内容" min-width="300">
               <template #default="{ row }">
                 <div class="task-cell-main">
-                  <div class="task-title" :class="{ done: row.status === 'done' }">{{ row.title }}</div>
+                  <div class="task-title" :class="{ done: row.status === 'done' }">
+                    {{ row.title }}
+                  </div>
                   <div class="task-meta">
                     <span v-if="row.dueDate" class="meta-item" :class="{ overdue: isOverdue(row) }">
                       <el-icon><Calendar /></el-icon> {{ row.dueDate.slice(0, 10) }}
                     </span>
-                    <el-tag v-for="tag in row.tags" :key="tag" size="small" type="info" effect="plain" class="meta-tag">
+                    <el-tag
+                      v-for="tag in row.tags"
+                      :key="tag"
+                      size="small"
+                      type="info"
+                      effect="plain"
+                      class="meta-tag"
+                    >
                       #{{ tag }}
                     </el-tag>
                   </div>
@@ -91,7 +110,7 @@
                 </div>
               </template>
             </el-table-column>
-            
+
             <el-table-column label="操作" width="180" align="right">
               <template #default="{ row }">
                 <el-button link type="primary" @click="edit(row)">编辑</el-button>
@@ -106,25 +125,36 @@
           <div v-for="col in columns" :key="col.key" class="kanban-column">
             <div class="column-header">
               <span class="col-title">{{ col.label }}</span>
-              <span class="col-count">{{ tasks.filter((x) => x.status === col.key).length }}</span>
+              <span class="col-count">{{ displayKanbanItems(col.key).length }}</span>
             </div>
             <div class="column-body">
               <div
-                v-for="t in tasks.filter((x) => x.status === col.key)"
+                v-for="t in displayKanbanItems(col.key)"
                 :key="t.id"
                 class="kanban-card"
                 @click="edit(t)"
               >
                 <div class="k-card-top">
-                  <el-tag size="small" :type="priorityType(t.priority)" effect="dark" class="mini-tag">
+                  <el-tag
+                    size="small"
+                    :type="priorityType(t.priority)"
+                    effect="dark"
+                    class="mini-tag"
+                  >
                     {{ priorityText(t.priority) }}
                   </el-tag>
-                  <el-dropdown trigger="click" @command="(c: any) => handleCommand(c, t)" @click.stop>
+                  <el-dropdown
+                    trigger="click"
+                    @command="(c: any) => handleCommand(c, t)"
+                    @click.stop
+                  >
                     <el-icon class="more-btn"><MoreFilled /></el-icon>
                     <template #dropdown>
                       <el-dropdown-menu>
                         <el-dropdown-item command="edit">编辑</el-dropdown-item>
-                        <el-dropdown-item command="delete" divided style="color: var(--danger)">删除</el-dropdown-item>
+                        <el-dropdown-item command="delete" divided style="color: var(--danger)"
+                          >删除</el-dropdown-item
+                        >
                       </el-dropdown-menu>
                     </template>
                   </el-dropdown>
@@ -135,12 +165,12 @@
                     {{ t.dueDate.slice(5, 10) }}
                   </span>
                   <div class="status-actions" @click.stop>
-                    <el-button 
-                      v-if="col.key !== 'done'" 
-                      size="small" 
-                      circle 
-                      icon="ArrowRight" 
-                      @click="setStatus(t, nextStatus(col.key))" 
+                    <el-button
+                      v-if="col.key !== 'done'"
+                      size="small"
+                      circle
+                      icon="ArrowRight"
+                      @click="setStatus(t, nextStatus(col.key))"
                     />
                   </div>
                 </div>
@@ -151,24 +181,21 @@
 
         <!-- 甘特视图 -->
         <div v-else-if="tab === 'gantt'" key="gantt" class="view-container gantt-view">
-           <el-empty
-              v-if="tasks.filter((x) => x.startDate && x.dueDate).length === 0"
-              description="暂无带时间范围的任务"
-            />
-            <el-timeline v-else>
-              <el-timeline-item
-                v-for="t in tasks.filter((x) => x.startDate && x.dueDate)"
-                :key="t.id"
-                :timestamp="t.startDate?.slice(0, 10) + ' → ' + t.dueDate?.slice(0, 10)"
-                :type="statusType(t.status)"
-                placement="top"
-              >
-                <el-card shadow="hover" class="gantt-card">
-                  <h4>{{ t.title }}</h4>
-                  <p>{{ t.description || '无描述' }}</p>
-                </el-card>
-              </el-timeline-item>
-            </el-timeline>
+          <el-empty v-if="ganttTasks.length === 0" description="暂无带时间范围的任务" />
+          <el-timeline v-else>
+            <el-timeline-item
+              v-for="t in ganttTasks"
+              :key="t.id"
+              :timestamp="t.startDate?.slice(0, 10) + ' → ' + t.dueDate?.slice(0, 10)"
+              :type="statusType(t.status)"
+              placement="top"
+            >
+              <el-card shadow="hover" class="gantt-card">
+                <h4>{{ t.title }}</h4>
+                <p>{{ t.description || '无描述' }}</p>
+              </el-card>
+            </el-timeline-item>
+          </el-timeline>
         </div>
 
         <!-- 统计视图 -->
@@ -180,28 +207,39 @@
               <div class="txt">总任务</div>
             </div>
             <div class="stat-box done">
-              <div class="num">{{ tasks.filter(x => x.status === 'done').length }}</div>
+              <div class="num">
+                {{
+                  aggregateStats?.byStatus?.done || tasks.filter((x) => x.status === 'done').length
+                }}
+              </div>
               <div class="txt">已完成</div>
             </div>
             <div class="stat-box progress">
-              <div class="num">{{ tasks.filter(x => x.status === 'in_progress').length }}</div>
+              <div class="num">
+                {{
+                  aggregateStats?.byStatus?.in_progress ||
+                  tasks.filter((x) => x.status === 'in_progress').length
+                }}
+              </div>
               <div class="txt">进行中</div>
             </div>
-             <div class="stat-box urgent">
-              <div class="num">{{ tasks.filter(x => x.priority === 'urgent' && x.status !== 'done').length }}</div>
+            <div class="stat-box urgent">
+              <div class="num">
+                {{ tasks.filter((x) => x.priority === 'urgent' && x.status !== 'done').length }}
+              </div>
               <div class="txt">紧急待办</div>
             </div>
           </div>
 
           <div class="charts-row">
-             <div class="chart-box">
-               <h3>状态分布</h3>
-               <BaseChart :key="statusChartKey" :option="statusPieOption" height="300px" />
-             </div>
-             <div class="chart-box">
-               <h3>优先级分布</h3>
-               <BaseChart :key="priorityChartKey" :option="priorityPieOption" height="300px" />
-             </div>
+            <div class="chart-box">
+              <h3>状态分布</h3>
+              <BaseChart :key="statusChartKey" :option="statusPieOption" height="300px" />
+            </div>
+            <div class="chart-box">
+              <h3>优先级分布</h3>
+              <BaseChart :key="priorityChartKey" :option="priorityPieOption" height="300px" />
+            </div>
           </div>
         </div>
       </transition>
@@ -220,7 +258,7 @@
         <el-form-item label="标题">
           <el-input v-model="form.title" placeholder="要做什么？" size="large" />
         </el-form-item>
-        
+
         <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="状态">
@@ -232,7 +270,7 @@
               </el-select>
             </el-form-item>
           </el-col>
-           <el-col :span="12">
+          <el-col :span="12">
             <el-form-item label="优先级">
               <el-select v-model="form.priority" style="width: 100%">
                 <el-option label="低" value="low" />
@@ -265,7 +303,7 @@
               />
             </el-form-item>
           </el-col>
-           <el-col :span="12">
+          <el-col :span="12">
             <el-form-item label="预估时间(分钟)">
               <el-input-number
                 v-model="form.estimateMinutes"
@@ -277,7 +315,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-         <el-form-item label="标签">
+        <el-form-item label="标签">
           <el-select
             v-model="form.tags"
             multiple
@@ -298,239 +336,57 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, watch } from 'vue'
-import { 
-  Plus, RefreshRight, Operation, Grid, Calendar, PieChart, 
-  Check, MoreFilled
-} from '@element-plus/icons-vue'
 import {
-  createTask as apiCreate,
-  updateTask as apiUpdate,
-  deleteTask as apiDelete,
-} from '../api/tasks'
-import type { Task } from '../types/task'
-import { useTasksStore } from '../store/tasks'
+  Plus,
+  RefreshRight,
+  Operation,
+  Grid,
+  Calendar,
+  PieChart,
+  Check,
+  MoreFilled,
+} from '@element-plus/icons-vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
-import { useTasksQuery } from '@/api/hooks/useTasks'
 import BaseChart from '@/components/charts/BaseChart.vue'
+import { useTaskBoard } from '@/composables/useTaskBoard'
 
-const store = useTasksStore()
-const q = ref(store.filters.q || '')
-const status = ref(store.filters.status || '')
-const priority = ref(store.filters.priority || '')
-const tab = ref<'table' | 'kanban' | 'gantt' | 'stats'>('table')
+const {
+  q,
+  status,
+  priority,
+  tab,
+  tasks,
+  kanbanColumns,
+  aggregateStats,
+  ganttTasks,
+  statusChartKey,
+  priorityChartKey,
+  dialogVisible,
+  isEdit,
+  form,
+  columns,
+  refresh,
+  toggleTaskStatus,
+  setStatus,
+  handleCommand,
+  isOverdue,
+  openCreate,
+  edit,
+  remove,
+  saveTask,
+  nextStatus,
+  priorityText,
+  priorityType,
+  statusType,
+  statusPieOption,
+  priorityPieOption,
+} = useTaskBoard()
 
-const { data, refetch } = useTasksQuery({
-  q: q.value,
-  status: status.value,
-  priority: priority.value,
-} as any)
-const tasks = computed(() => (data.value as any[]) || [])
-const refreshTick = ref(0)
-const statusChartKey = computed(() => `status-${refreshTick.value}`)
-const priorityChartKey = computed(() => `priority-${refreshTick.value}`)
-
-const dialogVisible = ref(false)
-const isEdit = ref(false)
-const form = ref<Task>({
-  title: '',
-  description: '',
-  status: 'todo',
-  priority: 'med',
-  tags: [],
-  startDate: '',
-  dueDate: '',
-  estimateMinutes: 0,
-  remindAt: '',
-})
-
-const columns = [
-  { key: 'todo', label: '待办' },
-  { key: 'in_progress', label: '进行中' },
-  { key: 'blocked', label: '阻塞' },
-  { key: 'done', label: '已完成' },
-] as const
-
-async function refresh() {
-  store.setFilters({ q: q.value, status: status.value, priority: priority.value })
-  try {
-    await refetch()
-  } finally {
-    await nextTick()
-    refreshTick.value++
-    requestAnimationFrame(() => window.dispatchEvent(new Event('resize')))
-  }
+const displayKanbanItems = (key: string) => {
+  const col = kanbanColumns.value.find((c) => c.status === key)
+  if (col?.items?.length) return col.items
+  return tasks.value.filter((x) => x.status === key)
 }
-
-watch(
-  () => (tasks.value as any[]).length,
-  () => {
-    refreshTick.value++
-    requestAnimationFrame(() => window.dispatchEvent(new Event('resize')))
-  },
-  { flush: 'post' },
-)
-
-watch(tab, (val) => {
-  if (val === 'stats') {
-    nextTick().then(() => {
-      refreshTick.value++
-      requestAnimationFrame(() => window.dispatchEvent(new Event('resize')))
-    })
-  }
-})
-
-function toggleTaskStatus(row: Task) {
-  const newStatus = row.status === 'done' ? 'todo' : 'done'
-  apiUpdate(row.id!, { status: newStatus }).then(refresh)
-}
-
-function setStatus(t: Task, s: string) {
-  apiUpdate(t.id!, { status: s }).then(refresh)
-}
-
-function handleCommand(command: string, t: Task) {
-  if (command === 'edit') edit(t)
-  if (command === 'delete') remove(t)
-}
-
-function isOverdue(t: Task) {
-  if (!t.dueDate || t.status === 'done') return false
-  return new Date(t.dueDate) < new Date()
-}
-
-function resetForm() {
-  form.value = {
-    title: '',
-    description: '',
-    status: 'todo',
-    priority: 'med',
-    tags: [],
-    startDate: '',
-    dueDate: '',
-    estimateMinutes: 0,
-    remindAt: '',
-  }
-}
-function openCreate() {
-  isEdit.value = false
-  resetForm()
-  dialogVisible.value = true
-}
-
-function edit(t: Task) {
-  isEdit.value = true
-  form.value = {
-    ...t,
-    startDate: t.startDate?.includes('T') ? t.startDate.slice(0, 10) : (t.startDate || ''),
-    dueDate: t.dueDate?.includes('T') ? t.dueDate.slice(0, 10) : (t.dueDate || ''),
-    remindAt: t.remindAt ? t.remindAt.replace('T', ' ').slice(0, 19) : '',
-  }
-  dialogVisible.value = true
-}
-
-function remove(t: Task) {
-  if (!window.confirm('确认删除？')) return
-  apiDelete(t.id!).then(refresh)
-}
-
-function saveTask() {
-  if (!form.value.title || !form.value.title.trim()) return
-  const payload: any = { ...form.value }
-  // 清理字段
-  if (!payload.startDate) delete payload.startDate
-  if (!payload.dueDate) delete payload.dueDate
-  if (!payload.remindAt) delete payload.remindAt
-  
-  if (payload.startDate && /^\d{4}-\d{2}-\d{2}$/.test(payload.startDate)) {
-    payload.startDate = `${payload.startDate}T00:00:00`
-  }
-  if (payload.dueDate && /^\d{4}-\d{2}-\d{2}$/.test(payload.dueDate)) {
-    payload.dueDate = `${payload.dueDate}T00:00:00`
-  }
-
-  const action = isEdit.value && form.value.id 
-    ? apiUpdate(form.value.id, payload) 
-    : apiCreate(payload)
-
-  action.then(() => {
-    dialogVisible.value = false
-    refresh()
-  })
-}
-
-function nextStatus(s: string) {
-  if (s === 'todo') return 'in_progress'
-  if (s === 'in_progress') return 'blocked'
-  if (s === 'blocked') return 'done'
-  return 'done'
-}
-
-function priorityText(p?: string) {
-  if (p === 'low') return '低'
-  if (p === 'med') return '中'
-  if (p === 'high') return '高'
-  if (p === 'urgent') return '紧急'
-  return '-'
-}
-function priorityType(p?: string) {
-  if (p === 'low') return 'info'
-  if (p === 'med') return 'primary'
-  if (p === 'high') return 'warning'
-  if (p === 'urgent') return 'danger'
-  return ''
-}
-function statusType(s?: string) {
-  if (s === 'done') return 'success'
-  if (s === 'in_progress') return 'warning'
-  if (s === 'blocked') return 'danger'
-  return 'primary'
-}
-
-const statusPieOption = computed(() => {
-  const ds = ['todo', 'in_progress', 'blocked', 'done'].map((s) => ({
-    name: s === 'todo' ? '待办' : s === 'in_progress' ? '进行中' : s === 'blocked' ? '阻塞' : '完成',
-    value: (tasks.value as any[]).filter((x) => x.status === s).length,
-  }))
-  const colors = ['#94a3b8', '#3b82f6', '#ef4444', '#10b981']
-  return {
-    tooltip: { trigger: 'item' },
-    legend: { bottom: 0 },
-    color: colors,
-    series: [{
-      type: 'pie',
-      radius: ['50%', '70%'],
-      avoidLabelOverlap: false,
-      label: { show: false },
-      data: ds,
-    }],
-  }
-})
-
-const priorityPieOption = computed(() => {
-  const priorities = [
-    { key: 'low', name: '低' },
-    { key: 'med', name: '中' },
-    { key: 'high', name: '高' },
-    { key: 'urgent', name: '紧急' },
-  ]
-  const ds = priorities.map((p) => ({
-    name: p.name,
-    value: (tasks.value as any[]).filter((x) => x.priority === p.key).length,
-  }))
-  return {
-    tooltip: { trigger: 'item' },
-    legend: { bottom: 0 },
-    series: [{
-      type: 'pie',
-      radius: ['50%', '70%'],
-      label: { show: false },
-      data: ds,
-    }],
-  }
-})
-
-refresh()
 </script>
 
 <style scoped>
@@ -655,10 +511,22 @@ refresh()
   display: inline-block;
 }
 
-.priority-indicator.low { color: var(--text-secondary); background: var(--app-bg); }
-.priority-indicator.med { color: var(--secondary); background: var(--secondary-light); }
-.priority-indicator.high { color: var(--warning); background: var(--warning-light); }
-.priority-indicator.urgent { color: var(--danger); background: var(--danger-light); }
+.priority-indicator.low {
+  color: var(--text-secondary);
+  background: var(--app-bg);
+}
+.priority-indicator.med {
+  color: var(--secondary);
+  background: var(--secondary-light);
+}
+.priority-indicator.high {
+  color: var(--warning);
+  background: var(--warning-light);
+}
+.priority-indicator.urgent {
+  color: var(--danger);
+  background: var(--danger-light);
+}
 
 /* Kanban View */
 .kanban-view {
@@ -686,7 +554,7 @@ refresh()
 }
 
 .col-count {
-  background: rgba(0,0,0,0.05);
+  background: rgba(0, 0, 0, 0.05);
   padding: 2px 8px;
   border-radius: 10px;
   font-size: 12px;
@@ -697,14 +565,14 @@ refresh()
   border-radius: 8px;
   padding: 12px;
   margin-bottom: 12px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   cursor: pointer;
   transition: transform 0.2s;
 }
 
 .kanban-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .k-card-top {
@@ -749,12 +617,27 @@ refresh()
   text-align: center;
 }
 
-.stat-box .num { font-size: 28px; font-weight: 800; }
-.stat-box .txt { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
-.stat-box.total .num { color: var(--app-text); }
-.stat-box.done .num { color: var(--success); }
-.stat-box.progress .num { color: var(--secondary); }
-.stat-box.urgent .num { color: var(--danger); }
+.stat-box .num {
+  font-size: 28px;
+  font-weight: 800;
+}
+.stat-box .txt {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+.stat-box.total .num {
+  color: var(--app-text);
+}
+.stat-box.done .num {
+  color: var(--success);
+}
+.stat-box.progress .num {
+  color: var(--secondary);
+}
+.stat-box.urgent .num {
+  color: var(--danger);
+}
 
 .charts-row {
   display: flex;
@@ -767,20 +650,33 @@ refresh()
   padding: 20px;
   border: 1px solid var(--border);
 }
-.chart-box h3 { margin: 0 0 20px 0; font-size: 16px; }
+.chart-box h3 {
+  margin: 0 0 20px 0;
+  font-size: 16px;
+}
 
 /* Responsive */
 @media (max-width: 1024px) {
   .kanban-view {
     grid-template-columns: repeat(2, 1fr);
   }
-  .charts-row { flex-direction: column; }
+  .charts-row {
+    flex-direction: column;
+  }
 }
 
 @media (max-width: 640px) {
-  .kanban-view { grid-template-columns: 1fr; }
-  .stats-overview { grid-template-columns: repeat(2, 1fr); }
-  .filters { flex-direction: column; }
-  .search-input { width: 100%; }
+  .kanban-view {
+    grid-template-columns: 1fr;
+  }
+  .stats-overview {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .filters {
+    flex-direction: column;
+  }
+  .search-input {
+    width: 100%;
+  }
 }
 </style>

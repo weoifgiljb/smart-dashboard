@@ -52,7 +52,8 @@ public class SecurityConfig {
                     response.setHeader("Access-Control-Allow-Origin", request.getHeader("Origin"));
                     response.setHeader("Access-Control-Allow-Credentials", "true");
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"" + authException.getMessage() + "\"}");
+                    String message = authException.getMessage() == null ? "Unauthorized" : authException.getMessage().replace("\"", "'");
+                    response.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"" + message + "\"}");
                 });
                 ex.accessDeniedHandler((request, response, accessDeniedException) -> {
                     response.setContentType("application/json;charset=UTF-8");
@@ -64,9 +65,8 @@ public class SecurityConfig {
             })
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/books/import").permitAll() // Allow book import without auth for convenience
-                .requestMatchers("/books/random").permitAll() // Allow random books without auth
+                .requestMatchers("/auth/register", "/auth/login", "/auth/refresh").permitAll()
+                .requestMatchers("/books/random").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

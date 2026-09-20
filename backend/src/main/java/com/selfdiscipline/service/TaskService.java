@@ -1,11 +1,15 @@
 package com.selfdiscipline.service;
 
+import com.selfdiscipline.dto.TaskCreateRequest;
+import com.selfdiscipline.dto.TaskPatchRequest;
+import com.selfdiscipline.exception.ApiException;
 import com.selfdiscipline.model.Task;
 import com.selfdiscipline.model.TaskHistory;
 import com.selfdiscipline.model.TaskShare;
 import com.selfdiscipline.repository.TaskHistoryRepository;
 import com.selfdiscipline.repository.TaskRepository;
 import com.selfdiscipline.repository.TaskShareRepository;
+import com.selfdiscipline.util.DateTimes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
@@ -25,6 +29,46 @@ public class TaskService {
     @Autowired
     private TaskShareRepository shareRepository;
 
+    public Task createFromRequest(@NonNull String userId, TaskCreateRequest req) {
+        Task task = new Task();
+        task.setTitle(req.getTitle());
+        task.setDescription(req.getDescription());
+        if (StringUtils.hasText(req.getStatus())) {
+            task.setStatus(req.getStatus());
+        }
+        if (StringUtils.hasText(req.getPriority())) {
+            task.setPriority(req.getPriority());
+        }
+        task.setTags(req.getTags());
+        task.setStartDate(DateTimes.parseFlexible(req.getStartDate()));
+        task.setDueDate(DateTimes.parseFlexible(req.getDueDate()));
+        task.setEstimateMinutes(req.getEstimateMinutes());
+        task.setActualMinutes(req.getActualMinutes());
+        task.setRecurrenceRule(req.getRecurrenceRule());
+        task.setRemindAt(DateTimes.parseFlexible(req.getRemindAt()));
+        return createTask(userId, task);
+    }
+
+    public Task updateFromRequest(@NonNull String userId, @NonNull String taskId, TaskPatchRequest req) {
+        return updateTask(userId, taskId, toPatchMap(req));
+    }
+
+    private Map<String, Object> toPatchMap(TaskPatchRequest req) {
+        Map<String, Object> patch = new LinkedHashMap<>();
+        if (req.getTitle() != null) patch.put("title", req.getTitle());
+        if (req.getDescription() != null) patch.put("description", req.getDescription());
+        if (req.getStatus() != null) patch.put("status", req.getStatus());
+        if (req.getPriority() != null) patch.put("priority", req.getPriority());
+        if (req.getTags() != null) patch.put("tags", req.getTags());
+        if (req.getStartDate() != null) patch.put("startDate", DateTimes.parseFlexible(req.getStartDate()));
+        if (req.getDueDate() != null) patch.put("dueDate", DateTimes.parseFlexible(req.getDueDate()));
+        if (req.getEstimateMinutes() != null) patch.put("estimateMinutes", req.getEstimateMinutes());
+        if (req.getActualMinutes() != null) patch.put("actualMinutes", req.getActualMinutes());
+        if (req.getRecurrenceRule() != null) patch.put("recurrenceRule", req.getRecurrenceRule());
+        if (req.getRemindAt() != null) patch.put("remindAt", DateTimes.parseFlexible(req.getRemindAt()));
+        return patch;
+    }
+
     public Task createTask(@NonNull String userId, Task task) {
         task.setOwnerUserId(userId);
         task.setCreatedAt(LocalDateTime.now());
@@ -35,7 +79,7 @@ public class TaskService {
     }
 
     public Task getTask(@NonNull String userId, @NonNull String taskId) {
-        Task t = taskRepository.findById(taskId).orElseThrow(() -> new RuntimeException("任务不存在"));
+        Task t = taskRepository.findById(taskId).orElseThrow(() -> ApiException.notFound("任务不存在"));
         assertCanRead(userId, t);
         return t;
     }
@@ -82,7 +126,7 @@ public class TaskService {
     }
 
     public Task updateTask(@NonNull String userId, @NonNull String taskId, Map<String, Object> patch) {
-        Task t = taskRepository.findById(Objects.requireNonNull(taskId)).orElseThrow(() -> new RuntimeException("任务不存在"));
+        Task t = taskRepository.findById(Objects.requireNonNull(taskId)).orElseThrow(() -> ApiException.notFound("任务不存在"));
         assertCanEdit(userId, t);
         Map<String, Object> before = snapshot(t);
         applyPatch(t, patch);
@@ -97,14 +141,14 @@ public class TaskService {
     }
 
     public void deleteTask(@NonNull String userId, @NonNull String taskId) {
-        Task t = taskRepository.findById(Objects.requireNonNull(taskId)).orElseThrow(() -> new RuntimeException("任务不存在"));
+        Task t = taskRepository.findById(Objects.requireNonNull(taskId)).orElseThrow(() -> ApiException.notFound("任务不存在"));
         assertCanEdit(userId, t);
         taskRepository.deleteById(Objects.requireNonNull(taskId));
         recordHistory(taskId, userId, "DELETE", null, null, null);
     }
 
     public Task createSubtask(@NonNull String userId, @NonNull String parentId, Task sub) {
-        Task parent = taskRepository.findById(Objects.requireNonNull(parentId)).orElseThrow(() -> new RuntimeException("父任务不存在"));
+        Task parent = taskRepository.findById(Objects.requireNonNull(parentId)).orElseThrow(() -> ApiException.notFound("父任务不存在"));
         assertCanEdit(userId, parent);
         sub.setParentId(parentId);
         sub.setSeriesId(parent.getSeriesId());
@@ -117,8 +161,8 @@ public class TaskService {
     }
 
     public Task addDependency(@NonNull String userId, @NonNull String taskId, @NonNull String depId) {
-        Task t = taskRepository.findById(Objects.requireNonNull(taskId)).orElseThrow(() -> new RuntimeException("任务不存在"));
-        Task dep = taskRepository.findById(Objects.requireNonNull(depId)).orElseThrow(() -> new RuntimeException("依赖任务不存在"));
+        Task t = taskRepository.findById(Objects.requireNonNull(taskId)).orElseThrow(() -> ApiException.notFound("任务不存在"));
+        Task dep = taskRepository.findById(Objects.requireNonNull(depId)).orElseThrow(() -> ApiException.notFound("依赖任务不存在"));
         assertCanEdit(userId, t);
         if (t.getDependencyIds() == null) t.setDependencyIds(new ArrayList<>());
         if (!t.getDependencyIds().contains(dep.getId())) t.getDependencyIds().add(dep.getId());
@@ -126,14 +170,14 @@ public class TaskService {
     }
 
     public Task removeDependency(@NonNull String userId, @NonNull String taskId, @NonNull String depId) {
-        Task t = taskRepository.findById(Objects.requireNonNull(taskId)).orElseThrow(() -> new RuntimeException("任务不存在"));
+        Task t = taskRepository.findById(Objects.requireNonNull(taskId)).orElseThrow(() -> ApiException.notFound("任务不存在"));
         assertCanEdit(userId, t);
         if (t.getDependencyIds() != null) t.getDependencyIds().remove(depId);
         return taskRepository.save(t);
     }
 
     public List<TaskHistory> getHistory(@NonNull String userId, @NonNull String taskId) {
-        Task t = taskRepository.findById(Objects.requireNonNull(taskId)).orElseThrow(() -> new RuntimeException("任务不存在"));
+        Task t = taskRepository.findById(Objects.requireNonNull(taskId)).orElseThrow(() -> ApiException.notFound("任务不存在"));
         assertCanRead(userId, t);
         return historyRepository.findByTaskIdOrderByCreatedAtAsc(taskId);
     }
@@ -171,13 +215,13 @@ public class TaskService {
     }
 
     public List<TaskShare> getShares(@NonNull String userId, @NonNull String taskId) {
-        Task t = taskRepository.findById(Objects.requireNonNull(taskId)).orElseThrow(() -> new RuntimeException("任务不存在"));
+        Task t = taskRepository.findById(Objects.requireNonNull(taskId)).orElseThrow(() -> ApiException.notFound("任务不存在"));
         assertCanRead(userId, t);
         return shareRepository.findByTaskId(taskId);
     }
 
     public TaskShare setShare(@NonNull String userId, @NonNull String taskId, @NonNull String targetUserId, String role) {
-        Task t = taskRepository.findById(Objects.requireNonNull(taskId)).orElseThrow(() -> new RuntimeException("任务不存在"));
+        Task t = taskRepository.findById(Objects.requireNonNull(taskId)).orElseThrow(() -> ApiException.notFound("任务不存在"));
         assertCanEdit(userId, t);
         List<TaskShare> existing = shareRepository.findByTaskId(taskId).stream()
                 .filter(s -> Objects.equals(s.getTargetUserId(), targetUserId))
@@ -196,7 +240,7 @@ public class TaskService {
     }
 
     public void removeShare(@NonNull String userId, @NonNull String taskId, @NonNull String targetUserId) {
-        Task t = taskRepository.findById(Objects.requireNonNull(taskId)).orElseThrow(() -> new RuntimeException("任务不存在"));
+        Task t = taskRepository.findById(Objects.requireNonNull(taskId)).orElseThrow(() -> ApiException.notFound("任务不存在"));
         assertCanEdit(userId, t);
         List<TaskShare> existing = shareRepository.findByTaskId(taskId);
         for (TaskShare s : existing) {
@@ -217,7 +261,7 @@ public class TaskService {
                 List<Task> deps = taskRepository.findAllById(Objects.requireNonNull(depIds));
                 boolean hasUndone = deps.stream().anyMatch(d -> !"done".equalsIgnoreCase(d.getStatus()));
                 if (hasUndone) {
-                    throw new RuntimeException("存在未完成依赖，无法开始或完成该任务");
+                    throw ApiException.badRequest("存在未完成依赖，无法开始或完成该任务");
                 }
             }
             t.setStatus(newStatus);
@@ -322,7 +366,7 @@ public class TaskService {
         boolean owner = Objects.equals(task.getOwnerUserId(), userId);
         boolean shared = shareRepository.findByTaskId(task.getId()).stream()
                 .anyMatch(s -> Objects.equals(s.getTargetUserId(), userId));
-        if (!(owner || shared)) throw new RuntimeException("无权查看该任务");
+        if (!(owner || shared)) throw ApiException.forbidden("无权查看该任务");
     }
 
     private void assertCanEdit(@NonNull String userId, Task task) {
@@ -331,7 +375,7 @@ public class TaskService {
                 Objects.requireNonNull(task.getId()),
                 Objects.requireNonNull(userId),
                 "EDIT");
-        if (!(owner || canEdit)) throw new RuntimeException("无权编辑该任务");
+        if (!(owner || canEdit)) throw ApiException.forbidden("无权编辑该任务");
     }
 }
 

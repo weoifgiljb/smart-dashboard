@@ -2,14 +2,15 @@ package com.selfdiscipline.exception;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.dao.DuplicateKeyException;
 
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,6 +18,19 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @ExceptionHandler(ApiException.class)
+    public ResponseEntity<Map<String, String>> handleApiException(ApiException e) {
+        if (e.getStatus().is5xxServerError()) {
+            log.error("业务异常[{}]: {}", e.getCode(), e.getMessage());
+        } else {
+            log.warn("业务异常[{}]: {}", e.getCode(), e.getMessage());
+        }
+        Map<String, String> error = new HashMap<>();
+        error.put("message", e.getMessage());
+        error.put("code", e.getCode());
+        return ResponseEntity.status(e.getStatus()).body(error);
+    }
 
     @ExceptionHandler(ImageGenerationException.class)
     public ResponseEntity<Map<String, String>> handleImageException(ImageGenerationException e) {
@@ -29,6 +43,7 @@ public class GlobalExceptionHandler {
         Map<String, String> error = new HashMap<>();
         error.put("message", e.getMessage());
         error.put("type", e.getType().name());
+        error.put("code", e.getType().name());
         return ResponseEntity.status(status).body(error);
     }
 
@@ -37,29 +52,29 @@ public class GlobalExceptionHandler {
         log.warn("重复键异常: {}", e.getMessage());
         Map<String, String> error = new HashMap<>();
         error.put("message", "用户名或邮箱已存在");
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        error.put("code", "CONFLICT");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException e) {
-        log.warn("运行时异常: {}", e.getMessage());
+    @ExceptionHandler({IllegalArgumentException.class, DateTimeParseException.class})
+    public ResponseEntity<Map<String, String>> handleBadRequest(Exception e) {
+        log.warn("请求参数错误: {}", e.getMessage());
         Map<String, String> error = new HashMap<>();
-        error.put("message", e.getMessage());
+        error.put("message", e.getMessage() == null ? "请求参数错误" : e.getMessage());
+        error.put("code", "BAD_REQUEST");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException e) {
         log.warn("参数校验失败: {}", e.getMessage());
-        Map<String, String> errors = new HashMap<>();
-        e.getBindingResult().getAllErrors().forEach((error) -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
+        String firstMessage = e.getBindingResult().getFieldErrors().stream()
+                .findFirst()
+                .map(FieldError::getDefaultMessage)
+                .orElse("验证失败");
         Map<String, String> response = new HashMap<>();
-        response.put("message", "验证失败");
-        response.put("errors", errors.toString());
+        response.put("message", firstMessage);
+        response.put("code", "VALIDATION_ERROR");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
@@ -68,6 +83,7 @@ public class GlobalExceptionHandler {
         log.error("服务器内部错误", e);
         Map<String, String> error = new HashMap<>();
         error.put("message", "服务器内部错误");
+        error.put("code", "INTERNAL_ERROR");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 
@@ -85,9 +101,3 @@ public class GlobalExceptionHandler {
         };
     }
 }
-
-
-
-
-
-

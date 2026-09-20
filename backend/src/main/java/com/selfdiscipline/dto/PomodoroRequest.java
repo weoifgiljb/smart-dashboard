@@ -1,6 +1,9 @@
 package com.selfdiscipline.dto;
 
+import jakarta.validation.constraints.Min;
+
 public class PomodoroRequest {
+    @Min(1)
     private Integer duration;
     private String type;
 

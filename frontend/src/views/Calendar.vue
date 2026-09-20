@@ -6,15 +6,15 @@
         <p class="subtitle">记录每一天的努力与坚持</p>
       </div>
       <div class="actions">
-        <el-button 
-          type="primary" 
-          size="large" 
+        <el-button
+          type="primary"
+          size="large"
           :disabled="hasCheckedIn"
           class="checkin-btn"
           @click="handleCheckIn"
         >
-          <el-icon class="el-icon--left" v-if="hasCheckedIn"><Check /></el-icon>
-          <el-icon class="el-icon--left" v-else><CalendarIcon /></el-icon>
+          <el-icon v-if="hasCheckedIn" class="el-icon--left"><Check /></el-icon>
+          <el-icon v-else class="el-icon--left"><CalendarIcon /></el-icon>
           {{ hasCheckedIn ? '今日已打卡' : '立即打卡' }}
         </el-button>
       </div>
@@ -36,11 +36,11 @@
           </div>
           <el-divider direction="vertical" />
           <div class="stat-box">
-             <div class="value year-status">
-               <span v-if="yearHeatmapAvailable" class="active">●</span>
-               <span v-else class="loading">○</span>
-             </div>
-             <div class="label">热力图就绪</div>
+            <div class="value year-status">
+              <span v-if="yearHeatmapAvailable" class="active">●</span>
+              <span v-else class="loading">○</span>
+            </div>
+            <div class="label">热力图就绪</div>
           </div>
         </div>
       </div>
@@ -62,9 +62,13 @@
       <div class="bento-item calendar-main" style="grid-area: main">
         <div class="calendar-toolbar">
           <div class="month-selector">
-            <el-button circle size="small" @click="goPrevMonth"><el-icon><ArrowLeft /></el-icon></el-button>
+            <el-button circle size="small" @click="goPrevMonth"
+              ><el-icon><ArrowLeft /></el-icon
+            ></el-button>
             <span class="current-month">{{ currentYear }}年 {{ currentMonth + 1 }}月</span>
-            <el-button circle size="small" @click="goNextMonth"><el-icon><ArrowRight /></el-icon></el-button>
+            <el-button circle size="small" @click="goNextMonth"
+              ><el-icon><ArrowRight /></el-icon
+            ></el-button>
             <el-button size="small" text bg @click="goToday">今天</el-button>
           </div>
           <div class="settings">
@@ -74,7 +78,7 @@
             </el-radio-group>
           </div>
         </div>
-        
+
         <div class="calendar-body">
           <div class="week-header">
             <div v-for="w in weekLabels" :key="w" class="week-day">{{ w }}</div>
@@ -84,10 +88,10 @@
               v-for="(cell, idx) in dayCells"
               :key="idx"
               class="day-cell"
-              :class="{ 
-                'is-other': !cell.inMonth, 
+              :class="{
+                'is-other': !cell.inMonth,
                 'is-today': cell.key === todayKey,
-                'has-events': hasEvents(cell.key)
+                'has-events': hasEvents(cell.key),
               }"
               @click="cell.inMonth && openDay(cell.key)"
             >
@@ -104,7 +108,13 @@
       </div>
     </div>
 
-    <el-drawer v-model="drawerOpen" :title="drawerTitle" size="400px" destroy-on-close class="day-detail-drawer">
+    <el-drawer
+      v-model="drawerOpen"
+      :title="drawerTitle"
+      size="400px"
+      destroy-on-close
+      class="day-detail-drawer"
+    >
       <div v-if="loadingDay" class="drawer-loading">
         <el-skeleton :rows="6" animated />
       </div>
@@ -123,7 +133,7 @@
               <div class="s-val">{{ (dayDetails.words || []).length }}</div>
               <div class="s-label">单词</div>
             </div>
-             <div class="summary-item">
+            <div class="summary-item">
               <div class="s-val">{{ (dayDetails.tasks || []).length }}</div>
               <div class="s-label">任务</div>
             </div>
@@ -143,12 +153,18 @@
                 <el-card class="timeline-card" shadow="hover">
                   <div class="t-header">
                     <span class="t-title">{{ item.title }}</span>
-                    <el-tag size="small" :type="item.tagType" v-if="item.tag">{{ item.tag }}</el-tag>
+                    <el-tag v-if="item.tag" size="small" :type="item.tagType">{{
+                      item.tag
+                    }}</el-tag>
                   </div>
-                  <div class="t-desc" v-if="item.desc">{{ item.desc }}</div>
+                  <div v-if="item.desc" class="t-desc">{{ item.desc }}</div>
                 </el-card>
               </el-timeline-item>
-              <el-timeline-item v-if="sortedTimelineEvents.length === 0" timestamp="" color="#e4e7ed">
+              <el-timeline-item
+                v-if="sortedTimelineEvents.length === 0"
+                timestamp=""
+                color="#e4e7ed"
+              >
                 <span style="color: #909399">暂无活动记录</span>
               </el-timeline-item>
             </el-timeline>
@@ -266,7 +282,7 @@ const handleCheckIn = async () => {
     // 尝试刷新数据，即使失败也不影响打卡成功的状态
     try {
       await loadCheckInStats()
-      await loadRange() 
+      await loadRange()
     } catch (e) {
       console.warn('刷新日历数据失败', e)
     }
@@ -304,7 +320,7 @@ const loadCheckinHeatmap = async () => {
     const historyData = historyResp?.data || historyResp || []
     const agg = calendarAgg || {}
 
-    let maxHeat = 10 
+    let maxHeat = 10
     const data = (Array.isArray(historyData) ? historyData : []).map((c: any) => {
       const key = c.checkInDate
       const raw = Number(c.heatValue) || 0
@@ -353,8 +369,8 @@ const loadCheckinHeatmap = async () => {
           coordinateSystem: 'calendar',
           data,
           itemStyle: {
-            borderRadius: 2
-          }
+            borderRadius: 2,
+          },
         },
       ],
     }
@@ -408,7 +424,7 @@ const sortedTimelineEvents = computed(() => {
       type: 'success',
       color: '#10b981',
       tag: 'Check-in',
-      tagType: 'success'
+      tagType: 'success',
     })
   })
 
@@ -422,7 +438,7 @@ const sortedTimelineEvents = computed(() => {
       type: p.type === 'work' ? 'primary' : 'warning',
       color: p.type === 'work' ? '#3b82f6' : '#f59e0b',
       tag: p.type === 'work' ? 'Focus' : 'Break',
-      tagType: p.type === 'work' ? '' : 'warning'
+      tagType: p.type === 'work' ? '' : 'warning',
     })
   })
 
@@ -434,26 +450,32 @@ const sortedTimelineEvents = computed(() => {
       time: firstWord.createTime ? formatTime(firstWord.createTime) : '',
       timestamp: new Date(firstWord.createTime || 0).getTime(),
       title: `学习了 ${d.words.length} 个单词`,
-      desc: d.words.map((w: any) => w.word).slice(0, 5).join(', ') + (d.words.length > 5 ? '...' : ''),
+      desc:
+        d.words
+          .map((w: any) => w.word)
+          .slice(0, 5)
+          .join(', ') + (d.words.length > 5 ? '...' : ''),
       type: 'info',
       color: '#06b6d4',
       tag: 'Vocabulary',
-      tagType: 'info'
+      tagType: 'info',
     })
   }
 
   // Tasks - 完成的任务
-  ;(d.tasks || []).filter((t:any) => t.status === 'done').forEach((t: any) => {
-    events.push({
-      time: '', // 任务往往没有精确完成时间，放最后
-      timestamp: 9999999999999,
-      title: `完成任务：${t.title}`,
-      type: 'success',
-      color: '#8b5cf6',
-      tag: 'Task',
-      tagType: ''
+  ;(d.tasks || [])
+    .filter((t: any) => t.status === 'done')
+    .forEach((t: any) => {
+      events.push({
+        time: '', // 任务往往没有精确完成时间，放最后
+        timestamp: 9999999999999,
+        title: `完成任务：${t.title}`,
+        type: 'success',
+        color: '#8b5cf6',
+        tag: 'Task',
+        tagType: '',
+      })
     })
-  })
 
   return events.sort((a, b) => a.timestamp - b.timestamp)
 })
@@ -526,8 +548,8 @@ function formatTime(s?: string | null) {
   grid-template-columns: 300px 1fr;
   grid-template-rows: auto auto;
   grid-template-areas:
-    "stats main"
-    "heatmap main";
+    'stats main'
+    'heatmap main';
   gap: 24px;
 }
 
@@ -578,10 +600,19 @@ function formatTime(s?: string | null) {
   margin-top: 4px;
 }
 
-.year-status .active { color: var(--success); }
-.year-status .loading { color: var(--text-light); animation: blink 1s infinite; }
+.year-status .active {
+  color: var(--success);
+}
+.year-status .loading {
+  color: var(--text-light);
+  animation: blink 1s infinite;
+}
 
-@keyframes blink { 50% { opacity: 0.5; } }
+@keyframes blink {
+  50% {
+    opacity: 0.5;
+  }
+}
 
 /* Heatmap Card */
 .heatmap-card {
@@ -696,10 +727,18 @@ function formatTime(s?: string | null) {
   border-radius: 50%;
 }
 
-.dot.checkin { background-color: var(--success); }
-.dot.pomodoro { background-color: var(--warning); }
-.dot.word { background-color: var(--info); }
-.dot.task { background-color: #8b5cf6; }
+.dot.checkin {
+  background-color: var(--success);
+}
+.dot.pomodoro {
+  background-color: var(--warning);
+}
+.dot.word {
+  background-color: var(--info);
+}
+.dot.task {
+  background-color: #8b5cf6;
+}
 
 /* Drawer Styles */
 .summary-cards {
@@ -738,7 +777,7 @@ function formatTime(s?: string | null) {
 
 .timeline-card {
   border: none;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   border-radius: 8px;
 }
 
@@ -763,9 +802,9 @@ function formatTime(s?: string | null) {
   .bento-grid {
     grid-template-columns: 1fr;
     grid-template-areas:
-      "stats"
-      "main"
-      "heatmap";
+      'stats'
+      'main'
+      'heatmap';
   }
 }
 </style>

@@ -1,8 +1,13 @@
 package com.selfdiscipline.dto;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+
 public class BookImportRequest {
+    @NotBlank(message = "CSV URL is required")
     private String csvUrl;
-    private Integer limit; // Optional limit
+    @Min(1)
+    private Integer limit;
 
     public String getCsvUrl() {
         return csvUrl;

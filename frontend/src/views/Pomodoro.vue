@@ -5,7 +5,7 @@
         <div class="card-header">
           <h3>番茄专注</h3>
           <div class="timer-type-switch">
-             <el-radio-group v-model="timerType" size="small">
+            <el-radio-group v-model="timerType" size="small">
               <el-radio-button label="work">专注</el-radio-button>
               <el-radio-button label="break">休息</el-radio-button>
             </el-radio-group>
@@ -41,53 +41,59 @@
               {{ formatTime(timeLeft) }}
             </div>
           </div>
-          
+
           <div class="timer-controls">
-            <el-button 
-              type="primary" 
-              circle 
-              size="large" 
+            <el-button
+              type="primary"
+              circle
+              size="large"
               class="control-btn play-btn"
-              :disabled="isRunning" 
+              :disabled="isRunning"
               @click="startTimer"
             >
               <el-icon size="24"><VideoPlay /></el-icon>
             </el-button>
-            <el-button 
-              type="warning" 
-              circle 
-              size="large" 
+            <el-button
+              type="warning"
+              circle
+              size="large"
               class="control-btn"
-              :disabled="!isRunning" 
+              :disabled="!isRunning"
               @click="pauseTimer"
             >
               <el-icon size="24"><VideoPause /></el-icon>
             </el-button>
-            <el-button 
-              info 
-              circle 
-              size="large" 
-              class="control-btn"
-              @click="resetTimer"
-            >
+            <el-button info circle size="large" class="control-btn" @click="resetTimer">
               <el-icon size="24"><Refresh /></el-icon>
             </el-button>
           </div>
 
-          <div class="timer-config" v-if="!isRunning">
+          <div v-if="!isRunning" class="timer-config">
             <div class="config-item">
               <span class="label">专注</span>
-              <el-input-number v-model="workMinutes" :min="1" :max="120" size="small" controls-position="right" />
+              <el-input-number
+                v-model="workMinutes"
+                :min="1"
+                :max="120"
+                size="small"
+                controls-position="right"
+              />
             </div>
             <div class="config-item">
               <span class="label">休息</span>
-              <el-input-number v-model="breakMinutes" :min="1" :max="60" size="small" controls-position="right" />
+              <el-input-number
+                v-model="breakMinutes"
+                :min="1"
+                :max="60"
+                size="small"
+                controls-position="right"
+              />
             </div>
           </div>
         </div>
 
         <el-divider content-position="center">今日成就</el-divider>
-        
+
         <div class="stats-row">
           <div class="stat-box">
             <div class="stat-num">{{ todayCount }}</div>
@@ -109,8 +115,8 @@
       <el-card class="chart-card">
         <template #header>时长波动</template>
         <BaseChart :option="fluctuationOption" height="200px" />
-    </el-card>
-        </div>
+      </el-card>
+    </div>
   </div>
 </template>
 
@@ -289,7 +295,12 @@ const loadFluctuation = async () => {
     })
     fluctuationOption.value = {
       grid: { left: 10, right: 10, top: 10, bottom: 20, containLabel: false },
-      xAxis: { type: 'time', axisLine: { show: false }, axisTick: { show: false }, axisLabel: { show: false } },
+      xAxis: {
+        type: 'time',
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: { show: false },
+      },
       yAxis: {
         type: 'value',
         name: '分钟',
@@ -442,13 +453,17 @@ const finishTimer = async () => {
   justify-content: center;
   font-size: 64px;
   font-weight: 700;
-  font-feature-settings: "tnum";
+  font-feature-settings: 'tnum';
   font-variant-numeric: tabular-nums;
   letter-spacing: -2px;
 }
 
-.time-display.work { color: var(--secondary); }
-.time-display.break { color: var(--primary); }
+.time-display.work {
+  color: var(--secondary);
+}
+.time-display.break {
+  color: var(--primary);
+}
 
 .timer-controls {
   display: flex;

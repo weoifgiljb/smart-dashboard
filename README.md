@@ -27,8 +27,8 @@
 ## 技术栈与架构
 
 ### 技术选型
-- **前端**：Vue 3 (Composition API)、TypeScript、Vite、Pinia、Vue Router、Axios、Element Plus
-- **后端**：Spring Boot 3、Spring Security、WebClient、JWT、Spring Data MongoDB
+- **前端**：Vue 3.5、TypeScript 5.8、Vite 6、Pinia、Vue Router、Axios、Element Plus
+- **后端**：Spring Boot 3.5、Java 21、Spring Security、WebClient、JWT、Spring Data MongoDB
 - **AI**：Ollama (本地大模型，优先)、阿里云通义千问 (云端回退)
 - **数据库**：MongoDB 4.4+
 
@@ -77,8 +77,8 @@ graph TD
 
 ## 一、系统要求
 
-- Node.js 18+（推荐 18/20 LTS）
-- Java 17（强烈推荐，避免与插件不兼容）
+- Node.js 20+（LTS）
+- Java 21（推荐 Temurin 21）
 - Maven 3.6+
 - MongoDB 4.4+（本地或云端 Atlas 皆可）
 
@@ -138,9 +138,9 @@ npm run dev
 
 ## 四、环境准备与配置
 
-### 1）Java 17 安装（必要）
-- Windows 推荐：Eclipse Temurin 17（.msi 安装并勾选 JAVA_HOME 与 PATH）
-- 验证：`java -version` 应显示 17
+### 1）Java 21 安装（必要）
+- Windows 推荐：Eclipse Temurin 21 或 Microsoft OpenJDK 21（安装并勾选 JAVA_HOME 与 PATH）
+- 验证：`java -version` 应显示 21
 
 ### 2）MongoDB 安装
 - 本地安装或使用 MongoDB Atlas 云服务
@@ -151,7 +151,10 @@ npm run dev
 spring:
   data:
     mongodb:
-      uri: mongodb://localhost:27017/self_discipline
+      uri: ${MONGODB_URI:mongodb://localhost:27017/self_discipline}
+
+jwt:
+  secret: ${JWT_SECRET:change-me-in-production-use-at-least-32-chars!!}
 ```
 
 （如使用 Atlas，请将 uri 替换为云端连接字符串）
@@ -164,7 +167,7 @@ spring:
 ## 五、常见问题（快速排查）
 
 - 后端启动报 Java 版本不兼容
-  - 切换到 Java 17；重新 `mvn clean compile && mvn spring-boot:run`
+  - 切换到 Java 21；重新 `mvn clean compile && mvn spring-boot:run`
 - 前端出现 CORS（跨域）提示
   - 确认后端已重启，前端代理与 Axios 配置生效
 - 访问无数据或接口 404

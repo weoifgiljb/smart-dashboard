@@ -1,5 +1,6 @@
 package com.selfdiscipline.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -10,6 +11,7 @@ public class User {
     @Id
     private String id;
     private String username;
+    @JsonIgnore
     private String password;
     private String email;
     private LocalDateTime createTime;

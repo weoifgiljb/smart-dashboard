@@ -18,24 +18,26 @@
               <el-icon><Search /></el-icon>
             </template>
             <template #suffix>
-              <el-button type="primary" round @click="handleSearch" :loading="searching">搜索</el-button>
+              <el-button type="primary" round :loading="searching" @click="handleSearch"
+                >搜索</el-button
+              >
             </template>
           </el-input>
         </div>
         <div class="quick-filters">
-          <span 
-            v-for="opt in sortOptions" 
-            :key="opt.value" 
-            class="filter-tag" 
+          <span
+            v-for="opt in sortOptions"
+            :key="opt.value"
+            class="filter-tag"
             :class="{ active: sortBy === opt.value }"
             @click="changeSort(opt.value)"
           >
             {{ opt.label }}
           </span>
           <el-divider direction="vertical" />
-          <span 
-            class="filter-tag" 
-            :class="{ active: showOnlyFavorited }" 
+          <span
+            class="filter-tag"
+            :class="{ active: showOnlyFavorited }"
             @click="toggleShowFavorite"
           >
             <el-icon><StarFilled /></el-icon> 仅看收藏
@@ -45,7 +47,7 @@
     </div>
 
     <!-- 书籍列表 -->
-    <div class="books-container" v-loading="loading">
+    <div v-loading="loading" class="books-container">
       <div v-if="books.length === 0" class="empty-state">
         <div class="empty-icon">📚</div>
         <p>没有找到相关书籍，换个词试试？</p>
@@ -71,22 +73,22 @@
               <h3 class="book-title" :title="book.title">{{ book.title }}</h3>
               <div class="book-meta">
                 <span class="author">{{ book.author || '佚名' }}</span>
-                <div class="rating" v-if="book.rating > 0">
+                <div v-if="book.rating > 0" class="rating">
                   <el-icon class="star-icon"><StarFilled /></el-icon>
                   {{ book.rating }}
                 </div>
               </div>
               <div class="book-actions">
-                 <el-button 
-                   text 
-                   bg 
-                   size="small" 
-                   class="ai-btn" 
-                   :loading="generatingId === book.id"
-                   @click.stop="handleGenBookImage(book)"
-                 >
-                   <el-icon><MagicStick /></el-icon> AI配图
-                 </el-button>
+                <el-button
+                  text
+                  bg
+                  size="small"
+                  class="ai-btn"
+                  :loading="generatingId === book.id"
+                  @click.stop="handleGenBookImage(book)"
+                >
+                  <el-icon><MagicStick /></el-icon> AI配图
+                </el-button>
               </div>
             </div>
           </div>
@@ -94,7 +96,7 @@
       </div>
 
       <!-- 分页 -->
-      <div class="pagination-section" v-if="totalPages > 1">
+      <div v-if="totalPages > 1" class="pagination-section">
         <el-pagination
           v-model:current-page="currentPage"
           :page-size="pageSize"
@@ -171,7 +173,7 @@ const loadBooks = async () => {
       // 模拟加载收藏...这里简单处理为加载所有后过滤，或者需要后端支持findByIds
       // 暂时先加载普通列表
     }
-    
+
     const params = {
       page: currentPage.value - 1,
       size: pageSize.value,
@@ -188,9 +190,9 @@ const loadBooks = async () => {
     } else {
       books.value = []
     }
-    
+
     if (showOnlyFavorited.value) {
-      books.value = books.value.filter(b => favoriteIds.value.has(b.id))
+      books.value = books.value.filter((b) => favoriteIds.value.has(b.id))
     }
   } catch (error) {
     ElMessage.error('获取书籍失败')
@@ -259,7 +261,7 @@ const handleGenBookImage = async (book: any) => {
   generatingId.value = book.id
   try {
     const updated: any = await generateBookImage(book.id)
-    const idx = books.value.findIndex(b => b.id === book.id)
+    const idx = books.value.findIndex((b) => b.id === book.id)
     if (idx >= 0) books.value[idx] = { ...books.value[idx], ...updated }
     ElMessage.success('配图已生成')
   } catch {
@@ -278,7 +280,7 @@ const goDetail = (book: any) => {
 }
 
 const onImgError = (e: Event) => {
-  (e.target as HTMLImageElement).src = fallbackCover
+  ;(e.target as HTMLImageElement).src = fallbackCover
 }
 </script>
 
@@ -301,8 +303,15 @@ const onImgError = (e: Event) => {
   margin: 0 auto;
 }
 
-.banner-content h2 { font-size: 28px; margin: 0 0 8px; color: var(--app-text); }
-.banner-content p { color: var(--text-secondary); margin-bottom: 24px; }
+.banner-content h2 {
+  font-size: 28px;
+  margin: 0 0 8px;
+  color: var(--app-text);
+}
+.banner-content p {
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
 
 .search-box {
   max-width: 600px;
@@ -311,7 +320,7 @@ const onImgError = (e: Event) => {
 
 .main-search :deep(.el-input__wrapper) {
   border-radius: 24px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   padding-left: 16px;
 }
 
@@ -331,8 +340,13 @@ const onImgError = (e: Event) => {
   align-items: center;
   gap: 4px;
 }
-.filter-tag:hover { color: var(--primary); }
-.filter-tag.active { color: var(--primary); font-weight: 600; }
+.filter-tag:hover {
+  color: var(--primary);
+}
+.filter-tag.active {
+  color: var(--primary);
+  font-weight: 600;
+}
 
 /* 瀑布流 */
 .books-container {
@@ -356,7 +370,9 @@ const onImgError = (e: Event) => {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: var(--shadow-sm);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
   cursor: pointer;
   border: 1px solid transparent;
 }
@@ -386,7 +402,7 @@ const onImgError = (e: Event) => {
 .cover-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.3);
+  background: rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -394,13 +410,15 @@ const onImgError = (e: Event) => {
   transition: opacity 0.2s;
 }
 
-.book-card:hover .cover-overlay { opacity: 1; }
+.book-card:hover .cover-overlay {
+  opacity: 1;
+}
 
 .fav-btn {
   position: absolute;
   top: 8px;
   right: 8px;
-  background: rgba(255,255,255,0.9);
+  background: rgba(255, 255, 255, 0.9);
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -408,14 +426,18 @@ const onImgError = (e: Event) => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   font-size: 18px;
   color: #cbd5e1;
   transition: all 0.2s;
 }
 
-.fav-btn:hover { transform: scale(1.1); }
-.fav-btn .active { color: #f59e0b; }
+.fav-btn:hover {
+  transform: scale(1.1);
+}
+.fav-btn .active {
+  color: #f59e0b;
+}
 
 .book-info {
   padding: 12px;
@@ -465,7 +487,10 @@ const onImgError = (e: Event) => {
   padding: 60px 0;
   color: var(--text-secondary);
 }
-.empty-icon { font-size: 48px; margin-bottom: 16px; }
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
 
 .pagination-section {
   display: flex;
@@ -474,12 +499,18 @@ const onImgError = (e: Event) => {
 }
 
 @media (max-width: 992px) {
-  .masonry-grid { column-count: 3; }
+  .masonry-grid {
+    column-count: 3;
+  }
 }
 @media (max-width: 768px) {
-  .masonry-grid { column-count: 2; }
+  .masonry-grid {
+    column-count: 2;
+  }
 }
 @media (max-width: 480px) {
-  .masonry-grid { column-count: 1; }
+  .masonry-grid {
+    column-count: 1;
+  }
 }
 </style>

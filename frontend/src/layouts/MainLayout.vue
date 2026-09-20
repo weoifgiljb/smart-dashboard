@@ -20,7 +20,7 @@
           @change="toggleTheme"
         />
         <span>欢迎，{{ userStore.user?.username }}</span>
-        <UiButton type="danger" style="margin-left: 20px" @click="handleLogout">退出</UiButton>
+        <UiButton variant="danger" style="margin-left: 20px" @click="handleLogout">退出</UiButton>
       </div>
     </el-header>
     <el-container>
@@ -95,7 +95,7 @@ import { useUserStore } from '@/store/user'
 import { ElMessage } from 'element-plus'
 import ErrorBoundary from '@/components/ErrorBoundary.vue'
 import SkeletonPage from '@/components/SkeletonPage.vue'
-import UiButton from '@/components/ui/Button.vue'
+import UiButton from '@/components/ui/AppButton.vue'
 import {
   House,
   Calendar,

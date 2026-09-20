@@ -8,12 +8,16 @@
         </el-button>
         <span class="progress-indicator">{{ currentIndex + 1 }} / {{ queue.length }}</span>
       </div>
-      
+
       <div class="right-actions">
         <div class="mode-switch">
-          <span :class="{ active: reviewMode === 'recognize' }" @click="reviewMode = 'recognize'">识记</span>
+          <span :class="{ active: reviewMode === 'recognize' }" @click="reviewMode = 'recognize'"
+            >识记</span
+          >
           <span class="divider">|</span>
-          <span :class="{ active: reviewMode === 'spell' }" @click="reviewMode = 'spell'">拼写</span>
+          <span :class="{ active: reviewMode === 'spell' }" @click="reviewMode = 'spell'"
+            >拼写</span
+          >
         </div>
         <el-button circle text @click="toggleSettings">
           <el-icon><Setting /></el-icon>
@@ -31,25 +35,32 @@
       <!-- 卡片区域 -->
       <div v-if="currentWord" class="card-scene">
         <!-- 认识/不认识模式 -->
-        <div v-if="reviewMode === 'recognize'" class="flip-card-wrapper" :class="{ flipped: isFlipped }" @click="!isFlipped && flipCard()">
+        <div
+          v-if="reviewMode === 'recognize'"
+          class="flip-card-wrapper"
+          :class="{ flipped: isFlipped }"
+          @click="!isFlipped && flipCard()"
+        >
           <div class="flip-card-inner">
             <!-- 正面 -->
             <div class="card-face card-front">
               <div class="card-body">
                 <div class="word-primary">{{ currentWord.word }}</div>
-                <div class="word-phonetic" v-if="currentWord.phonetic">/{{ currentWord.phonetic }}/</div>
+                <div v-if="currentWord.phonetic" class="word-phonetic">
+                  /{{ currentWord.phonetic }}/
+                </div>
                 <el-button class="audio-play-btn" circle @click.stop="playAudio">
                   <el-icon><Headset /></el-icon>
                 </el-button>
                 <div class="tap-hint">点击翻转查看释义</div>
               </div>
             </div>
-            
+
             <!-- 背面 -->
             <div class="card-face card-back">
               <div class="card-body">
                 <div class="word-meaning">{{ currentWord.translation }}</div>
-                <div class="word-example" v-if="currentWord.example">
+                <div v-if="currentWord.example" class="word-example">
                   <div class="ex-en">{{ currentWord.example }}</div>
                 </div>
                 <div class="action-buttons">
@@ -79,14 +90,14 @@
           <div class="spell-header">
             <div class="meaning-hint">{{ currentWord.translation }}</div>
           </div>
-          
+
           <div class="spell-input-wrapper">
-            <input 
+            <input
               ref="inputRef"
-              v-model="answer" 
-              type="text" 
-              class="spell-input" 
-              placeholder="输入单词..." 
+              v-model="answer"
+              type="text"
+              class="spell-input"
+              placeholder="输入单词..."
               :disabled="showResult"
               @keyup.enter="submitAnswer"
             />
@@ -101,10 +112,24 @@
           </div>
 
           <div class="spell-actions">
-            <el-button v-if="!showResult" type="primary" round size="large" class="submit-btn" @click="submitAnswer">
+            <el-button
+              v-if="!showResult"
+              type="primary"
+              round
+              size="large"
+              class="submit-btn"
+              @click="submitAnswer"
+            >
               提交 (Enter)
             </el-button>
-            <el-button v-else type="primary" round size="large" class="submit-btn" @click="nextWord">
+            <el-button
+              v-else
+              type="primary"
+              round
+              size="large"
+              class="submit-btn"
+              @click="nextWord"
+            >
               下一个 (Enter)
             </el-button>
           </div>
@@ -138,7 +163,9 @@
         </div>
         <div class="completion-actions">
           <el-button type="primary" round size="large" @click="backToWords">返回列表</el-button>
-          <el-button v-if="nextQueue.length" round size="large" @click="startNextRound">错题重练</el-button>
+          <el-button v-if="nextQueue.length" round size="large" @click="startNextRound"
+            >错题重练</el-button
+          >
         </div>
       </div>
     </div>
@@ -193,19 +220,19 @@ const showSettings = ref(false)
 
 const settings = ref({
   autoPlayAudio: true,
-  showExample: true
+  showExample: true,
 })
 
 const summary = ref({
   total: 0,
   correct: 0,
-  wrong: 0
+  wrong: 0,
 })
 
 const currentWord = computed(() => queue.value[currentIndex.value] || null)
 const progressPercentage = computed(() => {
   if (queue.value.length === 0) return 0
-  return ((currentIndex.value) / queue.value.length) * 100
+  return (currentIndex.value / queue.value.length) * 100
 })
 const accuracyPercentage = computed(() => {
   const total = summary.value.correct + summary.value.wrong
@@ -225,13 +252,13 @@ onBeforeUnmount(() => {
 const initQueue = async () => {
   const idsParam = (route.query.ids as string) || ''
   const ids = idsParam ? decodeURIComponent(idsParam).split(',').filter(Boolean) : []
-  
+
   let list: any[] = []
   try {
     if (ids.length) {
       // Fetch all to filter (simplified) or specific API
       const all = await getWords()
-      list = (all as any[]).filter(w => ids.includes(w.id))
+      list = (all as any[]).filter((w) => ids.includes(w.id))
     } else {
       list = await getTodayWords()
     }
@@ -239,13 +266,13 @@ const initQueue = async () => {
     console.error(e)
   }
 
-  queue.value = list.map(w => ({
+  queue.value = list.map((w) => ({
     id: w.id,
     word: w.word,
     translation: w.translation,
     example: w.example,
     image: w.image,
-    phonetic: w.phonetic || ''
+    phonetic: w.phonetic || '',
   }))
   summary.value.total = queue.value.length
 }
@@ -286,7 +313,7 @@ const nextWord = () => {
   showResult.value = false
   answer.value = ''
   currentIndex.value++
-  
+
   if (!currentWord.value && nextQueue.value.length === 0) {
     // Finished
   } else if (!currentWord.value && nextQueue.value.length > 0) {
@@ -303,7 +330,7 @@ const submitAnswer = async () => {
   if (!currentWord.value) return
   const correct = currentWord.value.word.trim().toLowerCase()
   const input = answer.value.trim().toLowerCase()
-  
+
   if (input === correct) {
     resultType.value = 'correct'
     showResult.value = true
@@ -328,7 +355,7 @@ const startNextRound = () => {
 }
 
 const backToWords = () => router.push('/words')
-const toggleSettings = () => showSettings.value = !showSettings.value
+const toggleSettings = () => (showSettings.value = !showSettings.value)
 
 const handleGlobalKey = (e: KeyboardEvent) => {
   if (reviewMode.value === 'recognize') {
@@ -358,8 +385,16 @@ const handleGlobalKey = (e: KeyboardEvent) => {
   border-bottom: 1px solid #e2e8f0;
 }
 
-.left-actions { display: flex; align-items: center; gap: 16px; }
-.progress-indicator { font-size: 14px; font-weight: 600; color: #64748b; }
+.left-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.progress-indicator {
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+}
 
 .mode-switch {
   display: flex;
@@ -371,9 +406,19 @@ const handleGlobalKey = (e: KeyboardEvent) => {
   font-size: 13px;
   margin-right: 12px;
 }
-.mode-switch span { cursor: pointer; color: #94a3b8; transition: color 0.2s; }
-.mode-switch span.active { color: #0f172a; font-weight: 600; }
-.mode-switch .divider { color: #cbd5e1; cursor: default; }
+.mode-switch span {
+  cursor: pointer;
+  color: #94a3b8;
+  transition: color 0.2s;
+}
+.mode-switch span.active {
+  color: #0f172a;
+  font-weight: 600;
+}
+.mode-switch .divider {
+  color: #cbd5e1;
+  cursor: default;
+}
 
 /* 主体 */
 .review-container {
@@ -435,10 +480,10 @@ const handleGlobalKey = (e: KeyboardEvent) => {
   height: 100%;
   backface-visibility: hidden;
   border-radius: 24px;
-  box-shadow: 
+  box-shadow:
     0 10px 15px -3px rgba(0, 0, 0, 0.1),
     0 4px 6px -2px rgba(0, 0, 0, 0.05),
-    inset 0 0 0 1px rgba(255,255,255,0.1);
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1);
   background: white;
   overflow: hidden;
 }
@@ -493,7 +538,9 @@ const handleGlobalKey = (e: KeyboardEvent) => {
 }
 
 /* 背面元素 */
-.card-back .card-body { justify-content: center; }
+.card-back .card-body {
+  justify-content: center;
+}
 .word-meaning {
   font-size: 28px;
   font-weight: 700;
@@ -533,15 +580,37 @@ const handleGlobalKey = (e: KeyboardEvent) => {
   cursor: pointer;
   transition: transform 0.1s;
 }
-.review-btn:active { transform: scale(0.95); }
+.review-btn:active {
+  transform: scale(0.95);
+}
 
-.review-btn .icon { font-size: 20px; margin-bottom: 4px; font-weight: bold; }
-.review-btn .label { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
-.review-btn .sub { font-size: 10px; opacity: 0.8; }
+.review-btn .icon {
+  font-size: 20px;
+  margin-bottom: 4px;
+  font-weight: bold;
+}
+.review-btn .label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.review-btn .sub {
+  font-size: 10px;
+  opacity: 0.8;
+}
 
-.review-btn.unknown { background: #fee2e2; color: #ef4444; }
-.review-btn.vague { background: #fef3c7; color: #d97706; }
-.review-btn.known { background: #dcfce7; color: #16a34a; }
+.review-btn.unknown {
+  background: #fee2e2;
+  color: #ef4444;
+}
+.review-btn.vague {
+  background: #fef3c7;
+  color: #d97706;
+}
+.review-btn.known {
+  background: #dcfce7;
+  color: #16a34a;
+}
 
 /* 拼写卡片 */
 .spell-card {
@@ -556,8 +625,17 @@ const handleGlobalKey = (e: KeyboardEvent) => {
   align-items: center;
 }
 
-.spell-header { flex: 1; display: flex; align-items: center; }
-.meaning-hint { font-size: 24px; font-weight: 600; color: #334155; text-align: center; }
+.spell-header {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+.meaning-hint {
+  font-size: 24px;
+  font-weight: 600;
+  color: #334155;
+  text-align: center;
+}
 
 .spell-input-wrapper {
   width: 100%;
@@ -576,7 +654,9 @@ const handleGlobalKey = (e: KeyboardEvent) => {
   color: #0f172a;
   background: transparent;
 }
-.spell-input:focus { border-color: var(--primary); }
+.spell-input:focus {
+  border-color: var(--primary);
+}
 
 .feedback-icon {
   position: absolute;
@@ -585,17 +665,26 @@ const handleGlobalKey = (e: KeyboardEvent) => {
   transform: translateY(-50%);
   font-size: 24px;
 }
-.feedback-icon.correct { color: var(--success); }
-.feedback-icon.wrong { color: var(--danger); }
+.feedback-icon.correct {
+  color: var(--success);
+}
+.feedback-icon.wrong {
+  color: var(--danger);
+}
 
 .correct-answer {
   color: var(--danger);
   font-size: 16px;
   margin-bottom: 20px;
 }
-.correct-answer span { font-weight: bold; font-size: 20px; }
+.correct-answer span {
+  font-weight: bold;
+  font-size: 20px;
+}
 
-.submit-btn { width: 100%; }
+.submit-btn {
+  width: 100%;
+}
 
 /* 完成卡片 */
 .completion-card {
@@ -603,7 +692,7 @@ const handleGlobalKey = (e: KeyboardEvent) => {
   padding: 40px;
   border-radius: 24px;
   text-align: center;
-  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-width: 400px;
 }
@@ -623,14 +712,37 @@ const handleGlobalKey = (e: KeyboardEvent) => {
   padding: 12px;
   border-radius: 12px;
 }
-.stat-item .val { font-size: 20px; font-weight: 800; color: #0f172a; }
-.stat-item .lbl { font-size: 12px; color: #64748b; }
+.stat-item .val {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+}
+.stat-item .lbl {
+  font-size: 12px;
+  color: #64748b;
+}
 
-.completion-actions { display: flex; gap: 12px; justify-content: center; }
+.completion-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
 
 /* 设置 */
-.settings-list { padding: 20px; }
-.s-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 14px; }
+.settings-list {
+  padding: 20px;
+}
+.s-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
 
-@keyframes pulse { 50% { opacity: 0.5; } }
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
 </style>

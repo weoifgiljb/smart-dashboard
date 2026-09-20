@@ -8,7 +8,7 @@ export const getCheckInStats = () => {
   return request.get('/checkin/stats')
 }
 
-export const getCheckInHistory = (params: any) => {
+export const getCheckInHistory = (params: { page?: number; size?: number }) => {
   return request.get('/checkin/history', { params })
 }
 

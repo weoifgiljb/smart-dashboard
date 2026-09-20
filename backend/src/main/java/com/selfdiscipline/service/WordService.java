@@ -3,6 +3,7 @@ package com.selfdiscipline.service;
 import com.selfdiscipline.dto.WordRequest;
 import com.selfdiscipline.dto.WordImportRequest;
 import com.selfdiscipline.dto.WordStatusRequest;
+import com.selfdiscipline.exception.ApiException;
 import com.selfdiscipline.model.User;
 import com.selfdiscipline.model.Word;
 import com.selfdiscipline.repository.UserRepository;
@@ -41,13 +42,13 @@ public class WordService {
 
     public List<Word> getWords(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> ApiException.notFound("用户不存在"));
         return wordRepository.findByUserIdOrderByCreateTimeDesc(user.getId());
     }
 
     public Word addWord(String username, WordRequest request) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> ApiException.notFound("用户不存在"));
 
         Word word = new Word();
         word.setUserId(user.getId());
@@ -59,15 +60,15 @@ public class WordService {
 
     public void deleteWord(String username, @NonNull String wordId) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> ApiException.notFound("用户不存在"));
 
         Word word = wordRepository.findById(wordId)
-                .orElseThrow(() -> new RuntimeException("单词不存在"));
+                .orElseThrow(() -> ApiException.notFound("单词不存在"));
 
         String wordUserId = word.getUserId();
         String userId = user.getId();
         if (wordUserId == null || userId == null || !wordUserId.equals(userId)) {
-            throw new RuntimeException("无权删除此单词");
+            throw ApiException.forbidden("无权删除此单词");
         }
 
         wordRepository.delete(word);
@@ -75,15 +76,15 @@ public class WordService {
 
     public Word reviewWord(String username, @NonNull String wordId) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> ApiException.notFound("用户不存在"));
 
         Word word = wordRepository.findById(wordId)
-                .orElseThrow(() -> new RuntimeException("单词不存在"));
+                .orElseThrow(() -> ApiException.notFound("单词不存在"));
 
         String wordUserId = word.getUserId();
         String userId = user.getId();
         if (wordUserId == null || userId == null || !wordUserId.equals(userId)) {
-            throw new RuntimeException("无权复习此单词");
+            throw ApiException.forbidden("无权复习此单词");
         }
 
         // 成功复习一次，进入下一阶段并根据艾宾浩斯间隔设置下次 dueDate
@@ -98,7 +99,7 @@ public class WordService {
 
     public List<Word> getTodayWords(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> ApiException.notFound("用户不存在"));
         LocalDateTime endOfToday = LocalDate.now().atTime(LocalTime.MAX);
         try {
             return wordRepository.findByUserIdAndStatusNotAndDueDateLessThanEqualOrderByDueDateAsc(
@@ -125,10 +126,10 @@ public class WordService {
 
     public Map<String, Object> importWords(String username, WordImportRequest req) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> ApiException.notFound("用户不存在"));
 
         if (req.getSectionSize() == null || req.getSectionSize() <= 0) {
-            throw new RuntimeException("分区大小需要为正整数");
+            throw ApiException.badRequest("分区大小需要为正整数");
         }
         String bookName = (req.getBookName() == null || req.getBookName().isBlank())
                 ? "默认词库" : req.getBookName().trim();
@@ -138,12 +139,12 @@ public class WordService {
                     ? LocalDate.now()
                     : LocalDate.parse(req.getStartDate());
         } catch (Exception e) {
-            throw new RuntimeException("开始日期格式应为yyyy-MM-dd");
+            throw ApiException.badRequest("开始日期格式应为yyyy-MM-dd");
         }
 
         String content = fetchText(req.getSourceUrl());
         if (content == null || content.isBlank()) {
-            throw new RuntimeException("未获取到词库内容");
+            throw ApiException.badRequest("未获取到词库内容");
         }
         // 解析行：支持 "word|translation" / "word,translation" / "word\ttranslation" / "word"
         String[] lines = content.split("\\r?\\n");
@@ -195,7 +196,7 @@ public class WordService {
         }
 
         if (toSave.isEmpty()) {
-            throw new RuntimeException("有效单词为空，导入取消");
+            throw ApiException.badRequest("有效单词为空，导入取消");
         }
         wordRepository.saveAll(toSave);
 
@@ -255,25 +256,25 @@ public class WordService {
             if (response.statusCode() >= 200 && response.statusCode() < 300) {
                 return response.body();
             }
-            throw new RuntimeException("下载失败，HTTP " + response.statusCode());
+            throw ApiException.badRequest("下载失败，HTTP " + response.statusCode());
         } catch (Exception e) {
-            throw new RuntimeException("下载词库失败: " + e.getMessage());
+            throw ApiException.badRequest("下载词库失败: " + e.getMessage());
         }
     }
 
     public Map<String, Object> importDefaultWords(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> ApiException.notFound("用户不存在"));
         try {
             ClassPathResource resource = new ClassPathResource("wordlists/default.txt");
             if (!resource.exists()) {
-                throw new RuntimeException("默认词库资源不存在");
+                throw ApiException.notFound("默认词库资源不存在");
             }
             try (InputStream is = resource.getInputStream();
                  BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
                 List<String> lines = reader.lines().toList();
                 if (lines.isEmpty()) {
-                    throw new RuntimeException("默认词库为空");
+                    throw ApiException.badRequest("默认词库为空");
                 }
                 // 采用每日一分区，默认每区50词，从今天开始
                 int sectionSize = 50;
@@ -317,7 +318,7 @@ public class WordService {
                     index++;
                 }
                 if (toSave.isEmpty()) {
-                    throw new RuntimeException("默认词库无有效词条");
+                    throw ApiException.badRequest("默认词库无有效词条");
                 }
                 wordRepository.saveAll(toSave);
                 Map<String, Object> resp = new HashMap<>();
@@ -330,21 +331,21 @@ public class WordService {
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
-            throw new RuntimeException("导入默认词库失败: " + e.getMessage());
+            throw ApiException.badRequest("导入默认词库失败: " + e.getMessage());
         }
     }
 
     public Word updateWordStatus(String username, @NonNull String wordId, WordStatusRequest req) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> ApiException.notFound("用户不存在"));
         Word word = wordRepository.findById(wordId)
-                .orElseThrow(() -> new RuntimeException("单词不存在"));
+                .orElseThrow(() -> ApiException.notFound("单词不存在"));
         if (!user.getId().equals(word.getUserId())) {
-            throw new RuntimeException("无权操作此单词");
+            throw ApiException.forbidden("无权操作此单词");
         }
         String status = (req.getStatus() == null ? "todo" : req.getStatus().trim().toLowerCase());
         if (!status.equals("todo") && !status.equals("done")) {
-            throw new RuntimeException("状态只能为 todo 或 done");
+            throw ApiException.badRequest("状态只能为 todo 或 done");
         }
         // 语义调整：
         // - 'done' 视为一次成功复习，按艾宾浩斯曲线安排下一次 dueDate（最终阶段则永久 done）
@@ -359,7 +360,7 @@ public class WordService {
 
     public List<Map<String, Object>> getBooks(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> ApiException.notFound("用户不存在"));
         List<Word> all = wordRepository.findByUserIdOrderByCreateTimeDesc(user.getId());
         Map<String, List<Word>> grouped = all.stream()
                 .collect(Collectors.groupingBy(w -> w.getBook() == null ? "未命名" : w.getBook()));

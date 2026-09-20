@@ -3,6 +3,7 @@ package com.selfdiscipline.controller;
 import com.selfdiscipline.dto.PomodoroRequest;
 import com.selfdiscipline.model.Pomodoro;
 import com.selfdiscipline.service.PomodoroService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -18,7 +19,7 @@ public class PomodoroController {
     private PomodoroService pomodoroService;
 
     @PostMapping
-    public ResponseEntity<Pomodoro> startPomodoro(@RequestBody PomodoroRequest request, Authentication authentication) {
+    public ResponseEntity<Pomodoro> startPomodoro(@Valid @RequestBody PomodoroRequest request, Authentication authentication) {
         Pomodoro pomodoro = pomodoroService.startPomodoro(authentication.getName(), request);
         return ResponseEntity.ok(pomodoro);
     }

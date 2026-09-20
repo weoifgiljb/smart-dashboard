@@ -9,7 +9,7 @@
           </div>
           <h1>加入我们</h1>
           <p class="brand-desc">
-            开启你的自我提升之旅。<br>
+            开启你的自我提升之旅。<br />
             所有的伟大，都源于一个开始。
           </p>
           <div class="feature-tags">
@@ -35,10 +35,22 @@
             <el-input v-model="form.email" placeholder="电子邮箱" prefix-icon="Message" />
           </el-form-item>
           <el-form-item prop="password">
-            <el-input v-model="form.password" type="password" placeholder="设置密码" prefix-icon="Lock" show-password />
+            <el-input
+              v-model="form.password"
+              type="password"
+              placeholder="设置密码"
+              prefix-icon="Lock"
+              show-password
+            />
           </el-form-item>
           <el-form-item prop="confirmPassword">
-            <el-input v-model="form.confirmPassword" type="password" placeholder="确认密码" prefix-icon="Lock" show-password />
+            <el-input
+              v-model="form.confirmPassword"
+              type="password"
+              placeholder="确认密码"
+              prefix-icon="Lock"
+              show-password
+            />
           </el-form-item>
 
           <el-form-item>
@@ -49,7 +61,7 @@
         </el-form>
 
         <div class="form-footer">
-          已有账号？ 
+          已有账号？
           <el-link type="primary" @click="$router.push('/login')">直接登录</el-link>
         </div>
       </div>
@@ -129,10 +141,10 @@ const handleRegister = async () => {
   justify-content: center;
   background-color: #f0f2f5;
   padding: 20px;
-  background-image: 
-    radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
-    radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
-    radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+  background-image:
+    radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
+    radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
   background-size: cover;
 }
 
@@ -142,7 +154,7 @@ const handleRegister = async () => {
   min-height: 600px;
   background: white;
   border-radius: 24px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
   overflow: hidden;
 }
 
@@ -178,7 +190,7 @@ const handleRegister = async () => {
 .logo-box {
   width: 64px;
   height: 64px;
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 16px;
   display: flex;
   align-items: center;
@@ -213,7 +225,7 @@ const handleRegister = async () => {
 
 .feature-tags span {
   padding: 6px 16px;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 20px;
   font-size: 14px;
   backdrop-filter: blur(4px);
@@ -274,12 +286,12 @@ const handleRegister = async () => {
     width: 100%;
     max-width: 480px;
   }
-  
+
   .brand-section {
     padding: 40px;
     display: none;
   }
-  
+
   .form-section {
     padding: 40px;
   }

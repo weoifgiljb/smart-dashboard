@@ -1,9 +1,10 @@
-import axios, { AxiosInstance, AxiosError } from 'axios'
+import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios'
 import { ElMessage } from 'element-plus'
 import router from '@/router'
 import { enqueue } from '@/utils/offlineQueue'
+import { refreshAuthToken } from '@/api/authRefresh'
 
-const apiBase = (import.meta as any).env?.VITE_API_BASE || '/api'
+const apiBase = (import.meta as { env?: { VITE_API_BASE?: string } }).env?.VITE_API_BASE || '/api'
 
 const request: AxiosInstance = axios.create({
   baseURL: apiBase,
@@ -16,26 +17,12 @@ const RETRY_METHODS = new Set(['get', 'head', 'options'])
 let isRefreshing = false
 let refreshPromise: Promise<string | null> | null = null
 
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+interface RetryConfig extends InternalAxiosRequestConfig {
+  __retryCount?: number
 }
 
-async function refreshAuthToken(): Promise<string | null> {
-  const refreshToken = localStorage.getItem('refreshToken')
-  if (!refreshToken) return null
-  try {
-    const res = await axios.post(`${apiBase}/auth/refresh`, null, {
-      headers: { 'Refresh-Token': refreshToken },
-    })
-    const newToken = (res.data?.token || res.data?.accessToken) as string | undefined
-    if (newToken) {
-      localStorage.setItem('token', newToken)
-      return newToken
-    }
-    return null
-  } catch {
-    return null
-  }
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 request.interceptors.request.use(
@@ -48,26 +35,23 @@ request.interceptors.request.use(
     config.headers['Accept'] = 'application/json'
     return config
   },
-  (error) => {
-    return Promise.reject(error)
-  },
+  (error) => Promise.reject(error),
 )
 
 request.interceptors.response.use(
-  (response): any => {
-    return response.data
-  },
+  (response) => response.data,
   async (error: AxiosError) => {
-    const config: any = error.config || {}
+    const config = (error.config || {}) as RetryConfig
     const status = error.response?.status
 
-    // 1) 未授权：尝试刷新一次 Token，失败则跳登录
     if (status === 401) {
       if (!isRefreshing) {
         isRefreshing = true
-        refreshPromise = refreshAuthToken().finally(() => {
-          isRefreshing = false
-        })
+        refreshPromise = refreshAuthToken()
+          .then((result) => result?.token ?? null)
+          .finally(() => {
+            isRefreshing = false
+          })
       }
       const newToken = await (refreshPromise as Promise<string | null>)
       if (newToken) {
@@ -76,12 +60,12 @@ request.interceptors.response.use(
         return request(config)
       }
       localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
       router.push('/login')
       ElMessage.error('登录已过期，请重新登录')
       return Promise.reject(error)
     }
 
-    // 2) 网络/超时或 5xx/429：对 GET 等幂等方法进行指数退避重试
     const shouldRetry =
       (!error.response || status === 429 || (status && status >= 500)) &&
       RETRY_METHODS.has(String(config.method || 'get').toLowerCase())
@@ -93,7 +77,6 @@ request.interceptors.response.use(
       return request(config)
     }
 
-    // 2.5) 离线：将写操作加入离线队列
     const method = String(config.method || 'get').toLowerCase()
     const isWrite =
       method === 'post' || method === 'put' || method === 'patch' || method === 'delete'
@@ -103,7 +86,7 @@ request.interceptors.response.use(
           url: config.url || '',
           method,
           data: config.data,
-          headers: config.headers as any,
+          headers: config.headers as Record<string, string>,
         })
         ElMessage.info('当前离线，操作已加入队列，将在恢复网络后自动重试')
       } catch {
@@ -111,9 +94,9 @@ request.interceptors.response.use(
       }
     }
 
-    // 3) 统一错误提示
     if (error.response) {
-      const msg = (error.response.data as any)?.message || `请求失败（${error.response.status}）`
+      const payload = error.response.data as { message?: string } | undefined
+      const msg = payload?.message || `请求失败（${error.response.status}）`
       ElMessage.error(msg)
     } else {
       ElMessage.error('网络错误，请稍后重试')

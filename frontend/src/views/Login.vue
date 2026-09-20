@@ -9,7 +9,7 @@
           </div>
           <h1>自律让自由更近</h1>
           <p class="brand-desc">
-            规划你的每一天，记录每一次进步。<br>
+            规划你的每一天，记录每一次进步。<br />
             从今天开始，遇见更好的自己。
           </p>
           <div class="feature-tags">
@@ -27,14 +27,27 @@
           <p>请登录您的账号以继续</p>
         </div>
 
-        <el-form ref="formRef" :model="form" :rules="rules" class="auth-form" size="large" @keyup.enter="handleLogin">
+        <el-form
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          class="auth-form"
+          size="large"
+          @keyup.enter="handleLogin"
+        >
           <el-form-item prop="username">
             <el-input v-model="form.username" placeholder="用户名/邮箱" prefix-icon="User" />
           </el-form-item>
           <el-form-item prop="password">
-            <el-input v-model="form.password" type="password" placeholder="密码" prefix-icon="Lock" show-password />
+            <el-input
+              v-model="form.password"
+              type="password"
+              placeholder="密码"
+              prefix-icon="Lock"
+              show-password
+            />
           </el-form-item>
-          
+
           <div class="form-options">
             <el-checkbox>记住我</el-checkbox>
             <el-link type="primary" :underline="false">忘记密码？</el-link>
@@ -48,7 +61,7 @@
         </el-form>
 
         <div class="form-footer">
-          还没有账号？ 
+          还没有账号？
           <el-link type="primary" @click="$router.push('/register')">立即注册</el-link>
         </div>
       </div>
@@ -106,10 +119,10 @@ const handleLogin = async () => {
   justify-content: center;
   background-color: #f0f2f5;
   padding: 20px;
-  background-image: 
-    radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
-    radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
-    radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+  background-image:
+    radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
+    radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
   background-size: cover;
 }
 
@@ -119,7 +132,7 @@ const handleLogin = async () => {
   min-height: 560px;
   background: white;
   border-radius: 24px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
   overflow: hidden;
 }
 
@@ -155,7 +168,7 @@ const handleLogin = async () => {
 .logo-box {
   width: 64px;
   height: 64px;
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 16px;
   display: flex;
   align-items: center;
@@ -190,7 +203,7 @@ const handleLogin = async () => {
 
 .feature-tags span {
   padding: 6px 16px;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 20px;
   font-size: 14px;
   backdrop-filter: blur(4px);
@@ -258,12 +271,12 @@ const handleLogin = async () => {
     width: 100%;
     max-width: 480px;
   }
-  
+
   .brand-section {
     padding: 40px;
     display: none; /* Mobile hide for simplicity, or show smaller */
   }
-  
+
   .form-section {
     padding: 40px;
   }

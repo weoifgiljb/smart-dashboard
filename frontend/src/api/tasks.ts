@@ -1,13 +1,24 @@
 import request from './request'
+import type { Task } from '@/types/task'
 
-export const createTask = (data: any) => request.post('/tasks', data)
-export const listTasks = (params: any) => request.get('/tasks', { params })
-export const getTask = (id: string) => request.get(`/tasks/${id}`)
-export const updateTask = (id: string, data: any) => request.patch(`/tasks/${id}`, data)
+export interface TaskListParams {
+  q?: string
+  status?: string
+  priority?: string
+  tag?: string
+}
+
+export const createTask = (data: Partial<Task>) => request.post<unknown, Task>('/tasks', data)
+export const listTasks = (params: TaskListParams) =>
+  request.get<unknown, Task[]>('/tasks', { params })
+export const getTask = (id: string) => request.get<unknown, Task>(`/tasks/${id}`)
+export const updateTask = (id: string, data: Partial<Task>) =>
+  request.patch<unknown, Task>(`/tasks/${id}`, data)
 export const deleteTask = (id: string) => request.delete(`/tasks/${id}`)
 
-export const createSubtask = (id: string, data: any) => request.post(`/tasks/${id}/subtasks`, data)
-export const getSubtasks = (id: string) => request.get(`/tasks/${id}/subtasks`)
+export const createSubtask = (id: string, data: Partial<Task>) =>
+  request.post<unknown, Task>(`/tasks/${id}/subtasks`, data)
+export const getSubtasks = (id: string) => request.get<unknown, Task[]>(`/tasks/${id}/subtasks`)
 
 export const addDependency = (id: string, depId: string) =>
   request.post(`/tasks/${id}/dependencies`, null, { params: { depId } })

@@ -1,6 +1,7 @@
 package com.selfdiscipline.service;
 
 import com.selfdiscipline.dto.PomodoroRequest;
+import com.selfdiscipline.exception.ApiException;
 import com.selfdiscipline.model.Pomodoro;
 import com.selfdiscipline.model.User;
 import com.selfdiscipline.repository.PomodoroRepository;
@@ -26,7 +27,7 @@ public class PomodoroService {
 
     public Pomodoro startPomodoro(String username, PomodoroRequest request) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> ApiException.notFound("用户不存在"));
 
         Pomodoro pomodoro = new Pomodoro();
         pomodoro.setUserId(user.getId());
@@ -39,7 +40,7 @@ public class PomodoroService {
 
     public Map<String, Object> getStats(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> ApiException.notFound("用户不存在"));
 
         LocalDateTime startOfDay = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
         LocalDateTime endOfDay = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
@@ -55,7 +56,7 @@ public class PomodoroService {
 
     public List<Pomodoro> getHistory(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> ApiException.notFound("用户不存在"));
         return pomodoroRepository.findByUserIdOrderByStartTimeDesc(user.getId());
     }
 

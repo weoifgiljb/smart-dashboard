@@ -1,27 +1,28 @@
 package com.selfdiscipline.config;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
-@Component
+@Configuration
+@ConfigurationProperties(prefix = "ollama")
 public class OllamaConfig {
 
-	@Value("${ollama.base-url:http://127.0.0.1:11434}")
-	private String baseUrl;
+    private String baseUrl = "http://127.0.0.1:11434";
+    private String model = "llama3.1";
 
-	@Value("${ollama.model:llama3.1}")
-	private String model;
+    public String getBaseUrl() {
+        return baseUrl;
+    }
 
-	public String getBaseUrl() {
-		return baseUrl;
-	}
+    public void setBaseUrl(String baseUrl) {
+        this.baseUrl = baseUrl;
+    }
 
-	public String getModel() {
-		return model;
-	}
+    public String getModel() {
+        return model;
+    }
+
+    public void setModel(String model) {
+        this.model = model;
+    }
 }
-
-
-
-
-

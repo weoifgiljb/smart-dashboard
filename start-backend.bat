@@ -3,10 +3,10 @@ echo Starting Spring Boot Backend...
 
 REM 检查并设置 Java 版本
 echo Checking Java version...
-java -version 2>nul | findstr /C:"version \"24" >nul 2>nul
+java -version 2>nul | findstr /C:"version \"21" >nul 2>nul
 if %ERRORLEVEL% NEQ 0 (
-    echo WARNING: Java 24 may not be the active version.
-    echo Please ensure Java 24 is set in JAVA_HOME or PATH.
+    echo WARNING: Java 21 may not be the active version.
+    echo Please ensure Java 21 is set in JAVA_HOME or PATH.
     java -version
 )
 
@@ -17,8 +17,8 @@ if defined JAVA_HOME (
     set "JAVA_HOME=%JAVA_HOME%"
 ) else (
     echo ERROR: JAVA_HOME is not set!
-    echo Please set JAVA_HOME to Java 24 installation directory.
-    echo Example: set JAVA_HOME=C:\Program Files\Java\jdk-24
+    echo Please set JAVA_HOME to Java 21 installation directory.
+    echo Example: set JAVA_HOME=C:\Program Files\Java\jdk-21
     pause
     exit /b 1
 )
@@ -65,12 +65,12 @@ if exist "env.bat" (
     echo backend\env.bat not found. Skipping local env load.
 )
 
-REM 清理旧的编译文件（使用 Java 24 重新编译）
+REM 清理旧的编译文件（使用 Java 21 重新编译）
 echo Cleaning previous build...
 call mvn clean -q
 
 echo Checking if dependencies are downloaded...
-if not exist "%USERPROFILE%\.m2\repository\org\springframework\boot\spring-boot-starter-parent\3.3.5" (
+if not exist "%USERPROFILE%\.m2\repository\org\springframework\boot\spring-boot-starter-parent\3.5.5" (
     echo Dependencies not found, downloading...
     call mvn dependency:resolve
 )
@@ -78,13 +78,13 @@ if not exist "%USERPROFILE%\.m2\repository\org\springframework\boot\spring-boot-
 REM 确保 Maven 使用 JAVA_HOME 中的 Java
 set "PATH=%JAVA_HOME%\bin;%PATH%"
 
-REM 设置 Maven 选项，确保所有插件使用 Java 24
+REM 设置 Maven 选项，确保所有插件使用 Java 21
 REM 注意：由于路径包含空格，不能直接在命令行参数中使用引号
 REM 通过设置 PATH 和 JAVA_HOME，Maven 会自动使用正确的 Java
 
-REM 先编译项目，确保使用 Java 24 编译
-echo Compiling project with Java 24...
-REM 不设置 executable 参数，让 Maven 使用 PATH 中的 Java（已设置为 Java 24）
+REM 先编译项目，确保使用 Java 21 编译
+echo Compiling project with Java 21...
+REM 不设置 executable 参数，让 Maven 使用 PATH 中的 Java（已设置为 Java 21）
 call mvn compile -Dmaven.compiler.fork=true
 if %ERRORLEVEL% NEQ 0 (
     echo ERROR: Compilation failed!
@@ -93,13 +93,13 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo Starting Spring Boot application...
-echo Using Maven with Java 24 support...
+echo Using Maven with Java 21 support...
 echo JAVA_HOME is set to: %JAVA_HOME%
 
 REM 使用 Maven exec:java 插件运行应用
 REM exec:java 会自动构建正确的 classpath，避免文件读取问题
-REM spring.classformat.ignore=true 已在 pom.xml 中配置，以支持 Java 24
-echo Starting application with Java 24 using Maven exec plugin...
+REM spring.classformat.ignore=true 已在 pom.xml 中配置，以支持 Java 21
+echo Starting application with Java 21 using Maven exec plugin...
 call mvn exec:java ^
     -Dexec.mainClass="com.selfdiscipline.SelfDisciplineApplication" ^
     -Dexec.classpathScope=runtime ^

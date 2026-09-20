@@ -5,6 +5,7 @@ import com.selfdiscipline.dto.WordImportRequest;
 import com.selfdiscipline.dto.WordStatusRequest;
 import com.selfdiscipline.model.Word;
 import com.selfdiscipline.service.WordService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
@@ -40,7 +41,7 @@ public class WordController {
     }
 
     @PostMapping
-    public ResponseEntity<Word> addWord(@RequestBody WordRequest request, Authentication authentication) {
+    public ResponseEntity<Word> addWord(@Valid @RequestBody WordRequest request, Authentication authentication) {
         Word word = wordService.addWord(authentication.getName(), request);
         return ResponseEntity.ok(word);
     }
@@ -58,7 +59,7 @@ public class WordController {
     }
 
     @PostMapping("/{id}/status")
-    public ResponseEntity<Word> updateStatus(@PathVariable @NonNull String id, @RequestBody WordStatusRequest req, Authentication authentication) {
+    public ResponseEntity<Word> updateStatus(@PathVariable @NonNull String id, @Valid @RequestBody WordStatusRequest req, Authentication authentication) {
         Word word = wordService.updateWordStatus(authentication.getName(), id, req);
         return ResponseEntity.ok(word);
     }

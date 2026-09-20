@@ -1,6 +1,13 @@
 @echo off
 REM 复制本文件为 env.bat，并按需填写你的密钥与参数
 
+REM JWT 密钥（生产环境务必替换为足够长的随机串）
+set "JWT_SECRET=change-me-in-production-use-at-least-32-chars!!"
+
+REM 可选：阿里云通义千问
+set "ALIYUN_AI_API_KEY="
+set "ALIYUN_AI_MODEL=qwen-turbo"
+
 REM 必填：OpenAI 兼容服务的 API Key（勿提交仓库）
 set "OPENAI_API_KEY=请在此处填入你的密钥"
 

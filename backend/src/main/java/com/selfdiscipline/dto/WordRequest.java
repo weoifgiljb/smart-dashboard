@@ -1,6 +1,9 @@
 package com.selfdiscipline.dto;
 
+import jakarta.validation.constraints.NotBlank;
+
 public class WordRequest {
+    @NotBlank(message = "单词不能为空")
     private String word;
     private String translation;
     private String example;

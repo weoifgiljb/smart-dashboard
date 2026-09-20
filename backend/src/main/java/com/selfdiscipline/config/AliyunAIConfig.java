@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 public class AliyunAIConfig {
     private String apiKey;
     private String apiUrl;
+    private String model = "qwen-turbo";
 
     public String getApiKey() {
         return apiKey;
@@ -23,6 +24,14 @@ public class AliyunAIConfig {
 
     public void setApiUrl(String apiUrl) {
         this.apiUrl = apiUrl;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public void setModel(String model) {
+        this.model = model;
     }
 }
 

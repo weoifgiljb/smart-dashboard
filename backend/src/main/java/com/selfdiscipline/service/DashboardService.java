@@ -1,5 +1,6 @@
 package com.selfdiscipline.service;
 
+import com.selfdiscipline.exception.ApiException;
 import com.selfdiscipline.model.CheckIn;
 import com.selfdiscipline.model.Pomodoro;
 import com.selfdiscipline.model.User;
@@ -43,7 +44,7 @@ public class DashboardService {
 
     public Map<String, Object> getStats(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> ApiException.notFound("用户不存在"));
         String userId = user.getId();
         
         Map<String, Object> stats = new HashMap<>();
@@ -56,7 +57,7 @@ public class DashboardService {
 
     public Map<String, Object> getTodayTasks(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> ApiException.notFound("用户不存在"));
         String userId = user.getId();
 
         LocalDate today = LocalDate.now();
@@ -80,7 +81,7 @@ public class DashboardService {
 
     public List<Map<String, Object>> getRecentActivities(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> ApiException.notFound("用户不存在"));
         String userId = user.getId();
 
         List<Map<String, Object>> activities = new ArrayList<>();
