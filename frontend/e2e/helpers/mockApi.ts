@@ -35,12 +35,19 @@ export type MockApiOptions = {
   diaries?: MockDiary[]
   deleteNotFoundIds?: string[]
   exportJsonError?: boolean
+  emptyBooks?: boolean
+  emptySearch?: boolean
 }
 
 export function previousMonthKey(now = new Date()) {
   const d = new Date(now.getFullYear(), now.getMonth() - 1, 1)
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`
+}
+
+export function todayDateKey(now = new Date()) {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
 }
 
 export function sampleDiary(overrides: Partial<MockDiary> = {}): MockDiary {
@@ -79,7 +86,13 @@ function isApiRequest(url: URL) {
   )
 }
 
-function payloadFor(url: URL, method: string, diaries: MockDiary[] = []) {
+function payloadFor(
+  url: URL,
+  method: string,
+  diaries: MockDiary[] = [],
+  options: MockApiOptions = {},
+  catalog: Array<{ id: string; title: string; author: string; description: string }> = [SAMPLE_BOOK],
+) {
   const path = apiPath(url)
 
   if (path.endsWith('/auth/me')) return SMOKE_USER
@@ -122,8 +135,16 @@ function payloadFor(url: URL, method: string, diaries: MockDiary[] = []) {
   if (path.includes('/tasks/aggregate/stats')) {
     return { byStatus: {}, byPriority: {}, overdue: 0 }
   }
-  if (/\/books\/[^/]+$/.test(path) && !path.includes('/books/random')) return SAMPLE_BOOK
-  if (path.includes('/books')) return { content: [SAMPLE_BOOK], totalElements: 1 }
+  if (path.includes('/books/search')) return options.emptySearch ? [] : catalog
+  if (path.includes('/books/by-ids')) {
+    const ids = (url.searchParams.get('ids') || '').split(',').filter(Boolean)
+    return catalog.filter((book) => ids.includes(book.id))
+  }
+  if (path.includes('/books/random')) return catalog
+  if (/\/books\/[^/]+$/.test(path) && !path.includes('/books/random') && !path.includes('/books/by-ids')) {
+    return SAMPLE_BOOK
+  }
+  if (path.includes('/books')) return { content: catalog, totalElements: catalog.length }
   if ((path === '/calendar' || path.endsWith('/calendar')) && method === 'GET') {
     return {
       '2026-01-05': { checkin: 1 },
@@ -228,6 +249,7 @@ function handleDiaryRoutes(
 export async function mockApi(page: Page, options: MockApiOptions = {}) {
   let sessionLive = true
   const diaries = [...(options.diaries || [])]
+  const catalog = options.emptyBooks ? [] : [{ ...SAMPLE_BOOK }]
   await page.route(isApiRequest, async (route) => {
     const url = new URL(route.request().url())
     if (url.hostname === 'api.github.com') {
@@ -259,6 +281,11 @@ export async function mockApi(page: Page, options: MockApiOptions = {}) {
     if (path.includes('/diaries')) {
       return handleDiaryRoutes(route, path, method, options, diaries)
     }
-    return json(route, payloadFor(url, method, diaries))
+    if (path.includes('/books/import') && method === 'POST') {
+      catalog.splice(0, catalog.length, { ...SAMPLE_BOOK })
+      const message = path.includes('/sample') ? '已放入 1 本示例书' : '已开始后台导入，稍后刷新书架'
+      return json(route, { message })
+    }
+    return json(route, payloadFor(url, method, diaries, options, catalog))
   })
 }

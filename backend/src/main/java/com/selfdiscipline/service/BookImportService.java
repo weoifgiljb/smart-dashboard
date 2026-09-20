@@ -19,6 +19,8 @@ import java.util.List;
 @Service
 public class BookImportService {
 
+    static final String SAMPLE_SOURCE = "sample-shelf";
+
     @Autowired
     private BookRepository bookRepository;
 
@@ -32,11 +34,29 @@ public class BookImportService {
                 .build();
     }
 
+    public int importSampleShelf() {
+        if (bookRepository.existsBySource(SAMPLE_SOURCE)) {
+            return 0;
+        }
+        LocalDateTime now = LocalDateTime.now();
+        List<Book> samples = List.of(
+                sample("深度工作", "Cal Newport", "专注", now),
+                sample("原子习惯", "James Clear", "习惯", now),
+                sample("心流", "Mihaly Csikszentmihalyi", "心理", now),
+                sample("思考，快与慢", "Daniel Kahneman", "认知", now),
+                sample("非暴力沟通", "Marshall B. Rosenberg", "沟通", now),
+                sample("原则", "Ray Dalio", "决策", now),
+                sample("如何阅读一本书", "Mortimer J. Adler", "阅读", now),
+                sample("把时间当作朋友", "李笑来", "自律", now)
+        );
+        bookRepository.saveAll(samples);
+        return samples.size();
+    }
+
     @Async
     public void importBooksFromUrl(String csvUrl, int limit) {
         try {
             RemoteUrlGuard.assertSafeHttpUrl(csvUrl);
-            System.out.println("Starting import from: " + csvUrl);
             String csvContent = webClient.get()
                     .uri(csvUrl)
                     .retrieve()
@@ -44,7 +64,6 @@ public class BookImportService {
                     .block();
 
             if (csvContent == null) {
-                System.err.println("Failed to download CSV content");
                 return;
             }
 
@@ -53,84 +72,76 @@ public class BookImportService {
                 String line;
                 int lineNumber = 0;
                 int imported = 0;
-                
+
                 while ((line = reader.readLine()) != null && imported < limit) {
                     lineNumber++;
-                    
-                    // Skip header
-                    if (lineNumber == 1) continue;
-                    
+                    if (lineNumber == 1) {
+                        continue;
+                    }
                     try {
-                        // Parse CSV with proper handling of quoted fields
                         String[] parts = parseCsvLine(line);
-                        
-                        if (parts.length >= 4) {
-                            Book book = new Book();
-                            
-                            // Book32 format: ASIN, Title, Author, Category, URL
-                            // Example: 0001712799,"Rica la noche","Marcela Serrano","Literature & Fiction","http://ecx.images-amazon.com/images/I/512-B-1-L._SL500_.jpg"
-                            
-                            String title = cleanField(parts[1]);
-                            String author = cleanField(parts[2]);
-                            String category = cleanField(parts[3]);
-                            String coverUrl = parts.length > 4 ? cleanField(parts[4]) : "";
-                            
-                            // Skip invalid titles or headers
-                            if (title.isEmpty() || title.equalsIgnoreCase("title") || title.contains("示例")) {
-                                continue;
-                            }
-                            
-                            book.setTitle(title);
-                            book.setAuthor(author.isEmpty() ? "Unknown Author" : author);
-                            book.setCategory(category.isEmpty() ? "General" : category);
-                            book.setCover(coverUrl.isEmpty() ? "/no-cover.svg" : coverUrl);
-                            book.setDescription("From Book32 dataset - " + category);
-                            book.setSource("Book32-Real");
-                            book.setCreateTime(LocalDateTime.now());
-                            book.setUpdateTime(LocalDateTime.now());
-                            
-                            // Generate random rating and view count for better UI
-                            book.setRating(Math.round((Math.random() * 2 + 3) * 10) / 10.0); // 3.0-5.0
-                            book.setViewCount((int)(Math.random() * 1000));
-                            
-                            booksToSave.add(book);
-                            imported++;
-                            
-                            if (imported % 50 == 0) {
-                                System.out.println("Imported " + imported + " books...");
-                            }
+                        if (parts.length < 4) {
+                            continue;
                         }
+                        String title = cleanField(parts[1]);
+                        String author = cleanField(parts[2]);
+                        String category = cleanField(parts[3]);
+                        String coverUrl = parts.length > 4 ? cleanField(parts[4]) : "";
+                        if (title.isEmpty() || title.equalsIgnoreCase("title") || title.contains("示例")) {
+                            continue;
+                        }
+                        Book book = new Book();
+                        book.setTitle(title);
+                        book.setAuthor(author.isEmpty() ? "Unknown Author" : author);
+                        book.setCategory(category.isEmpty() ? "General" : category);
+                        book.setCover(coverUrl.isEmpty() ? "/no-cover.svg" : coverUrl);
+                        book.setDescription("From Book32 dataset - " + category);
+                        book.setSource("Book32-Real");
+                        book.setCreateTime(LocalDateTime.now());
+                        book.setUpdateTime(LocalDateTime.now());
+                        book.setRating(Math.round((Math.random() * 2 + 3) * 10) / 10.0);
+                        book.setViewCount((int) (Math.random() * 1000));
+                        booksToSave.add(book);
+                        imported++;
                     } catch (Exception e) {
                         System.err.println("Error on line " + lineNumber + ": " + e.getMessage());
                     }
                 }
             }
-            
+
             if (!booksToSave.isEmpty()) {
-                // Only clear dummy data, keep user data if any (checking by source)
                 List<Book> oldDummyBooks = bookRepository.findAll().stream()
-                    .filter(b -> "douban".equals(b.getSource()) || b.getTitle().contains("示例书籍"))
-                    .toList();
+                        .filter(b -> "douban".equals(b.getSource()) || b.getTitle().contains("示例书籍"))
+                        .toList();
                 if (!oldDummyBooks.isEmpty()) {
                     bookRepository.deleteAll(oldDummyBooks);
-                    System.out.println("Cleared " + oldDummyBooks.size() + " dummy books.");
                 }
-                
                 bookRepository.saveAll(booksToSave);
-                System.out.println("✅ Successfully imported " + booksToSave.size() + " REAL books from Book32 dataset!");
             }
-
         } catch (Exception e) {
-            System.err.println("❌ Import failed: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("Import failed: " + e.getMessage());
         }
+    }
+
+    private static Book sample(String title, String author, String category, LocalDateTime now) {
+        Book book = new Book();
+        book.setTitle(title);
+        book.setAuthor(author);
+        book.setCategory(category);
+        book.setCover("/no-cover.svg");
+        book.setDescription("示例书架 · " + category);
+        book.setSource(SAMPLE_SOURCE);
+        book.setRating(4.4);
+        book.setViewCount(1);
+        book.setCreateTime(now);
+        book.setUpdateTime(now);
+        return book;
     }
 
     private String[] parseCsvLine(String line) {
         List<String> result = new ArrayList<>();
         boolean inQuotes = false;
         StringBuilder current = new StringBuilder();
-        
         for (char c : line.toCharArray()) {
             if (c == '"') {
                 inQuotes = !inQuotes;
@@ -146,7 +157,9 @@ public class BookImportService {
     }
 
     private String cleanField(String field) {
-        if (field == null) return "";
+        if (field == null) {
+            return "";
+        }
         return field.replaceAll("^\"|\"$", "").trim();
     }
 }

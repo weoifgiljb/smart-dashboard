@@ -44,6 +44,11 @@ public class BookController {
         return ResponseEntity.ok(books);
     }
 
+    @GetMapping("/by-ids")
+    public ResponseEntity<List<Book>> getBooksByIds(@RequestParam List<String> ids) {
+        return ResponseEntity.ok(bookService.getBooksByIds(ids));
+    }
+
     /**
      * 获取所有推荐书籍（不分页，兼容旧接口）
      */

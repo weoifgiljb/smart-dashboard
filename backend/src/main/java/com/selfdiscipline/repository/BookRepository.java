@@ -17,6 +17,8 @@ public interface BookRepository extends MongoRepository<Book, String> {
 
     List<Book> findTop20ByCategoryOrderByRatingDesc(String category);
 
+    boolean existsBySource(String source);
+
     @Query("{ '$or': [ { 'title': { '$regex': ?0, '$options': 'i' } }, { 'author': { '$regex': ?0, '$options': 'i' } }, { 'description': { '$regex': ?0, '$options': 'i' } } ] }")
     List<Book> searchByKeyword(String keyword, org.springframework.data.domain.Sort sort);
 }

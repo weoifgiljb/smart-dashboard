@@ -26,6 +26,15 @@ public class BookImportController {
         RemoteUrlGuard.assertSafeHttpUrl(request.getCsvUrl());
         int limit = request.getLimit() != null ? request.getLimit() : 100;
         bookImportService.importBooksFromUrl(request.getCsvUrl(), limit);
-        return ResponseEntity.ok(new MessageResponse("Import started in background..."));
+        return ResponseEntity.ok(new MessageResponse("已开始后台导入，稍后刷新书架"));
+    }
+
+    @PostMapping("/sample")
+    public ResponseEntity<MessageResponse> importSampleShelf() {
+        int count = bookImportService.importSampleShelf();
+        if (count == 0) {
+            return ResponseEntity.ok(new MessageResponse("示例书架已经导入过了"));
+        }
+        return ResponseEntity.ok(new MessageResponse("已放入 " + count + " 本示例书"));
     }
 }

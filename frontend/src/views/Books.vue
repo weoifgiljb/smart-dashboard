@@ -1,6 +1,5 @@
 <template>
   <div class="books-page">
-    <!-- 头部搜索区 -->
     <div class="header-banner">
       <div class="banner-content">
         <h2>发现下一本好书</h2>
@@ -18,85 +17,78 @@
               <el-icon><Search /></el-icon>
             </template>
             <template #suffix>
-              <el-button type="primary" round :loading="searching" @click="handleSearch"
-                >搜索</el-button
-              >
+              <el-button type="primary" round :loading="searching" @click="handleSearch">
+                搜索
+              </el-button>
             </template>
           </el-input>
         </div>
         <div class="quick-filters">
           <span
-            v-for="opt in sortOptions"
-            :key="opt.value"
             class="filter-tag"
-            :class="{ active: sortBy === opt.value }"
-            @click="changeSort(opt.value)"
+            :class="{ active: sortBy === BookSort.Random }"
+            @click="changeSort(BookSort.Random)"
           >
-            {{ opt.label }}
+            随机推荐
           </span>
-          <el-divider direction="vertical" />
           <span
             class="filter-tag"
-            :class="{ active: showOnlyFavorited }"
-            @click="toggleShowFavorite"
+            :class="{ active: sortBy === BookSort.Rating }"
+            @click="changeSort(BookSort.Rating)"
           >
-            <el-icon><StarFilled /></el-icon> 仅看收藏
+            评分最高
           </span>
+          <span
+            class="filter-tag"
+            :class="{ active: sortBy === BookSort.New }"
+            @click="changeSort(BookSort.New)"
+          >
+            最新上架
+          </span>
+          <span
+            class="filter-tag"
+            :class="{ active: sortBy === BookSort.Hot }"
+            @click="changeSort(BookSort.Hot)"
+          >
+            热门书籍
+          </span>
+          <el-button
+            v-if="showShuffle"
+            size="small"
+            round
+            :loading="loading"
+            @click="shuffleRandom"
+          >
+            换一批
+          </el-button>
+          <el-divider direction="vertical" />
+          <span class="filter-tag" :class="{ active: showOnlyFavorited }" @click="toggleShowFavorite">
+            <el-icon><StarFilled /></el-icon>
+            仅看收藏
+          </span>
+          <el-button size="small" round @click="openImportDialog">导入书目</el-button>
         </div>
       </div>
     </div>
 
-    <!-- 书籍列表 -->
     <div v-loading="loading" class="books-container">
-      <div v-if="books.length === 0" class="empty-state">
+      <div v-if="emptyKind" class="empty-state">
         <div class="empty-icon">📚</div>
-        <p>没有找到相关书籍，换个词试试？</p>
-        <el-button @click="resetFilters">重置筛选</el-button>
+        <p>{{ emptyCopy.description }}</p>
+        <el-button v-if="emptyCopy.action" @click="onEmptyAction">
+          {{ emptyCopy.action }}
+        </el-button>
       </div>
-
-      <div v-else class="masonry-grid">
-        <div v-for="book in books" :key="book.id" class="book-card-wrapper">
-          <div class="book-card" @click="goDetail(book)">
-            <div class="cover-image">
-              <img :src="book.cover || fallbackCover" loading="lazy" @error="onImgError" />
-              <div class="cover-overlay">
-                <el-button type="primary" round size="small">查看详情</el-button>
-              </div>
-              <div class="fav-btn" @click.stop="toggleFavorite(book)">
-                <el-icon :class="{ active: isFavorited(book.id) }">
-                  <StarFilled v-if="isFavorited(book.id)" />
-                  <Star v-else />
-                </el-icon>
-              </div>
-            </div>
-            <div class="book-info">
-              <h3 class="book-title" :title="book.title">{{ book.title }}</h3>
-              <div class="book-meta">
-                <span class="author">{{ book.author || '佚名' }}</span>
-                <div v-if="book.rating > 0" class="rating">
-                  <el-icon class="star-icon"><StarFilled /></el-icon>
-                  {{ book.rating }}
-                </div>
-              </div>
-              <div class="book-actions">
-                <el-button
-                  text
-                  bg
-                  size="small"
-                  class="ai-btn"
-                  :loading="generatingId === book.id"
-                  @click.stop="handleGenBookImage(book)"
-                >
-                  <el-icon><MagicStick /></el-icon> AI配图
-                </el-button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 分页 -->
-      <div v-if="totalPages > 1" class="pagination-section">
+      <BookGrid
+        v-else
+        :books="books"
+        :favorite-ids="favoriteIds"
+        :generating-id="generatingId"
+        @open="goDetail"
+        @toggle-favorite="toggleFavorite"
+        @generate="handleGenBookImage"
+      />
+      <div v-if="showPager" class="pagination-section">
         <el-pagination
           v-model:current-page="currentPage"
           :page-size="pageSize"
@@ -107,195 +99,292 @@
         />
       </div>
     </div>
+
+    <el-dialog v-model="importOpen" title="导入书目" width="520px" align-center destroy-on-close>
+      <p class="import-hint">CSV 需为 Book32 格式：ASIN, 书名, 作者, 分类, 封面URL。地址必须是公网 http/https。</p>
+      <el-form label-position="top">
+        <el-form-item label="CSV 地址">
+          <el-input v-model="importUrl" placeholder="https://example.com/books.csv" clearable />
+        </el-form-item>
+        <el-form-item label="导入数量">
+          <el-input-number v-model="importLimit" :min="1" :max="200" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="importOpen = false">取消</el-button>
+        <el-button :loading="importingSample" @click="handleSampleImport">导入示例书架</el-button>
+        <el-button type="primary" :loading="importingCsv" @click="handleCsvImport">开始导入</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { isAxiosError } from 'axios'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Search, Star, StarFilled, MagicStick } from '@element-plus/icons-vue'
-import { getBooks, searchBooks } from '@/api/books'
+import { Search, StarFilled } from '@element-plus/icons-vue'
 import { generateBookImage } from '@/api/ai'
+import { getBooks, getBooksByIds, getRandomBooks, importBooks, importSampleBooks, searchBooks } from '@/api/books'
+import BookGrid from '@/components/BookGrid.vue'
+import { useUserStore } from '@/store/user'
+import {
+  BookEmptyKind,
+  BookSort,
+  bookEmptyCopy,
+  normalizeBook,
+  parseBooksPayload,
+  readPayloadMessage,
+  resolveBookEmptyKind,
+  type BookItem,
+} from '@/utils/bookDisplay'
+import { loadFavoriteIds, saveFavoriteIds, toggleFavoriteId } from '@/utils/bookFavorites'
 
 const router = useRouter()
-const books = ref<any[]>([])
+const userStore = useUserStore()
+const books = ref<BookItem[]>([])
 const loading = ref(false)
 const searching = ref(false)
-const fallbackCover = '/no-cover.svg'
-
 const searchKeyword = ref('')
-const sortBy = ref('random')
+const searchingActive = ref(false)
+const sortBy = ref(BookSort.Random)
 const showOnlyFavorited = ref(false)
 const generatingId = ref<string | null>(null)
 const currentPage = ref(1)
-const pageSize = ref(12) // 4 columns * 3 rows
+const pageSize = 12
 const total = ref(0)
-const favoriteIds = ref<Set<string>>(new Set())
+const favoriteIds = ref(new Set<string>())
+const importOpen = ref(false)
+const importUrl = ref('')
+const importLimit = ref(24)
+const importingCsv = ref(false)
+const importingSample = ref(false)
 
-const sortOptions = [
-  { label: '随机推荐', value: 'random' },
-  { label: '评分最高', value: 'rating' },
-  { label: '最新上架', value: 'new' },
-  { label: '热门书籍', value: 'hot' },
-]
+const ownerKey = computed(() => userStore.user?.id || userStore.user?.username || 'anon')
 
-const totalPages = computed(() => Math.ceil(total.value / pageSize.value))
+const emptyKind = computed(() =>
+  resolveBookEmptyKind({
+    hasKeyword: searchingActive.value,
+    favoritesOnly: showOnlyFavorited.value,
+    count: books.value.length,
+  }),
+)
+
+const emptyCopy = computed(() =>
+  emptyKind.value ? bookEmptyCopy(emptyKind.value) : bookEmptyCopy(BookEmptyKind.Catalog),
+)
+
+const showShuffle = computed(
+  () => sortBy.value === BookSort.Random && !searchingActive.value && !showOnlyFavorited.value,
+)
+
+const showPager = computed(
+  () =>
+    !searchingActive.value &&
+    !showOnlyFavorited.value &&
+    sortBy.value !== BookSort.Random &&
+    total.value > pageSize,
+)
+
+function persistFavorites() {
+  saveFavoriteIds(ownerKey.value, Array.from(favoriteIds.value))
+}
+
+watch(
+  ownerKey,
+  (key) => {
+    favoriteIds.value = new Set(loadFavoriteIds(key))
+  },
+  { immediate: true },
+)
 
 onMounted(async () => {
-  const saved = localStorage.getItem('favoriteBooks')
-  if (saved) favoriteIds.value = new Set(JSON.parse(saved))
   await loadBooks()
 })
-
-const processBooksData = (rawBooks: any[]) => {
-  return rawBooks.map((b: any) => {
-    let title = b.title
-    let author = b.author
-    let cover = b.cover
-    if (title && (title.endsWith('.jpg') || title.endsWith('.png'))) {
-      if (b.category && b.category.length > 20) title = b.category
-    }
-    if (author && (author.startsWith('http') || author.includes('.jpg'))) {
-      if (!cover || !cover.startsWith('http')) cover = author
-      author = 'Unknown'
-    }
-    if (!cover || cover.includes('placeholder')) cover = ''
-    return { ...b, title, author, cover }
-  })
-}
 
 const loadBooks = async () => {
   try {
     loading.value = true
-    // 如果是仅看收藏，就在前端过滤（简化逻辑，实际应由后端支持）
     if (showOnlyFavorited.value) {
-      // 模拟加载收藏...这里简单处理为加载所有后过滤，或者需要后端支持findByIds
-      // 暂时先加载普通列表
+      const ids = Array.from(favoriteIds.value)
+      books.value = parseBooksPayload(await getBooksByIds(ids)).books
+      total.value = books.value.length
+      return
     }
-
-    const params = {
-      page: currentPage.value - 1,
-      size: pageSize.value,
-      sortBy: sortBy.value,
+    if (sortBy.value === BookSort.Random) {
+      books.value = parseBooksPayload(await getRandomBooks(pageSize)).books
+      total.value = books.value.length
+      return
     }
-    const data: any = await getBooks(params.page, params.size, params.sortBy)
-
-    if (data.content) {
-      books.value = processBooksData(data.content)
-      total.value = data.totalElements || 0
-    } else if (Array.isArray(data)) {
-      books.value = processBooksData(data)
-      total.value = data.length
-    } else {
-      books.value = []
-    }
-
-    if (showOnlyFavorited.value) {
-      books.value = books.value.filter((b) => favoriteIds.value.has(b.id))
-    }
+    const data = await getBooks(currentPage.value - 1, pageSize, sortBy.value)
+    const parsed = parseBooksPayload(data)
+    books.value = parsed.books
+    total.value = parsed.total
   } catch (error) {
-    ElMessage.error('获取书籍失败')
+    if (!isAxiosError(error)) ElMessage.error('获取书籍失败')
   } finally {
     loading.value = false
   }
 }
 
 const handleSearch = async () => {
-  if (!searchKeyword.value.trim()) {
+  const keyword = searchKeyword.value.trim()
+  if (!keyword) {
+    searchingActive.value = false
     currentPage.value = 1
     await loadBooks()
     return
   }
   searching.value = true
+  searchingActive.value = true
+  showOnlyFavorited.value = false
   try {
-    const data: any = await searchBooks(searchKeyword.value)
-    const rawList = Array.isArray(data) ? data : []
-    books.value = processBooksData(rawList)
+    books.value = parseBooksPayload(await searchBooks(keyword)).books
     total.value = books.value.length
     currentPage.value = 1
-  } catch {
-    ElMessage.error('搜索失败')
+  } catch (error) {
+    if (!isAxiosError(error)) ElMessage.error('搜索失败')
   } finally {
     searching.value = false
   }
 }
 
-const changeSort = (val: string) => {
+function changeSort(val: BookSort) {
   sortBy.value = val
+  searchingActive.value = false
+  searchKeyword.value = ''
   currentPage.value = 1
   loadBooks()
 }
 
-const toggleShowFavorite = () => {
+function shuffleRandom() {
+  sortBy.value = BookSort.Random
+  searchingActive.value = false
+  loadBooks()
+}
+
+function toggleShowFavorite() {
   showOnlyFavorited.value = !showOnlyFavorited.value
+  searchingActive.value = false
   loadBooks()
 }
 
-const resetFilters = () => {
-  searchKeyword.value = ''
-  sortBy.value = 'random'
+function onEmptyAction() {
+  const kind = emptyKind.value
+  if (!kind) return
+  switch (kind) {
+    case BookEmptyKind.Search:
+      searchKeyword.value = ''
+      searchingActive.value = false
+      loadBooks()
+      return
+    case BookEmptyKind.Favorites:
+      showOnlyFavorited.value = false
+      loadBooks()
+      return
+    case BookEmptyKind.Catalog:
+      openImportDialog()
+      return
+    default: {
+      const exhaustive: never = kind
+      return exhaustive
+    }
+  }
+}
+
+function openImportDialog() {
+  importOpen.value = true
+}
+
+function finishImport(message: string) {
+  importOpen.value = false
+  ElMessage.success(message)
+  searchingActive.value = false
   showOnlyFavorited.value = false
+  sortBy.value = BookSort.Random
+  currentPage.value = 1
   loadBooks()
 }
 
-const handlePageChange = () => {
+async function handleSampleImport() {
+  importingSample.value = true
+  try {
+    const data = await importSampleBooks()
+    finishImport(readPayloadMessage(data, '示例书架已导入'))
+  } catch (error) {
+    if (!isAxiosError(error)) ElMessage.error('导入失败')
+  } finally {
+    importingSample.value = false
+  }
+}
+
+async function handleCsvImport() {
+  const csvUrl = importUrl.value.trim()
+  if (!csvUrl.startsWith('http://') && !csvUrl.startsWith('https://')) {
+    ElMessage.warning('请填写公网 http/https 地址')
+    return
+  }
+  importingCsv.value = true
+  try {
+    const data = await importBooks(csvUrl, importLimit.value)
+    finishImport(readPayloadMessage(data, '已开始导入，稍后点换一批查看'))
+  } catch (error) {
+    if (!isAxiosError(error)) ElMessage.error('导入失败')
+  } finally {
+    importingCsv.value = false
+  }
+}
+
+function handlePageChange() {
   loadBooks()
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-const isFavorited = (id: string) => favoriteIds.value.has(id)
-
-const toggleFavorite = (book: any) => {
-  if (isFavorited(book.id)) {
-    favoriteIds.value.delete(book.id)
-    ElMessage.info('取消收藏')
-  } else {
-    favoriteIds.value.add(book.id)
-    ElMessage.success('已收藏')
+function toggleFavorite(book: BookItem) {
+  const added = toggleFavoriteId(favoriteIds.value, book.id)
+  favoriteIds.value = new Set(favoriteIds.value)
+  persistFavorites()
+  ElMessage[added ? 'success' : 'info'](added ? '已收藏' : '取消收藏')
+  if (showOnlyFavorited.value && !added) {
+    books.value = books.value.filter((item) => item.id !== book.id)
   }
-  localStorage.setItem('favoriteBooks', JSON.stringify(Array.from(favoriteIds.value)))
 }
 
-const handleGenBookImage = async (book: any) => {
+async function handleGenBookImage(book: BookItem) {
   generatingId.value = book.id
   try {
-    const updated: any = await generateBookImage(book.id)
-    const idx = books.value.findIndex((b) => b.id === book.id)
-    if (idx >= 0) books.value[idx] = { ...books.value[idx], ...updated }
+    const updated = normalizeBook(await generateBookImage(book.id))
+    if (!updated) return
+    books.value = books.value.map((item) => (item.id === book.id ? { ...item, ...updated } : item))
     ElMessage.success('配图已生成')
-  } catch {
-    ElMessage.error('生成失败')
+  } catch (error) {
+    if (!isAxiosError(error)) ElMessage.error('生成失败')
   } finally {
     generatingId.value = null
   }
 }
 
-const goDetail = (book: any) => {
+function goDetail(book: BookItem) {
   router.push({
     name: 'BookDetail',
-    params: { id: book.id || 'unknown' },
+    params: { id: book.id },
     state: { book },
   })
-}
-
-const onImgError = (e: Event) => {
-  ;(e.target as HTMLImageElement).src = fallbackCover
 }
 </script>
 
 <style scoped lang="less">
 .books-page {
   min-height: 100vh;
-  background: var(--app-bg);
+  background: var(--color-bg);
 }
 
-/* 顶部横幅 */
 .header-banner {
   background: var(--color-bg-elevated);
   padding: 40px 20px;
   text-align: center;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .banner-content {
@@ -306,10 +395,11 @@ const onImgError = (e: Event) => {
 .banner-content h2 {
   font-size: 28px;
   margin: 0 0 8px;
-  color: var(--app-text);
+  color: var(--color-text);
 }
+
 .banner-content p {
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   margin-bottom: 24px;
 }
 
@@ -320,7 +410,6 @@ const onImgError = (e: Event) => {
 
 .main-search :deep(.el-input__wrapper) {
   border-radius: 24px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   padding-left: 16px;
 }
 
@@ -328,9 +417,10 @@ const onImgError = (e: Event) => {
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-wrap: wrap;
   gap: 16px;
   font-size: 14px;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
 }
 
 .filter-tag {
@@ -340,177 +430,43 @@ const onImgError = (e: Event) => {
   align-items: center;
   gap: 4px;
 }
-.filter-tag:hover {
-  color: var(--primary);
-}
+
+.filter-tag:hover,
 .filter-tag.active {
-  color: var(--primary);
+  color: var(--color-primary);
+}
+
+.filter-tag.active {
   font-weight: 600;
 }
 
-/* 瀑布流 */
 .books-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 30px 20px;
 }
 
-.masonry-grid {
-  column-count: 4;
-  column-gap: 24px;
-}
-
-.book-card-wrapper {
-  break-inside: avoid;
-  margin-bottom: 24px;
-}
-
-.book-card {
-  background: var(--color-bg-elevated);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
-  cursor: pointer;
-  border: 1px solid transparent;
-}
-
-.book-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--el-border-color-lighter);
-}
-
-.cover-image {
-  position: relative;
-  width: 100%;
-  padding-top: 140%; /* 2:3 aspect ratio approximately */
-  background: var(--color-bg-muted);
-}
-
-.cover-image img {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.cover-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.book-card:hover .cover-overlay {
-  opacity: 1;
-}
-
-.fav-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: rgba(255, 255, 255, 0.9);
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  font-size: 18px;
-  color: var(--color-text-muted);
-  transition: all 0.2s;
-}
-
-.fav-btn:hover {
-  transform: scale(1.1);
-}
-.fav-btn .active {
-  color: var(--color-warning);
-}
-
-.book-info {
-  padding: 12px;
-}
-
-.book-title {
-  margin: 0 0 4px;
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1.4;
-  color: var(--app-text);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.book-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-  font-size: 12px;
-  color: var(--text-light);
-}
-
-.rating {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  color: var(--color-warning);
-  font-weight: 600;
-}
-
-.book-actions {
-  padding-top: 8px;
-  border-top: 1px solid var(--color-bg-muted);
-}
-
-.ai-btn {
-  width: 100%;
-  color: var(--primary);
-}
-
 .empty-state {
   text-align: center;
   padding: 60px 0;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
 }
+
 .empty-icon {
   font-size: 48px;
   margin-bottom: 16px;
+}
+
+.import-hint {
+  margin: 0 0 16px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .pagination-section {
   display: flex;
   justify-content: center;
   margin-top: 40px;
-}
-
-@media (max-width: 992px) {
-  .masonry-grid {
-    column-count: 3;
-  }
-}
-@media (max-width: 768px) {
-  .masonry-grid {
-    column-count: 2;
-  }
-}
-@media (max-width: 480px) {
-  .masonry-grid {
-    column-count: 1;
-  }
 }
 </style>

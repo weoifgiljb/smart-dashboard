@@ -78,11 +78,23 @@ test.describe('authenticated smoke', () => {
     await expect(page.locator('.word-primary')).toHaveText('focus')
   })
 
-  test('book detail shows the stubbed book', async ({ page }) => {
+  test('book shelf shuffles from random and does not pretend a search miss', async ({ page }) => {
+    await page.goto('/books')
+    await expect(page.locator('.layout-container')).toBeVisible({ timeout: 15000 })
+    await expect(page.getByRole('heading', { name: '发现下一本好书' })).toBeVisible()
+    await expect(page.getByRole('button', { name: '换一批' })).toBeVisible()
+    await expect(page.getByText('Deep Work')).toBeVisible()
+    await expect(page.getByText('换个词试试')).toHaveCount(0)
+  })
+
+  test('book detail favors collect and shelf over GitHub', async ({ page }) => {
     await page.goto('/books/book-1')
     await expect(page.locator('.layout-container')).toBeVisible({ timeout: 15000 })
     await expect(page.getByText('书籍详情')).toBeVisible()
     await expect(page.getByText('Deep Work')).toBeVisible()
+    await expect(page.getByRole('button', { name: '收藏这本书' })).toBeVisible()
+    await expect(page.getByRole('button', { name: '返回书架' })).toBeVisible()
+    await expect(page.getByRole('button', { name: '在 GitHub 查找相关仓库' })).toBeVisible()
   })
 
   test('unknown route shows not found', async ({ page }) => {
@@ -96,6 +108,59 @@ test.describe('authenticated smoke', () => {
     await expect(page.locator('.layout-container')).toBeVisible({ timeout: 15000 })
     await page.locator('.header-right').getByRole('button', { name: '退出' }).click()
     await expect(page).toHaveURL(/\/login/)
+  })
+})
+
+test.describe('authenticated books', () => {
+  test('empty catalog explains import instead of a bad search', async ({ page }) => {
+    await seedAuthenticatedSession(page, { emptyBooks: true })
+    await page.goto('/books')
+    await expect(page.locator('.layout-container')).toBeVisible({ timeout: 15000 })
+    await expect(page.getByText('书架还是空的')).toBeVisible()
+    await expect(page.getByText('换个词试试')).toHaveCount(0)
+    await expect(page.getByRole('button', { name: '换一批' })).toBeVisible()
+    await expect(page.getByRole('button', { name: '导入书目' }).first()).toBeVisible()
+  })
+
+  test('sample shelf import fills an empty catalog', async ({ page }) => {
+    await seedAuthenticatedSession(page, { emptyBooks: true })
+    await page.goto('/books')
+    await expect(page.getByText('书架还是空的')).toBeVisible()
+    await page.getByRole('button', { name: '导入书目' }).first().click()
+    await expect(page.getByText('CSV 需为 Book32 格式')).toBeVisible()
+    await page.getByRole('button', { name: '导入示例书架' }).click()
+    await expect(page.getByText('Deep Work')).toBeVisible()
+  })
+
+  test('search miss can clear the keyword', async ({ page }) => {
+    await seedAuthenticatedSession(page, { emptySearch: true })
+    await page.goto('/books')
+    await expect(page.getByText('Deep Work')).toBeVisible()
+    await page.getByPlaceholder('搜索书名、作者...').fill('zzzz-not-a-book')
+    await page.getByRole('button', { name: '搜索' }).click()
+    await expect(page.getByText('没有找到相关书籍，换个词试试？')).toBeVisible()
+    await page.getByRole('button', { name: '清空搜索' }).click()
+    await expect(page.getByText('Deep Work')).toBeVisible()
+  })
+
+  test('favorites empty copy unsets the filter', async ({ page }) => {
+    await seedAuthenticatedSession(page)
+    await page.goto('/books')
+    await expect(page.getByText('Deep Work')).toBeVisible()
+    await page.getByText('仅看收藏').click()
+    await expect(page.getByText('还没有收藏，去书架上点亮星星吧')).toBeVisible()
+    await page.getByRole('button', { name: '取消仅看收藏' }).click()
+    await expect(page.getByText('Deep Work')).toBeVisible()
+  })
+
+  test('favorites load by saved ids not the current page', async ({ page }) => {
+    await seedAuthenticatedSession(page)
+    await page.addInitScript(() => {
+      localStorage.setItem('favoriteBooks:u1', JSON.stringify(['book-1']))
+    })
+    await page.goto('/books')
+    await page.getByText('仅看收藏').click()
+    await expect(page.getByText('Deep Work')).toBeVisible()
   })
 })
 
