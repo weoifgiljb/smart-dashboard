@@ -168,8 +168,10 @@ spring:
       uri: ${MONGODB_URI:mongodb://localhost:27017/self_discipline}
 
 jwt:
-  secret: ${JWT_SECRET:change-me-in-production-use-at-least-32-chars!!}
+  secret: ${JWT_SECRET:}
 ```
+
+必须设置环境变量 `JWT_SECRET`（至少 32 字节的随机串）。未配置或仍使用旧占位密钥时，后端会拒绝启动。
 
 （如使用 Atlas，请将 uri 替换为云端连接字符串）
 

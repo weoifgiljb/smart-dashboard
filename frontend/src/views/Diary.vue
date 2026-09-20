@@ -188,6 +188,7 @@ import {
 } from '@/api/diary'
 import { VueMonacoEditor } from '@guolao/vue-monaco-editor'
 import { marked } from 'marked'
+import { sanitizeHtml } from '@/utils/sanitizeHtml'
 
 const loading = ref(false)
 const saving = ref(false)
@@ -208,7 +209,13 @@ const moodOptions = [
   { value: 'happy', label: '开心', emoji: '😄', type: 'success', color: 'var(--color-success)' },
   { value: 'neutral', label: '平淡', emoji: '😐', type: 'info', color: 'var(--color-text-muted)' },
   { value: 'sad', label: '难过', emoji: '😭', type: 'info', color: 'var(--color-text-secondary)' },
-  { value: 'energetic', label: '充满活力', emoji: '💪', type: 'warning', color: 'var(--color-warning)' },
+  {
+    value: 'energetic',
+    label: '充满活力',
+    emoji: '💪',
+    type: 'warning',
+    color: 'var(--color-warning)',
+  },
   { value: 'tired', label: '疲惫', emoji: '😫', type: 'danger', color: 'var(--color-danger)' },
 ]
 
@@ -233,9 +240,9 @@ const formatTime = (timeStr: string) => {
 const formatContent = (content: string) => {
   if (!content) return ''
   try {
-    return marked.parse(content) as string
+    return sanitizeHtml(String(marked.parse(content)))
   } catch (e) {
-    return content
+    return sanitizeHtml(content)
   }
 }
 

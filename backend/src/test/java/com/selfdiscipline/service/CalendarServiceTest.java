@@ -94,6 +94,24 @@ class CalendarServiceTest {
         assertFalse(data.containsKey("2026-09-10"));
     }
 
+    @Test
+    void incompleteTasksDoNotCountTowardHeat() {
+        when(checkInRepository.findByUserIdOrderByCheckInDateDesc("u1")).thenReturn(List.of());
+        when(pomodoroRepository.findByUserIdOrderByStartTimeDesc("u1")).thenReturn(List.of());
+        when(wordRepository.findByUserIdOrderByCreateTimeDesc("u1")).thenReturn(List.of());
+
+        Task open = new Task();
+        open.setDueDate(today.atTime(18, 0));
+        open.setStatus("todo");
+        Task done = new Task();
+        done.setDueDate(today.atTime(19, 0));
+        done.setStatus("done");
+        when(taskRepository.findByOwnerUserId("u1")).thenReturn(List.of(open, done));
+
+        Map<String, Integer> day = calendarService.getCalendarData("alice", today, today).get("2026-09-20");
+        assertEquals(1, day.get("task"));
+    }
+
     private void stubSources(LocalDate inRange, LocalDate outOfRange) {
         CheckIn todayCheck = new CheckIn();
         todayCheck.setCheckInDate(inRange);
@@ -117,8 +135,10 @@ class CalendarServiceTest {
 
         Task todayTask = new Task();
         todayTask.setDueDate(inRange.atTime(18, 0));
+        todayTask.setStatus("done");
         Task oldTask = new Task();
         oldTask.setDueDate(outOfRange.atTime(18, 0));
+        oldTask.setStatus("done");
         when(taskRepository.findByOwnerUserId("u1")).thenReturn(List.of(todayTask, oldTask));
     }
 

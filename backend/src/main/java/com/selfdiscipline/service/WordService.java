@@ -8,6 +8,7 @@ import com.selfdiscipline.model.User;
 import com.selfdiscipline.model.Word;
 import com.selfdiscipline.repository.UserRepository;
 import com.selfdiscipline.repository.WordRepository;
+import com.selfdiscipline.util.RemoteUrlGuard;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
@@ -245,18 +246,26 @@ public class WordService {
     }
 
     private String fetchText(String url) {
-        if (url == null || url.isBlank()) return null;
+        URI uri = RemoteUrlGuard.assertSafeHttpUrl(url);
         try {
-            HttpClient client = HttpClient.newHttpClient();
+            HttpClient client = HttpClient.newBuilder()
+                    .followRedirects(HttpClient.Redirect.NEVER)
+                    .build();
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
+                    .uri(uri)
                     .GET()
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+            int status = response.statusCode();
+            if (status >= 300 && status < 400) {
+                throw ApiException.badRequest("不允许跟随重定向");
+            }
+            if (status >= 200 && status < 300) {
                 return response.body();
             }
-            throw ApiException.badRequest("下载失败，HTTP " + response.statusCode());
+            throw ApiException.badRequest("下载失败，HTTP " + status);
+        } catch (ApiException e) {
+            throw e;
         } catch (Exception e) {
             throw ApiException.badRequest("下载词库失败: " + e.getMessage());
         }

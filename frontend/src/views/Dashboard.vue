@@ -167,7 +167,11 @@
                 <span class="task-title">每日打卡</span>
                 <span class="task-desc">记录今天的成长足迹</span>
               </div>
-              <el-tag v-if="todayTasks.hasCheckedIn || rhythm.hasCheckedIn" type="success" size="small" effect="dark"
+              <el-tag
+                v-if="todayTasks.hasCheckedIn || rhythm.hasCheckedIn"
+                type="success"
+                size="small"
+                effect="dark"
                 >已完成</el-tag
               >
               <el-tag v-else size="small" type="info">未完成</el-tag>
@@ -329,6 +333,8 @@ const formatDurationMinutes = (duration: unknown) => {
 const goRhythm = () => {
   router.push(rhythm.value.ctaPath || '/calendar')
 }
+
+defineExpose({ formatDurationMinutes })
 </script>
 
 <style scoped lang="less">
@@ -661,7 +667,6 @@ const goRhythm = () => {
 }
 
 @media (max-width: 768px) {
-
   .kpi-row,
   .chart-row,
   .list-row {

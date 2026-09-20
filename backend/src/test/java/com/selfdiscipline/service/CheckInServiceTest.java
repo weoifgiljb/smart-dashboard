@@ -78,6 +78,25 @@ class CheckInServiceTest {
     }
 
     @Test
+    void consecutiveDaysCountsFromYesterdayWhenTodayMissing() {
+        when(checkInRepository.findByUserIdOrderByCheckInDateDesc("u1")).thenReturn(List.of(
+                checkIn(LocalDate.now().minusDays(1)),
+                checkIn(LocalDate.now().minusDays(2))
+        ));
+
+        assertEquals(2, checkInService.getConsecutiveDays("u1"));
+    }
+
+    @Test
+    void consecutiveDaysIsZeroWhenYesterdayAlsoMissing() {
+        when(checkInRepository.findByUserIdOrderByCheckInDateDesc("u1")).thenReturn(List.of(
+                checkIn(LocalDate.now().minusDays(3))
+        ));
+
+        assertEquals(0, checkInService.getConsecutiveDays("u1"));
+    }
+
+    @Test
     void consecutiveDaysStopsAtGap() {
         when(checkInRepository.findByUserIdOrderByCheckInDateDesc("u1")).thenReturn(List.of(
                 checkIn(LocalDate.now()),

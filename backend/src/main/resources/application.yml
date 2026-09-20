@@ -8,7 +8,7 @@ spring:
       database: ${MONGODB_DATABASE:self_discipline}
 
 jwt:
-  secret: ${JWT_SECRET:change-me-in-production-use-at-least-32-chars!!}
+  secret: ${JWT_SECRET:}
   expiration: ${JWT_EXPIRATION:86400000}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 

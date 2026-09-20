@@ -98,7 +98,7 @@ public class CalendarService {
                             .put("word", result.get(dateKey).getOrDefault("word", 0) + 1);
                 });
 
-        // 任务数据（按 dueDate 优先，其次 startDate）
+        // 任务数据（按 dueDate 优先，其次 startDate）；热力只计已完成
         List<Task> tasks = taskRepository.findByOwnerUserId(userId);
         tasks.stream()
                 .map(t -> {
@@ -107,6 +107,7 @@ public class CalendarService {
                 })
                 .filter(arr -> arr[1] != null)
                 .filter(arr -> within((LocalDate) arr[1], startInclusive, endInclusive))
+                .filter(arr -> "done".equalsIgnoreCase(((Task) arr[0]).getStatus()))
                 .forEach(arr -> {
                     LocalDate d = (LocalDate) arr[1];
                     String dateKey = d.format(DAY_KEY);

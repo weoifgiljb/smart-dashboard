@@ -3,6 +3,7 @@ package com.selfdiscipline.controller;
 import com.selfdiscipline.dto.BookImportRequest;
 import com.selfdiscipline.dto.MessageResponse;
 import com.selfdiscipline.service.BookImportService;
+import com.selfdiscipline.util.RemoteUrlGuard;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,6 +23,7 @@ public class BookImportController {
 
     @PostMapping
     public ResponseEntity<MessageResponse> importBooks(@Valid @RequestBody BookImportRequest request) {
+        RemoteUrlGuard.assertSafeHttpUrl(request.getCsvUrl());
         int limit = request.getLimit() != null ? request.getLimit() : 100;
         bookImportService.importBooksFromUrl(request.getCsvUrl(), limit);
         return ResponseEntity.ok(new MessageResponse("Import started in background..."));

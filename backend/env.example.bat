@@ -1,8 +1,8 @@
 @echo off
 REM 复制本文件为 env.bat，并按需填写你的密钥与参数
 
-REM JWT 密钥（生产环境务必替换为足够长的随机串）
-set "JWT_SECRET=change-me-in-production-use-at-least-32-chars!!"
+REM JWT 密钥（必填，至少 32 字节随机串；勿使用仓库旧占位值）
+set "JWT_SECRET=replace-this-with-a-random-32-byte-secret!!"
 
 REM 可选：阿里云通义千问
 set "ALIYUN_AI_API_KEY="

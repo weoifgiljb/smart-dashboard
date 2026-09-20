@@ -2,10 +2,13 @@ package com.selfdiscipline.service;
 
 import com.selfdiscipline.model.Book;
 import com.selfdiscipline.repository.BookRepository;
+import com.selfdiscipline.util.RemoteUrlGuard;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
 
 import java.io.BufferedReader;
 import java.io.StringReader;
@@ -22,7 +25,9 @@ public class BookImportService {
     private final WebClient webClient;
 
     public BookImportService() {
+        HttpClient httpClient = HttpClient.create().followRedirect(false);
         this.webClient = WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(50 * 1024 * 1024))
                 .build();
     }
@@ -30,6 +35,7 @@ public class BookImportService {
     @Async
     public void importBooksFromUrl(String csvUrl, int limit) {
         try {
+            RemoteUrlGuard.assertSafeHttpUrl(csvUrl);
             System.out.println("Starting import from: " + csvUrl);
             String csvContent = webClient.get()
                     .uri(csvUrl)

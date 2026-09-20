@@ -48,15 +48,18 @@ public class ImageService {
     private ImageRateLimiter imageRateLimiter;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public Book generateBookCover(String bookId) {
-        return generateBookCover(bookId, false);
+    public Book generateBookCover(String username, String bookId) {
+        return generateBookCover(username, bookId, false);
     }
 
-    public Book generateBookCover(String bookId, boolean force) {
-        imageRateLimiter.consumeOrThrow("book:" + bookId);
+    public Book generateBookCover(String username, String bookId, boolean force) {
+        if (username == null || username.isBlank()) {
+            throw ApiException.unauthorized("未登录");
+        }
+        imageRateLimiter.consumeOrThrow("user:" + username);
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> ApiException.notFound("书籍不存在"));
-        if (!force && book.getCover() != null && !book.getCover().isBlank()) {
+        if (hasRealCover(book)) {
             return book;
         }
         String prompt = PromptTemplates.buildBookCoverPrompt(book);
@@ -115,6 +118,14 @@ public class ImageService {
         }
         word.setImage(image);
         return wordRepository.save(word);
+    }
+
+    private static boolean hasRealCover(Book book) {
+        String cover = book.getCover();
+        if (cover == null || cover.isBlank()) {
+            return false;
+        }
+        return !"/no-cover.svg".equals(cover);
     }
 
     private String generateImage(String prompt) {

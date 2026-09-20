@@ -44,8 +44,9 @@ public class AIController {
 
     @PostMapping("/image/book/{bookId}")
     public ResponseEntity<Book> generateBookCover(@PathVariable String bookId,
-                                                  @RequestParam(value = "force", required = false, defaultValue = "false") boolean force) {
-        return ResponseEntity.ok(imageService.generateBookCover(bookId, force));
+                                                  @RequestParam(value = "force", required = false, defaultValue = "false") boolean force,
+                                                  Authentication authentication) {
+        return ResponseEntity.ok(imageService.generateBookCover(authentication.getName(), bookId, force));
     }
 
     @PostMapping("/image/word/{wordId}")

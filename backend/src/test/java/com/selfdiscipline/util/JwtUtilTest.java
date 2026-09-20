@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JwtUtilTest {
@@ -40,5 +41,18 @@ class JwtUtilTest {
     void invalidTokenFailsValidation() {
         assertFalse(jwtUtil.validateToken("not-a-jwt"));
         assertFalse(jwtUtil.validateAccessToken("not-a-jwt"));
+    }
+
+    @Test
+    void shortOrPlaceholderSecretIsRejected() {
+        JwtConfig shortSecret = new JwtConfig();
+        shortSecret.setSecret("too-short");
+        shortSecret.setExpiration(3600000L);
+        assertThrows(IllegalStateException.class, () -> new JwtUtil(shortSecret));
+
+        JwtConfig placeholder = new JwtConfig();
+        placeholder.setSecret(JwtConfig.INSECURE_PLACEHOLDER);
+        placeholder.setExpiration(3600000L);
+        assertThrows(IllegalStateException.class, () -> new JwtUtil(placeholder));
     }
 }

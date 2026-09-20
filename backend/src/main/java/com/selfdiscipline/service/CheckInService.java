@@ -85,18 +85,7 @@ public class CheckInService {
         int totalDays = checkIns.size();
 
         // 优化连续打卡天数计算逻辑
-        int consecutiveDays = 0;
-        LocalDate expectedDate = today;
-        for (CheckIn checkIn : checkIns) {
-            if (checkIn.getCheckInDate().equals(expectedDate)) {
-                consecutiveDays++;
-                expectedDate = expectedDate.minusDays(1);
-            } else if (checkIn.getCheckInDate().isBefore(expectedDate)) {
-                // 如果打卡日期早于期望日期，说明中间有断档，停止计算
-                break;
-            }
-            // 如果打卡日期晚于期望日期，跳过（可能是数据异常）
-        }
+        int consecutiveDays = countConsecutiveDays(checkIns, today);
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("hasCheckedInToday", hasCheckedInToday);
@@ -114,19 +103,7 @@ public class CheckInService {
 
     public int getConsecutiveDays(String userId) {
         List<CheckIn> checkIns = checkInRepository.findByUserIdOrderByCheckInDateDesc(userId);
-        int consecutiveDays = 0;
-        LocalDate expectedDate = LocalDate.now();
-        for (CheckIn checkIn : checkIns) {
-            if (checkIn.getCheckInDate().equals(expectedDate)) {
-                consecutiveDays++;
-                expectedDate = expectedDate.minusDays(1);
-            } else if (checkIn.getCheckInDate().isBefore(expectedDate)) {
-                // 如果打卡日期早于期望日期，说明中间有断档，停止计算
-                break;
-            }
-            // 如果打卡日期晚于期望日期，跳过（可能是数据异常）
-        }
-        return consecutiveDays;
+        return countConsecutiveDays(checkIns, LocalDate.now());
     }
 
     public int getTotalDays(String userId) {
@@ -140,6 +117,30 @@ public class CheckInService {
         int start = page * size;
         int end = Math.min(start + size, checkIns.size());
         return checkIns.subList(Math.min(start, checkIns.size()), end);
+    }
+
+    static int countConsecutiveDays(List<CheckIn> checkIns, LocalDate today) {
+        if (checkIns == null || checkIns.isEmpty() || today == null) {
+            return 0;
+        }
+        boolean checkedInToday = checkIns.stream()
+                .map(CheckIn::getCheckInDate)
+                .anyMatch(today::equals);
+        LocalDate expectedDate = checkedInToday ? today : today.minusDays(1);
+        int consecutiveDays = 0;
+        for (CheckIn checkIn : checkIns) {
+            LocalDate date = checkIn.getCheckInDate();
+            if (date == null) {
+                continue;
+            }
+            if (date.equals(expectedDate)) {
+                consecutiveDays++;
+                expectedDate = expectedDate.minusDays(1);
+            } else if (date.isBefore(expectedDate)) {
+                break;
+            }
+        }
+        return consecutiveDays;
     }
     
     /**
