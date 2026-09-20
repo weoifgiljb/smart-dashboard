@@ -31,9 +31,9 @@
     </div>
 
     <!-- KPI Cards -->
-    <el-row :gutter="20" class="kpi-row">
-      <el-col :span="6">
-        <el-card shadow="hover" class="kpi-card">
+    <el-row :gutter="16" class="kpi-row">
+      <el-col :xs="24" :sm="12" :lg="6">
+        <el-card shadow="never" class="kpi-card">
           <div class="kpi-body">
             <div class="kpi-icon icon-streak">
               <el-icon><Trophy /></el-icon>
@@ -45,8 +45,8 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover" class="kpi-card">
+      <el-col :xs="24" :sm="12" :lg="6">
+        <el-card shadow="never" class="kpi-card">
           <div class="kpi-body">
             <div class="kpi-icon icon-words">
               <el-icon><Reading /></el-icon>
@@ -58,8 +58,8 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover" class="kpi-card">
+      <el-col :xs="24" :sm="12" :lg="6">
+        <el-card shadow="never" class="kpi-card">
           <div class="kpi-body">
             <div class="kpi-icon icon-pomodoro">
               <el-icon><Timer /></el-icon>
@@ -71,8 +71,8 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover" class="kpi-card">
+      <el-col :xs="24" :sm="12" :lg="6">
+        <el-card shadow="never" class="kpi-card">
           <div class="kpi-body">
             <div class="kpi-icon icon-total">
               <el-icon><DataLine /></el-icon>
@@ -87,9 +87,9 @@
     </el-row>
 
     <!-- Charts Row -->
-    <el-row :gutter="20" style="margin-top: 20px">
-      <el-col :span="8">
-        <el-card class="chart-card">
+    <el-row :gutter="20" class="chart-row">
+      <el-col :xs="24" :lg="8">
+        <el-card shadow="never" class="chart-card">
           <template #header>
             <div class="card-header">
               <span>近30天热力值</span>
@@ -99,8 +99,8 @@
           <BaseChart :option="heatValueOption" height="200px" />
         </el-card>
       </el-col>
-      <el-col :span="8">
-        <el-card class="chart-card">
+      <el-col :xs="24" :lg="8">
+        <el-card shadow="never" class="chart-card">
           <template #header>
             <div class="card-header">
               <span>番茄专注</span>
@@ -114,8 +114,8 @@
           />
         </el-card>
       </el-col>
-      <el-col :span="8">
-        <el-card class="chart-card">
+      <el-col :xs="24" :lg="8">
+        <el-card shadow="never" class="chart-card">
           <template #header>
             <div class="card-header">
               <span>单词积累</span>
@@ -132,9 +132,9 @@
     </el-row>
 
     <!-- Bottom Row: Today Tasks & Recent Activity -->
-    <el-row :gutter="20" style="margin-top: 20px">
-      <el-col :span="12">
-        <el-card class="list-card">
+    <el-row :gutter="20" class="list-row">
+      <el-col :xs="24" :lg="12">
+        <el-card shadow="never" class="list-card">
           <template #header>
             <div class="card-header">
               <span>今日任务</span>
@@ -182,8 +182,8 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :span="12">
-        <el-card class="list-card">
+      <el-col :xs="24" :lg="12">
+        <el-card shadow="never" class="list-card">
           <template #header>
             <div class="card-header">
               <span>最近活动</span>
@@ -230,7 +230,7 @@
       <el-table v-else :data="dialogData" style="width: 100%" stripe>
         <el-table-column prop="word" label="单词" width="180">
           <template #default="{ row }">
-            <span style="font-weight: bold; color: var(--primary)">{{ row.word }}</span>
+            <span style="font-weight: bold; color: var(--color-primary)">{{ row.word }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="meaning" label="释义" />
@@ -269,34 +269,32 @@ const {
 } = useDashboard()
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .dashboard {
-  padding: 24px;
   max-width: 1200px;
   margin: 0 auto;
 }
 
-/* Welcome Section */
 .welcome-section {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
   margin-bottom: 32px;
   padding-bottom: 24px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--color-bg-muted);
 }
 
 .welcome-text h2 {
   font-size: 28px;
   font-weight: 700;
-  color: var(--app-text);
-  margin: 0 0 8px 0;
+  color: var(--color-text);
+  margin: 0 0 8px;
   letter-spacing: -0.5px;
 }
 
 .subtitle {
   margin: 0;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   font-size: 14px;
 }
 
@@ -308,115 +306,112 @@ const {
 
 .action-btn {
   font-weight: 600;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  transition: transform 0.2s;
 }
 
-.action-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-/* KPI Cards */
 .kpi-row {
-  margin-bottom: 24px;
+  margin-bottom: 8px;
 }
 
-.kpi-card {
+.chart-row,
+.list-row {
+  margin-top: 20px;
+}
+
+.kpi-card,
+.chart-card,
+.list-card {
   border: none;
-  background: var(--card-bg);
-  border-radius: var(--radius-md);
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
+}
+
+.kpi-card :deep(.el-card__body) {
+  padding: 16px 20px;
 }
 
 .kpi-body {
   display: flex;
   align-items: center;
-  padding: 16px 8px;
+  gap: 16px;
 }
 
 .kpi-icon {
   width: 48px;
   height: 48px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 16px;
   font-size: 24px;
   flex-shrink: 0;
 }
 
 .icon-streak {
-  background: #fff1f2;
-  color: #e11d48;
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
 }
 
 .icon-words {
-  background: #eff6ff;
-  color: #2563eb;
+  background: var(--color-info-soft);
+  color: var(--color-info);
 }
 
 .icon-pomodoro {
-  background: #fff7ed;
-  color: #ea580c;
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
 }
 
 .icon-total {
-  background: #f0fdf4;
-  color: #16a34a;
+  background: var(--color-success-soft);
+  color: var(--color-success);
 }
 
 .stat-value {
   font-size: 28px;
   font-weight: 800;
-  color: var(--app-text);
+  color: var(--color-text);
   line-height: 1.2;
 }
 
 .unit {
   font-size: 12px;
-  font-weight: normal;
-  color: var(--text-light);
+  font-weight: 400;
+  color: var(--color-text-muted);
   margin-left: 2px;
 }
 
 .stat-label {
   font-size: 13px;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   margin-top: 4px;
-}
-
-/* Charts */
-.chart-card {
-  border: none;
-  border-radius: var(--radius-md);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-weight: 600;
+  color: var(--color-text);
 }
 
-/* Lists */
 .list-card {
-  border: none;
-  border-radius: var(--radius-md);
   height: 100%;
 }
 
 .tasks-list,
 .activities-list {
-  padding: 8px 0;
+  padding: 4px 0;
 }
 
 .task-item {
   display: flex;
   align-items: center;
   padding: 16px 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--color-bg-muted);
 }
 
 .task-item:last-child {
@@ -426,13 +421,13 @@ const {
 .task-icon-wrapper {
   width: 40px;
   height: 40px;
-  border-radius: 10px;
-  background: var(--app-bg);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 16px;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
 }
 
 .task-info {
@@ -443,13 +438,13 @@ const {
   display: block;
   font-size: 15px;
   font-weight: 500;
-  color: var(--app-text);
+  color: var(--color-text);
   margin-bottom: 4px;
 }
 
 .task-desc {
   font-size: 12px;
-  color: var(--text-light);
+  color: var(--color-text-muted);
 }
 
 .task-item.completed {
@@ -460,7 +455,7 @@ const {
   display: flex;
   align-items: flex-start;
   padding: 12px 0;
-  border-bottom: 1px dashed var(--el-border-color-lighter);
+  border-bottom: 1px dashed var(--color-border);
 }
 
 .activity-item:last-child {
@@ -480,18 +475,18 @@ const {
 }
 
 .activity-icon.checkin {
-  background-color: var(--success-light);
-  color: var(--success);
+  background-color: var(--color-success-soft);
+  color: var(--color-success);
 }
 
 .activity-icon.pomodoro {
-  background-color: var(--warning-light);
-  color: var(--warning);
+  background-color: var(--color-warning-soft);
+  color: var(--color-warning);
 }
 
 .activity-icon.word {
-  background-color: var(--info-light);
-  color: var(--info);
+  background-color: var(--color-info-soft);
+  color: var(--color-info);
 }
 
 .activity-content {
@@ -500,13 +495,13 @@ const {
 
 .activity-title {
   font-size: 14px;
-  color: var(--app-text);
+  color: var(--color-text);
   margin-bottom: 4px;
 }
 
 .activity-time {
   font-size: 12px;
-  color: var(--text-light);
+  color: var(--color-text-muted);
 }
 
 @media (max-width: 768px) {
@@ -521,9 +516,12 @@ const {
     flex-wrap: wrap;
   }
 
-  .el-col {
-    width: 100% !important;
-    margin-bottom: 16px;
+  .kpi-row,
+  .chart-row,
+  .list-row {
+    :deep(.el-col) {
+      margin-bottom: 16px;
+    }
   }
 }
 </style>

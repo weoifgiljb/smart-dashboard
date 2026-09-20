@@ -1,99 +1,80 @@
 <template>
-  <div class="pomodoro-page" :class="timerType">
-    <el-card class="timer-card" :class="{ 'is-running': isRunning }">
-      <template #header>
-        <div class="card-header">
-          <h3>番茄专注</h3>
-          <div class="timer-type-switch">
-            <el-radio-group v-model="timerType" size="small">
-              <el-radio-button label="work">专注</el-radio-button>
-              <el-radio-button label="break">休息</el-radio-button>
-            </el-radio-group>
-          </div>
+  <div class="pomodoro-page">
+    <section class="timer-card" :class="{ 'is-running': isRunning }">
+      <div class="card-header">
+        <h3>番茄专注</h3>
+        <div class="mode-switch">
+          <button
+            type="button"
+            class="mode-btn"
+            :class="{ active: timerType === 'work' }"
+            @click="timerType = 'work'"
+          >
+            专注
+          </button>
+          <button
+            type="button"
+            class="mode-btn"
+            :class="{ active: timerType === 'break' }"
+            @click="timerType = 'break'"
+          >
+            休息
+          </button>
         </div>
-      </template>
-      <div class="pomodoro-content">
-        <div class="timer-wrapper">
-          <div class="progress-container">
-            <svg class="progress-svg" viewBox="0 0 120 120">
-              <defs>
-                <linearGradient id="gradient-work" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#3b82f6" />
-                  <stop offset="100%" stop-color="#2563eb" />
-                </linearGradient>
-                <linearGradient id="gradient-break" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#10b981" />
-                  <stop offset="100%" stop-color="#059669" />
-                </linearGradient>
-              </defs>
-              <circle class="progress-bg" cx="60" cy="60" r="54" />
-              <circle
-                class="progress-bar"
-                cx="60"
-                cy="60"
-                r="54"
-                :stroke-dasharray="circumference"
-                :stroke-dashoffset="dashOffset"
-                :stroke="timerType === 'work' ? 'url(#gradient-work)' : 'url(#gradient-break)'"
-              />
-            </svg>
-            <div class="time-display" :class="timerType">
-              {{ formatTime(timeLeft) }}
-            </div>
-          </div>
+      </div>
 
-          <div class="timer-controls">
-            <el-button
-              type="primary"
-              circle
-              size="large"
-              class="control-btn play-btn"
-              :disabled="isRunning"
-              @click="startTimer"
-            >
-              <el-icon size="24"><VideoPlay /></el-icon>
-            </el-button>
-            <el-button
-              type="warning"
-              circle
-              size="large"
-              class="control-btn"
-              :disabled="!isRunning"
-              @click="pauseTimer"
-            >
-              <el-icon size="24"><VideoPause /></el-icon>
-            </el-button>
-            <el-button info circle size="large" class="control-btn" @click="resetTimer">
-              <el-icon size="24"><Refresh /></el-icon>
-            </el-button>
-          </div>
+      <div class="progress-container">
+        <svg class="progress-svg" viewBox="0 0 288 288">
+          <circle class="progress-bg" cx="144" cy="144" r="136" />
+          <circle
+            class="progress-bar"
+            cx="144"
+            cy="144"
+            r="136"
+            :stroke-dasharray="circumference"
+            :stroke-dashoffset="dashOffset"
+          />
+        </svg>
+        <div class="time-display">{{ formatTime(timeLeft) }}</div>
+      </div>
 
-          <div v-if="!isRunning" class="timer-config">
-            <div class="config-item">
-              <span class="label">专注</span>
-              <el-input-number
-                v-model="workMinutes"
-                :min="1"
-                :max="120"
-                size="small"
-                controls-position="right"
-              />
-            </div>
-            <div class="config-item">
-              <span class="label">休息</span>
-              <el-input-number
-                v-model="breakMinutes"
-                :min="1"
-                :max="60"
-                size="small"
-                controls-position="right"
-              />
-            </div>
-          </div>
+      <div class="timer-controls">
+        <button type="button" class="ctrl-btn" aria-label="重置" @click="resetTimer">
+          <el-icon :size="22"><Refresh /></el-icon>
+        </button>
+        <button
+          type="button"
+          class="ctrl-btn play"
+          aria-label="开始"
+          :disabled="isRunning"
+          @click="startTimer"
+        >
+          <el-icon :size="32"><VideoPlay /></el-icon>
+        </button>
+        <button
+          type="button"
+          class="ctrl-btn"
+          aria-label="暂停"
+          :disabled="!isRunning"
+          @click="pauseTimer"
+        >
+          <el-icon :size="22"><VideoPause /></el-icon>
+        </button>
+      </div>
+
+      <div v-if="!isRunning" class="timer-config">
+        <div class="config-item">
+          <span class="label">专注时长</span>
+          <el-input-number v-model="workMinutes" :min="1" :max="120" controls-position="right" />
         </div>
+        <div class="config-item">
+          <span class="label">休息时长</span>
+          <el-input-number v-model="breakMinutes" :min="1" :max="60" controls-position="right" />
+        </div>
+      </div>
 
-        <el-divider content-position="center">今日成就</el-divider>
-
+      <div class="stats-block">
+        <div class="stats-caption">今日成就</div>
         <div class="stats-row">
           <div class="stat-box">
             <div class="stat-num">{{ todayCount }}</div>
@@ -105,16 +86,25 @@
           </div>
         </div>
       </div>
-    </el-card>
+    </section>
 
     <div class="charts-row">
-      <el-card class="chart-card">
-        <template #header>近7天分布</template>
-        <BaseChart :option="weeklyOption" height="200px" />
+      <el-card shadow="never" class="chart-card">
+        <template #header>
+          <div class="chart-header">
+            <span>近7天分布</span>
+            <span class="chart-tag">分析</span>
+          </div>
+        </template>
+        <BaseChart :option="weeklyOption" height="192px" />
       </el-card>
-      <el-card class="chart-card">
-        <template #header>时长波动</template>
-        <BaseChart :option="fluctuationOption" height="200px" />
+      <el-card shadow="never" class="chart-card">
+        <template #header>
+          <div class="chart-header">
+            <span>时长波动</span>
+          </div>
+        </template>
+        <BaseChart :option="fluctuationOption" height="192px" />
       </el-card>
     </div>
   </div>
@@ -126,6 +116,7 @@ import { ElMessage } from 'element-plus'
 import { VideoPlay, VideoPause, Refresh } from '@element-plus/icons-vue'
 import { startPomodoro, getPomodoroStats, getPomodoroHistory } from '@/api/pomodoro'
 import BaseChart from '@/components/charts/BaseChart.vue'
+import { chartPalette } from '@/utils/themeTokens'
 
 const workMinutes = ref(25)
 const breakMinutes = ref(5)
@@ -146,7 +137,7 @@ const progress = computed(() => {
   if (totalSeconds.value <= 0) return 0
   return 1 - timeLeft.value / totalSeconds.value
 })
-const radius = 54
+const radius = 136
 const circumference = 2 * Math.PI * radius
 const dashOffset = computed(() => circumference * (1 - progress.value))
 
@@ -236,14 +227,15 @@ const loadWeekly = async () => {
     })
     const workVals = days.map((d) => workMap.get(key(d)) || 0)
     const breakVals = days.map((d) => breakMap.get(key(d)) || 0)
+    const palette = chartPalette()
     weeklyOption.value = {
-      grid: { left: 10, right: 10, top: 10, bottom: 20, containLabel: false },
+      grid: { left: 12, right: 12, top: 16, bottom: 28, containLabel: true },
       xAxis: {
         type: 'category',
         data: labels,
         axisTick: { show: false },
         axisLine: { show: false },
-        axisLabel: { show: true, fontSize: 10, color: '#9ca3af' },
+        axisLabel: { show: true, fontSize: 10, color: palette.text },
       },
       yAxis: {
         type: 'value',
@@ -252,23 +244,29 @@ const loadWeekly = async () => {
         axisTick: { show: false },
         axisLabel: { show: false },
       },
-      legend: { data: ['工作', '休息'], bottom: 0 },
+      legend: {
+        data: ['工作', '休息'],
+        bottom: 0,
+        textStyle: { color: palette.text, fontSize: 11 },
+        itemWidth: 10,
+        itemHeight: 8,
+      },
       series: [
         {
           name: '工作',
           type: 'bar',
           stack: 'total',
           data: workVals,
-          itemStyle: { color: '#3b82f6' },
-          barWidth: '40%',
+          itemStyle: { color: palette.primary, borderRadius: [6, 6, 0, 0] },
+          barWidth: '42%',
         },
         {
           name: '休息',
           type: 'bar',
           stack: 'total',
           data: breakVals,
-          itemStyle: { color: '#10b981' },
-          barWidth: '40%',
+          itemStyle: { color: palette.primary, opacity: 0.35 },
+          barWidth: '42%',
         },
       ],
       tooltip: { trigger: 'axis' },
@@ -293,8 +291,9 @@ const loadFluctuation = async () => {
         breakPoints.push(point)
       }
     })
+    const palette = chartPalette()
     fluctuationOption.value = {
-      grid: { left: 10, right: 10, top: 10, bottom: 20, containLabel: false },
+      grid: { left: 12, right: 12, top: 16, bottom: 28, containLabel: true },
       xAxis: {
         type: 'time',
         axisLine: { show: false },
@@ -303,16 +302,19 @@ const loadFluctuation = async () => {
       },
       yAxis: {
         type: 'value',
-        name: '分钟',
-        splitLine: { show: true, lineStyle: { type: 'dashed' } },
+        splitLine: { show: true, lineStyle: { type: 'dashed', color: palette.border } },
         axisLine: { show: false },
         axisTick: { show: false },
         axisLabel: { show: false },
       },
-      legend: { data: ['工作', '休息'], bottom: 0 },
-      tooltip: {
-        trigger: 'axis',
+      legend: {
+        data: ['工作', '休息'],
+        bottom: 0,
+        textStyle: { color: palette.text, fontSize: 11 },
+        itemWidth: 10,
+        itemHeight: 8,
       },
+      tooltip: { trigger: 'axis' },
       series: [
         {
           name: '工作',
@@ -320,8 +322,9 @@ const loadFluctuation = async () => {
           smooth: true,
           showSymbol: false,
           data: workPoints,
-          itemStyle: { color: '#3b82f6' },
-          areaStyle: { color: 'rgba(59, 130, 246, 0.1)' },
+          itemStyle: { color: palette.primary },
+          lineStyle: { color: palette.primary, width: 2 },
+          areaStyle: { color: palette.primary, opacity: 0.08 },
         },
         {
           name: '休息',
@@ -329,8 +332,9 @@ const loadFluctuation = async () => {
           smooth: true,
           showSymbol: false,
           data: breakPoints,
-          itemStyle: { color: '#10b981' },
-          areaStyle: { color: 'rgba(16, 185, 129, 0.1)' },
+          itemStyle: { color: palette.secondary },
+          lineStyle: { color: palette.secondary, width: 2 },
+          areaStyle: { color: palette.secondary, opacity: 0.08 },
         },
       ],
     }
@@ -379,51 +383,67 @@ const finishTimer = async () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .pomodoro-page {
   max-width: 800px;
   margin: 0 auto;
-  padding: 24px;
 }
 
 .timer-card {
-  text-align: center;
-  transition: all 0.5s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px;
+  background: var(--color-bg-elevated);
   border-radius: var(--radius-lg);
-  border: none;
-  box-shadow: var(--shadow-md);
-}
-
-.pomodoro-page.work .timer-card {
-  background: linear-gradient(to bottom right, #ffffff, #eff6ff);
-}
-
-.pomodoro-page.break .timer-card {
-  background: linear-gradient(to bottom right, #ffffff, #f0fdf4);
+  box-shadow: var(--shadow-sm);
 }
 
 .card-header {
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 40px;
 }
 
 .card-header h3 {
   margin: 0;
   font-size: 18px;
-  font-weight: 600;
-  color: var(--app-text);
+  font-weight: 700;
+  color: var(--color-text);
 }
 
-.timer-wrapper {
-  padding: 40px 0;
+.mode-switch {
+  display: flex;
+  padding: 4px;
+  background: var(--color-bg-muted);
+  border-radius: 12px;
+}
+
+.mode-btn {
+  border: 0;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 6px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.mode-btn.active {
+  background: var(--color-bg-elevated);
+  color: var(--color-primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
 }
 
 .progress-container {
   position: relative;
-  width: 280px;
-  height: 280px;
-  margin: 0 auto 32px;
+  width: 288px;
+  height: 288px;
+  margin-bottom: 32px;
 }
 
 .progress-svg {
@@ -434,12 +454,13 @@ const finishTimer = async () => {
 
 .progress-bg {
   fill: none;
-  stroke: var(--el-border-color-lighter);
+  stroke: var(--color-bg-muted);
   stroke-width: 8;
 }
 
 .progress-bar {
   fill: none;
+  stroke: var(--color-primary);
   stroke-width: 8;
   stroke-linecap: round;
   transition: stroke-dashoffset 1s linear;
@@ -451,98 +472,173 @@ const finishTimer = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 64px;
+  font-size: 60px;
   font-weight: 700;
-  font-feature-settings: 'tnum';
-  font-variant-numeric: tabular-nums;
   letter-spacing: -2px;
-}
-
-.time-display.work {
-  color: var(--secondary);
-}
-.time-display.break {
-  color: var(--primary);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
 }
 
 .timer-controls {
   display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 24px;
-  margin-bottom: 32px;
+  gap: 32px;
+  margin-bottom: 40px;
 }
 
-.control-btn {
-  width: 64px;
-  height: 64px;
-  font-size: 24px;
-  box-shadow: var(--shadow-md);
-  transition: transform 0.2s;
+.ctrl-btn {
+  width: 56px;
+  height: 56px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-bg-muted);
+  color: var(--color-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
-.control-btn:hover {
-  transform: scale(1.1);
+.ctrl-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ctrl-btn.play {
+  width: 80px;
+  height: 80px;
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.ctrl-btn.play:disabled {
+  opacity: 0.55;
 }
 
 .timer-config {
-  display: flex;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 32px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.5);
+  width: 100%;
+  max-width: 380px;
+  padding: 16px 24px;
+  background: color-mix(in srgb, var(--color-bg-muted) 70%, transparent);
   border-radius: var(--radius-md);
-  width: fit-content;
-  margin: 0 auto;
 }
 
 .config-item {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
 }
 
 .config-item .label {
-  font-size: 14px;
-  color: var(--text-secondary);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.config-item :deep(.el-input-number) {
+  width: 100%;
+}
+
+.config-item :deep(.el-input-number .el-input__wrapper) {
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 0 1px var(--color-border) inset;
+}
+
+.stats-block {
+  width: 100%;
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-bg-muted);
+}
+
+.stats-caption {
+  text-align: center;
+  margin-bottom: 24px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
 }
 
 .stats-row {
-  display: flex;
-  justify-content: space-around;
-  padding-top: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
 }
 
 .stat-box {
   text-align: center;
 }
 
+.stat-box:first-child {
+  border-right: 1px solid var(--color-bg-muted);
+}
+
 .stat-num {
-  font-size: 24px;
-  font-weight: bold;
-  color: var(--app-text);
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.2;
 }
 
 .stat-desc {
   font-size: 12px;
-  color: var(--text-light);
+  color: var(--color-text-secondary);
   margin-top: 4px;
 }
 
 .charts-row {
-  display: flex;
-  gap: 20px;
-  margin-top: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 24px;
 }
 
 .chart-card {
-  flex: 1;
-  border-radius: var(--radius-md);
   border: none;
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
 }
 
-@media (max-width: 640px) {
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.chart-tag {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+@media (max-width: 720px) {
+  .timer-card {
+    padding: 24px 16px;
+  }
+
+  .progress-container {
+    width: 240px;
+    height: 240px;
+  }
+
+  .time-display {
+    font-size: 48px;
+  }
+
   .charts-row {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 }
 </style>

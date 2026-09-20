@@ -1,0 +1,77 @@
+:root,
+[data-theme='light'] {
+  --el-color-primary: var(--color-primary);
+  --el-color-primary-light-3: color-mix(in srgb, var(--color-primary) 70%, white);
+  --el-color-primary-light-5: color-mix(in srgb, var(--color-primary) 50%, white);
+  --el-color-primary-light-7: color-mix(in srgb, var(--color-primary) 30%, white);
+  --el-color-primary-light-8: color-mix(in srgb, var(--color-primary) 20%, white);
+  --el-color-primary-light-9: color-mix(in srgb, var(--color-primary) 10%, white);
+  --el-color-primary-dark-2: var(--color-primary-hover);
+  --el-color-success: var(--color-success);
+  --el-color-warning: var(--color-warning);
+  --el-color-danger: var(--color-danger);
+  --el-color-error: var(--color-danger);
+  --el-color-info: var(--color-info);
+  --el-bg-color: var(--color-bg-elevated);
+  --el-bg-color-page: var(--color-bg);
+  --el-bg-color-overlay: var(--color-bg-elevated);
+  --el-fill-color: var(--color-bg-muted);
+  --el-fill-color-light: var(--color-bg-muted);
+  --el-fill-color-lighter: var(--color-bg);
+  --el-fill-color-blank: var(--color-bg-elevated);
+  --el-text-color-primary: var(--color-text);
+  --el-text-color-regular: var(--color-text-secondary);
+  --el-text-color-secondary: var(--color-text-muted);
+  --el-text-color-placeholder: var(--color-text-muted);
+  --el-border-color: var(--color-border);
+  --el-border-color-light: var(--color-border);
+  --el-border-color-lighter: var(--color-border);
+  --el-border-color-extra-light: var(--color-bg-muted);
+  --el-border-radius-base: var(--radius-sm);
+  --el-mask-color: rgba(15, 23, 42, 0.45);
+  --el-box-shadow: var(--shadow-md);
+  --el-box-shadow-light: var(--shadow-sm);
+  --el-disabled-bg-color: var(--color-bg-muted);
+  --el-disabled-text-color: var(--color-text-muted);
+  --el-table-header-bg-color: var(--color-bg-muted);
+  --el-table-tr-bg-color: var(--color-bg-elevated);
+  --el-table-row-hover-bg-color: var(--color-bg-muted);
+  --el-fill-color-dark: var(--color-bg-muted);
+  --el-fill-color-extra-light: var(--color-bg);
+}
+
+html.dark,
+html[data-theme='dark'] {
+  color-scheme: dark;
+  --el-color-primary: var(--color-primary);
+  --el-color-primary-light-3: color-mix(in srgb, var(--color-primary) 70%, black);
+  --el-color-primary-light-5: color-mix(in srgb, var(--color-primary) 50%, black);
+  --el-color-primary-light-7: color-mix(in srgb, var(--color-primary) 35%, black);
+  --el-color-primary-light-8: color-mix(in srgb, var(--color-primary) 22%, black);
+  --el-color-primary-light-9: color-mix(in srgb, var(--color-primary) 12%, black);
+  --el-color-primary-dark-2: var(--color-primary-hover);
+  --el-color-success: var(--color-success);
+  --el-color-warning: var(--color-warning);
+  --el-color-danger: var(--color-danger);
+  --el-color-error: var(--color-danger);
+  --el-color-info: var(--color-info);
+  --el-bg-color: var(--color-bg-elevated);
+  --el-bg-color-page: var(--color-bg);
+  --el-bg-color-overlay: var(--color-bg-elevated);
+  --el-fill-color: var(--color-bg-muted);
+  --el-fill-color-light: var(--color-bg-muted);
+  --el-fill-color-lighter: var(--color-bg);
+  --el-fill-color-blank: var(--color-bg-elevated);
+  --el-text-color-primary: var(--color-text);
+  --el-text-color-regular: var(--color-text-secondary);
+  --el-text-color-secondary: var(--color-text-muted);
+  --el-text-color-placeholder: var(--color-text-muted);
+  --el-border-color: var(--color-border);
+  --el-border-color-light: var(--color-border);
+  --el-border-color-lighter: var(--color-border);
+  --el-border-color-extra-light: var(--color-bg-muted);
+  --el-mask-color: rgba(0, 0, 0, 0.6);
+  --el-table-header-bg-color: var(--color-bg-muted);
+  --el-table-tr-bg-color: var(--color-bg-elevated);
+  --el-table-row-hover-bg-color: var(--color-bg-muted);
+}

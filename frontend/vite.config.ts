@@ -40,6 +40,13 @@ export default defineConfig(({ mode }) => {
       //   filename: 'stats.html',
       // }),
     ],
+    css: {
+      preprocessorOptions: {
+        less: {
+          javascriptEnabled: true,
+        },
+      },
+    },
     resolve: {
       alias: {
         '@': resolve(__dirname, 'src'),

@@ -284,7 +284,7 @@ const onImgError = (e: Event) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .books-page {
   min-height: 100vh;
   background: var(--app-bg);
@@ -292,7 +292,7 @@ const onImgError = (e: Event) => {
 
 /* 顶部横幅 */
 .header-banner {
-  background: white;
+  background: var(--color-bg-elevated);
   padding: 40px 20px;
   text-align: center;
   border-bottom: 1px solid var(--border);
@@ -366,7 +366,7 @@ const onImgError = (e: Event) => {
 }
 
 .book-card {
-  background: white;
+  background: var(--color-bg-elevated);
   border-radius: 12px;
   overflow: hidden;
   box-shadow: var(--shadow-sm);
@@ -387,7 +387,7 @@ const onImgError = (e: Event) => {
   position: relative;
   width: 100%;
   padding-top: 140%; /* 2:3 aspect ratio approximately */
-  background: #f1f5f9;
+  background: var(--color-bg-muted);
 }
 
 .cover-image img {
@@ -428,7 +428,7 @@ const onImgError = (e: Event) => {
   cursor: pointer;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   font-size: 18px;
-  color: #cbd5e1;
+  color: var(--color-text-muted);
   transition: all 0.2s;
 }
 
@@ -436,7 +436,7 @@ const onImgError = (e: Event) => {
   transform: scale(1.1);
 }
 .fav-btn .active {
-  color: #f59e0b;
+  color: var(--color-warning);
 }
 
 .book-info {
@@ -468,13 +468,13 @@ const onImgError = (e: Event) => {
   display: flex;
   align-items: center;
   gap: 2px;
-  color: #f59e0b;
+  color: var(--color-warning);
   font-weight: 600;
 }
 
 .book-actions {
   padding-top: 8px;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--color-bg-muted);
 }
 
 .ai-btn {

@@ -315,6 +315,7 @@ import BaseChart from '@/components/charts/BaseChart.vue'
 import VirtualList from '@/components/virtual/VirtualList.vue'
 import { generateWordImage } from '@/api/ai'
 import { getState as getSm2State } from '@/utils/sm2'
+import { chartPalette } from '@/utils/themeTokens'
 
 interface WordItem {
   id: string
@@ -560,7 +561,7 @@ const buildTrendOption = () => {
       data: labels,
       axisTick: { show: false },
       axisLine: { show: false },
-      axisLabel: { fontSize: 10, color: '#999' },
+      axisLabel: { fontSize: 10, color: chartPalette().text },
     },
     yAxis: [
       {
@@ -590,15 +591,15 @@ const buildTrendOption = () => {
         yAxisIndex: 0,
         data: addVals,
         showSymbol: false,
-        lineStyle: { color: '#409eff', width: 3 },
-        itemStyle: { color: '#409eff' },
+        lineStyle: { color: chartPalette().primary, width: 3 },
+        itemStyle: { color: chartPalette().primary },
       },
       {
         name: '复习',
         type: 'bar',
         yAxisIndex: 1,
         data: reviewVals,
-        itemStyle: { color: '#e5e7eb', borderRadius: 2 },
+        itemStyle: { color: chartPalette().border, borderRadius: 2 },
         barWidth: '60%',
       },
     ],
@@ -626,7 +627,7 @@ const startNewReview = () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .words-page {
   padding: 24px;
   max-width: 1200px;
@@ -718,7 +719,7 @@ const startNewReview = () => {
   border-radius: 8px;
   overflow: hidden;
   margin-right: 16px;
-  background: #f1f5f9;
+  background: var(--color-bg-muted);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -733,7 +734,7 @@ const startNewReview = () => {
 }
 
 .img-placeholder {
-  color: #cbd5e1;
+  color: var(--color-text-muted);
   font-size: 20px;
 }
 
@@ -805,7 +806,7 @@ const startNewReview = () => {
   display: flex;
   align-items: center;
   padding: 10px;
-  background: #f8fafc;
+  background: var(--color-bg);
   border-radius: 8px;
 }
 
@@ -835,8 +836,8 @@ const startNewReview = () => {
 
 .dialog-tip {
   margin-top: 16px;
-  background: #eff6ff;
-  color: #3b82f6;
+  background: var(--color-info-soft);
+  color: var(--color-secondary);
   padding: 8px 12px;
   border-radius: 6px;
   font-size: 12px;

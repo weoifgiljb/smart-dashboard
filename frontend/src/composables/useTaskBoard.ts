@@ -12,6 +12,7 @@ import {
   useTaskStatsQuery,
   useTasksQuery,
 } from '@/api/hooks/useTasks'
+import { chartPalette } from '@/utils/themeTokens'
 
 export function useTaskBoard() {
   const store = useTasksStore()
@@ -213,7 +214,12 @@ export function useTaskBoard() {
     return {
       tooltip: { trigger: 'item' },
       legend: { bottom: 0 },
-      color: ['#94a3b8', '#3b82f6', '#ef4444', '#10b981'],
+      color: [
+        chartPalette().muted,
+        chartPalette().secondary,
+        chartPalette().danger,
+        chartPalette().primary,
+      ],
       series: [
         {
           type: 'pie',

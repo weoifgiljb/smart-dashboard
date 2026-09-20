@@ -19,11 +19,11 @@ withDefaults(
 )
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .empty-state {
   padding: 24px;
   text-align: center;
-  color: var(--app-subtext);
+  color: var(--color-text-muted);
 }
 .icon {
   font-size: 28px;

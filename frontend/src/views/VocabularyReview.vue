@@ -366,12 +366,12 @@ const handleGlobalKey = (e: KeyboardEvent) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .vocabulary-review-page {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #f8fafc;
+  background-color: var(--color-bg);
 }
 
 /* 顶部栏 */
@@ -381,8 +381,8 @@ const handleGlobalKey = (e: KeyboardEvent) => {
   justify-content: space-between;
   align-items: center;
   padding: 0 20px;
-  background: white;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--color-bg-elevated);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .left-actions {
@@ -393,14 +393,14 @@ const handleGlobalKey = (e: KeyboardEvent) => {
 .progress-indicator {
   font-size: 14px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--color-text-secondary);
 }
 
 .mode-switch {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #f1f5f9;
+  background: var(--color-bg-muted);
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 13px;
@@ -408,15 +408,15 @@ const handleGlobalKey = (e: KeyboardEvent) => {
 }
 .mode-switch span {
   cursor: pointer;
-  color: #94a3b8;
+  color: var(--color-text-muted);
   transition: color 0.2s;
 }
 .mode-switch span.active {
-  color: #0f172a;
+  color: var(--color-text);
   font-weight: 600;
 }
 .mode-switch .divider {
-  color: #cbd5e1;
+  color: var(--color-text-muted);
   cursor: default;
 }
 
@@ -437,7 +437,7 @@ const handleGlobalKey = (e: KeyboardEvent) => {
   left: 0;
   width: 100%;
   height: 4px;
-  background: #e2e8f0;
+  background: var(--color-border);
 }
 .progress-fill {
   height: 100%;
@@ -484,19 +484,19 @@ const handleGlobalKey = (e: KeyboardEvent) => {
     0 10px 15px -3px rgba(0, 0, 0, 0.1),
     0 4px 6px -2px rgba(0, 0, 0, 0.05),
     inset 0 0 0 1px rgba(255, 255, 255, 0.1);
-  background: white;
+  background: var(--color-bg-elevated);
   overflow: hidden;
 }
 
 .card-front {
-  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  background: linear-gradient(145deg, var(--color-bg-elevated), var(--color-bg));
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .card-back {
-  background: white;
+  background: var(--color-bg-elevated);
   transform: rotateY(180deg);
   display: flex;
   flex-direction: column;
@@ -516,12 +516,12 @@ const handleGlobalKey = (e: KeyboardEvent) => {
 .word-primary {
   font-size: 48px;
   font-weight: 800;
-  color: #1e293b;
+  color: var(--color-text);
   margin-bottom: 8px;
 }
 .word-phonetic {
   font-size: 18px;
-  color: #64748b;
+  color: var(--color-text-secondary);
   font-family: monospace;
   margin-bottom: 24px;
 }
@@ -533,7 +533,7 @@ const handleGlobalKey = (e: KeyboardEvent) => {
 .tap-hint {
   margin-top: auto;
   font-size: 13px;
-  color: #94a3b8;
+  color: var(--color-text-muted);
   animation: pulse 2s infinite;
 }
 
@@ -544,12 +544,12 @@ const handleGlobalKey = (e: KeyboardEvent) => {
 .word-meaning {
   font-size: 28px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--color-text);
   margin-bottom: 24px;
   text-align: center;
 }
 .word-example {
-  background: #f1f5f9;
+  background: var(--color-bg-muted);
   padding: 16px;
   border-radius: 12px;
   width: 100%;
@@ -557,7 +557,7 @@ const handleGlobalKey = (e: KeyboardEvent) => {
 }
 .ex-en {
   font-size: 16px;
-  color: #334155;
+  color: var(--color-text);
   line-height: 1.5;
   text-align: center;
 }
@@ -600,21 +600,21 @@ const handleGlobalKey = (e: KeyboardEvent) => {
 }
 
 .review-btn.unknown {
-  background: #fee2e2;
-  color: #ef4444;
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
 }
 .review-btn.vague {
-  background: #fef3c7;
-  color: #d97706;
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
 }
 .review-btn.known {
-  background: #dcfce7;
-  color: #16a34a;
+  background: var(--color-success-soft);
+  color: var(--color-success);
 }
 
 /* 拼写卡片 */
 .spell-card {
-  background: white;
+  background: var(--color-bg-elevated);
   border-radius: 24px;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
   width: 100%;
@@ -633,7 +633,7 @@ const handleGlobalKey = (e: KeyboardEvent) => {
 .meaning-hint {
   font-size: 24px;
   font-weight: 600;
-  color: #334155;
+  color: var(--color-text);
   text-align: center;
 }
 
@@ -647,11 +647,11 @@ const handleGlobalKey = (e: KeyboardEvent) => {
   font-size: 32px;
   text-align: center;
   border: none;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid var(--color-border);
   padding: 10px;
   outline: none;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--color-text);
   background: transparent;
 }
 .spell-input:focus {
@@ -688,7 +688,7 @@ const handleGlobalKey = (e: KeyboardEvent) => {
 
 /* 完成卡片 */
 .completion-card {
-  background: white;
+  background: var(--color-bg-elevated);
   padding: 40px;
   border-radius: 24px;
   text-align: center;
@@ -698,7 +698,7 @@ const handleGlobalKey = (e: KeyboardEvent) => {
 }
 .success-icon {
   font-size: 64px;
-  color: #fbbf24;
+  color: var(--color-warning);
   margin-bottom: 16px;
 }
 .stats-grid {
@@ -708,18 +708,18 @@ const handleGlobalKey = (e: KeyboardEvent) => {
   margin: 24px 0;
 }
 .stat-item {
-  background: #f8fafc;
+  background: var(--color-bg);
   padding: 12px;
   border-radius: 12px;
 }
 .stat-item .val {
   font-size: 20px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--color-text);
 }
 .stat-item .lbl {
   font-size: 12px;
-  color: #64748b;
+  color: var(--color-text-secondary);
 }
 
 .completion-actions {

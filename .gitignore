@@ -30,6 +30,9 @@ logs/
 .DS_Store
 Thumbs.db
 
+# Superdesign temp
+.superdesign/tmp/
+
 # Environment
 .env
 .env.local

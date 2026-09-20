@@ -44,22 +44,23 @@ const goHome = () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .error-boundary {
   padding: 24px;
 }
 .result {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   padding: 16px;
-  background: #fff;
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
 }
 .title {
   font-weight: 700;
   margin-bottom: 6px;
 }
 .subtitle {
-  color: #666;
+  color: var(--color-text-secondary);
   margin-bottom: 12px;
 }
 .actions {
@@ -68,19 +69,20 @@ const goHome = () => {
 }
 .btn {
   padding: 6px 12px;
-  border: 1px solid #dcdfe6;
+  border: 1px solid var(--color-border);
   border-radius: 6px;
-  background: #fff;
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
   cursor: pointer;
 }
 .btn.primary {
-  background: #409eff;
-  color: #fff;
-  border-color: #409eff;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border-color: var(--color-primary);
 }
 .dev-message {
   margin-top: 12px;
-  color: #909399;
+  color: var(--color-text-muted);
   font-size: 12px;
   word-break: break-all;
 }

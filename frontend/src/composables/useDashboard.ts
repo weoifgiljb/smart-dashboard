@@ -1,9 +1,10 @@
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { getDashboardStats, getTodayTasks, getRecentActivities } from '@/api/dashboard'
 import { getCheckInHistory, getCheckInHistoryWithHeatValue } from '@/api/checkin'
 import { getCalendarData } from '@/api/calendar'
 import { getPomodoroHistory } from '@/api/pomodoro'
 import { getWords, getTodayWords } from '@/api/words'
+import { chartPalette } from '@/utils/themeTokens'
 
 export interface DashboardStats {
   checkInDays: number
@@ -155,7 +156,7 @@ export function useDashboard() {
         data: labels,
         axisTick: { show: false },
         axisLine: { show: false },
-        axisLabel: { show: true, interval: 6, color: '#9ca3af', fontSize: 10 },
+        axisLabel: { show: true, interval: 6, color: chartPalette().text, fontSize: 10 },
       },
       yAxis: {
         type: 'value',
@@ -180,7 +181,7 @@ export function useDashboard() {
               x2: 0,
               y2: 1,
               colorStops: [
-                { offset: 0, color: '#10b981' },
+                { offset: 0, color: chartPalette().primary },
                 { offset: 1, color: 'rgba(16, 185, 129, 0.2)' },
               ],
             },
@@ -191,7 +192,7 @@ export function useDashboard() {
         trigger: 'axis',
         formatter: (params: Array<{ axisValue: string; data: number }>) => {
           const p = params?.[0]
-          return `<div style="font-size:12px">${p.axisValue}<br/><span style="color:#10b981">●</span> 热力值：${p.data}</div>`
+          return `<div style="font-size:12px">${p.axisValue}<br/><span style="color:${chartPalette().primary}">●</span> 热力值：${p.data}</div>`
         },
       },
     }
@@ -221,7 +222,7 @@ export function useDashboard() {
         ),
         axisTick: { show: false },
         axisLine: { show: false },
-        axisLabel: { show: true, fontSize: 10, color: '#9ca3af' },
+        axisLabel: { show: true, fontSize: 10, color: chartPalette().text },
       },
       yAxis: {
         type: 'value',
@@ -237,8 +238,8 @@ export function useDashboard() {
           smooth: true,
           symbolSize: 6,
           areaStyle: { color: 'rgba(59, 130, 246, 0.1)' },
-          lineStyle: { color: '#3b82f6', width: 3 },
-          itemStyle: { color: '#3b82f6', borderWidth: 2, borderColor: '#fff' },
+          lineStyle: { color: chartPalette().secondary, width: 3 },
+          itemStyle: { color: chartPalette().secondary, borderWidth: 2, borderColor: chartPalette().bg },
         },
       ],
       tooltip: { trigger: 'axis' },
@@ -265,7 +266,7 @@ export function useDashboard() {
         ),
         axisTick: { show: false },
         axisLine: { show: false },
-        axisLabel: { show: true, fontSize: 10, color: '#9ca3af' },
+        axisLabel: { show: true, fontSize: 10, color: chartPalette().text },
       },
       yAxis: {
         type: 'value',
@@ -279,7 +280,7 @@ export function useDashboard() {
           data: days.map((d) => mapAdd.get(getDateKey(d)) || 0),
           type: 'bar',
           barWidth: '50%',
-          itemStyle: { color: '#10b981', borderRadius: [4, 4, 0, 0] },
+          itemStyle: { color: chartPalette().primary, borderRadius: [4, 4, 0, 0] },
         },
       ],
       tooltip: { trigger: 'axis' },
@@ -436,6 +437,16 @@ export function useDashboard() {
   })
 
   watch(dateRange, () => updateCharts())
+
+  let themeObserver: MutationObserver | null = null
+  onMounted(() => {
+    themeObserver = new MutationObserver(() => updateCharts())
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme', 'class'],
+    })
+  })
+  onBeforeUnmount(() => themeObserver?.disconnect())
 
   return {
     stats,

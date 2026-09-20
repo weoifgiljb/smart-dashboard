@@ -1,0 +1,121 @@
+@import './palette.less';
+
+:root {
+  --color-bg: @bg-light;
+  --color-bg-elevated: @bg-elevated-light;
+  --color-bg-muted: @bg-muted-light;
+  --color-text: @text-light;
+  --color-text-secondary: @text-secondary-light;
+  --color-text-muted: @text-muted-light;
+  --color-border: @border-light;
+  --color-primary: @primary-light;
+  --color-primary-hover: @primary-hover-light;
+  --color-primary-soft: rgba(@primary-rgb-light, 0.12);
+  --color-primary-rgb: @primary-rgb-light;
+  --color-secondary: @secondary-light;
+  --color-success: @success-light;
+  --color-success-soft: rgba(16, 185, 129, 0.12);
+  --color-warning: @warning-light;
+  --color-warning-soft: rgba(245, 158, 11, 0.14);
+  --color-danger: @danger-light;
+  --color-danger-soft: rgba(239, 68, 68, 0.12);
+  --color-info: @info-light;
+  --color-info-soft: rgba(59, 130, 246, 0.12);
+  --color-on-primary: #ffffff;
+  --radius-sm: @radius-sm;
+  --radius-md: @radius-md;
+  --radius-lg: @radius-lg;
+  --shadow-sm: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 10px 28px rgba(15, 23, 42, 0.07);
+  --shadow-lg: 0 18px 48px rgba(15, 23, 42, 0.08);
+  --gradient-primary: linear-gradient(135deg, @primary-light 0%, @secondary-light 100%);
+  --sidebar-local-bg: @sidebar-bg;
+  --sidebar-local-text: @sidebar-text;
+  --sidebar-local-text-secondary: @sidebar-text-secondary;
+  --sidebar-local-border: @sidebar-border;
+
+  /* Legacy aliases */
+  --app-bg: var(--color-bg);
+  --card-bg: var(--color-bg-elevated);
+  --sidebar-bg: var(--sidebar-local-bg);
+  --header-bg: var(--color-bg-elevated);
+  --app-text: var(--color-text);
+  --app-subtext: var(--color-text-muted);
+  --text-secondary: var(--color-text-secondary);
+  --text-light: var(--color-text-muted);
+  --border: var(--color-border);
+  --primary: var(--color-primary);
+  --primary-hover: var(--color-primary-hover);
+  --primary-light: var(--color-primary-soft);
+  --primary-fade: var(--color-primary-soft);
+  --primary-rgb: var(--color-primary-rgb);
+  --secondary: var(--color-secondary);
+  --secondary-hover: var(--color-secondary);
+  --secondary-light: var(--color-info-soft);
+  --success: var(--color-success);
+  --success-light: var(--color-success-soft);
+  --warning: var(--color-warning);
+  --warning-light: var(--color-warning-soft);
+  --danger: var(--color-danger);
+  --danger-light: var(--color-danger-soft);
+  --info: var(--color-info);
+  --info-light: var(--color-info-soft);
+}
+
+[data-theme='dark'] {
+  --color-bg: @bg-dark;
+  --color-bg-elevated: @bg-elevated-dark;
+  --color-bg-muted: @bg-muted-dark;
+  --color-text: @text-dark;
+  --color-text-secondary: @text-secondary-dark;
+  --color-text-muted: @text-muted-dark;
+  --color-border: @border-dark;
+  --color-primary: @primary-dark;
+  --color-primary-hover: @primary-hover-dark;
+  --color-primary-soft: rgba(@primary-rgb-dark, 0.16);
+  --color-primary-rgb: @primary-rgb-dark;
+  --color-secondary: @secondary-dark;
+  --color-success: @success-dark;
+  --color-success-soft: rgba(52, 211, 153, 0.16);
+  --color-warning: @warning-dark;
+  --color-warning-soft: rgba(251, 191, 36, 0.16);
+  --color-danger: @danger-dark;
+  --color-danger-soft: rgba(248, 113, 113, 0.16);
+  --color-info: @info-dark;
+  --color-info-soft: rgba(96, 165, 250, 0.16);
+  --color-on-primary: #052e1c;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.45);
+  --gradient-primary: linear-gradient(135deg, @primary-dark 0%, @secondary-dark 100%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-bg: @bg-dark;
+    --color-bg-elevated: @bg-elevated-dark;
+    --color-bg-muted: @bg-muted-dark;
+    --color-text: @text-dark;
+    --color-text-secondary: @text-secondary-dark;
+    --color-text-muted: @text-muted-dark;
+    --color-border: @border-dark;
+    --color-primary: @primary-dark;
+    --color-primary-hover: @primary-hover-dark;
+    --color-primary-soft: rgba(@primary-rgb-dark, 0.16);
+    --color-primary-rgb: @primary-rgb-dark;
+    --color-secondary: @secondary-dark;
+    --color-success: @success-dark;
+    --color-success-soft: rgba(52, 211, 153, 0.16);
+    --color-warning: @warning-dark;
+    --color-warning-soft: rgba(251, 191, 36, 0.16);
+    --color-danger: @danger-dark;
+    --color-danger-soft: rgba(248, 113, 113, 0.16);
+    --color-info: @info-dark;
+    --color-info-soft: rgba(96, 165, 250, 0.16);
+    --color-on-primary: #052e1c;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.45);
+    --gradient-primary: linear-gradient(135deg, @primary-dark 0%, @secondary-dark 100%);
+  }
+}

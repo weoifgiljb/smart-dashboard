@@ -187,7 +187,7 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .book-detail-page {
   padding: 20px;
 }
@@ -203,7 +203,7 @@ onMounted(async () => {
   height: 320px;
   object-fit: cover;
   border-radius: 4px;
-  background: #f5f7fa;
+  background: var(--color-bg);
 }
 .detail-meta {
   flex: 1;
@@ -213,7 +213,7 @@ onMounted(async () => {
 }
 .author {
   margin: 0 0 10px 0;
-  color: #666;
+  color: var(--color-text-secondary);
 }
 .rating {
   margin: 8px 0 12px 0;
@@ -226,7 +226,7 @@ onMounted(async () => {
   margin-top: 18px;
 }
 .muted {
-  color: #999;
+  color: var(--color-text-muted);
 }
 .github-card {
   margin-top: 16px;
@@ -243,7 +243,7 @@ onMounted(async () => {
 }
 .repo-item {
   padding: 10px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--color-border);
 }
 .repo-item:last-child {
   border-bottom: none;
@@ -253,11 +253,11 @@ onMounted(async () => {
   text-decoration: none;
 }
 .repo-desc {
-  color: #666;
+  color: var(--color-text-secondary);
   margin-top: 4px;
 }
 .stars {
   margin-left: 8px;
-  color: #fa8c16;
+  color: var(--color-warning);
 }
 </style>

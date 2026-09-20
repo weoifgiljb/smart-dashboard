@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "targets": {
+    "/": {
+      "targetKind": "existing-ui",
+      "projectId": "cb22ae2a-4d09-4c5d-b072-49cdf89c2d2a",
+      "baselineDraftId": "7e79dc50-63de-40fe-852a-87c5a45f893a",
+      "activeDraftId": "b3f360ae-98fc-4c3c-b63a-83373099a273",
+      "designSystemPath": ".superdesign/design-system.md",
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        "frontend/src/layouts/MainLayout.vue",
+        "frontend/src/views/Dashboard.vue",
+        "frontend/src/App.vue",
+        "frontend/src/styles/theme.less",
+        "frontend/src/components/ui/AppCard.vue"
+      ],
+      "fingerprints": {},
+      "components": [
+        {
+          "name": "AppSidebar",
+          "id": "43234587-5088-4a80-81f0-15e6010e5782",
+          "sourcePath": "frontend/src/layouts/MainLayout.vue"
+        },
+        {
+          "name": "AppHeader",
+          "id": "1104bcc8-2d29-4801-b0cc-cb6b86ce5e5e",
+          "sourcePath": "frontend/src/layouts/MainLayout.vue"
+        }
+      ],
+      "drafts": {
+        "7e79dc50-63de-40fe-852a-87c5a45f893a": {
+          "title": "Current 仪表盘",
+          "visualDirection": "baseline reproduction",
+          "currentVersion": 1
+        },
+        "07abf0c1-dc53-439a-94b3-35253e0f528d": {
+          "title": "克制生产力",
+          "visualDirection": "light productivity",
+          "parentDraftId": "7e79dc50-63de-40fe-852a-87c5a45f893a"
+        },
+        "ee43b8fc-6f16-4b19-b846-c2191772a5e8": {
+          "title": "深色工作台",
+          "visualDirection": "dark workstation",
+          "parentDraftId": "7e79dc50-63de-40fe-852a-87c5a45f893a"
+        },
+        "b3f360ae-98fc-4c3c-b63a-83373099a273": {
+          "title": "柔和成长风",
+          "visualDirection": "soft growth",
+          "parentDraftId": "7e79dc50-63de-40fe-852a-87c5a45f893a"
+        }
+      },
+      "updatedAt": "2026-09-20T07:14:00.000Z"
+    },
+    "/pomodoro": {
+      "targetKind": "new-ui",
+      "projectId": "cb22ae2a-4d09-4c5d-b072-49cdf89c2d2a",
+      "activeDraftId": "431b5b4f-2025-4444-b767-01ff3db9c96b",
+      "sourceTarget": "/",
+      "sourceDraftId": "b3f360ae-98fc-4c3c-b63a-83373099a273",
+      "designSystemPath": ".superdesign/design-system.md",
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        "frontend/src/layouts/MainLayout.vue",
+        "frontend/src/views/Pomodoro.vue",
+        "frontend/src/styles/theme.less"
+      ],
+      "fingerprints": {
+        ".superdesign/design-system.md": "3ab5262996cfc2be179cfb6ee64bb2716dd02a15a85d8b048161292fd361eeff",
+        "frontend/src/layouts/MainLayout.vue": "2e05094e5fea47c1893796ea6af505219de6833bf2cd35ced6f543c1466bb876",
+        "frontend/src/views/Pomodoro.vue": "c35918939c86838df7bd0f30eb59990c38c133276566bca2cfa970f2a3725718",
+        "frontend/src/styles/theme.less": "7ba6b82c23cc5ca24baf31f11787b0a66c098f64f092082f82870a02b19f82a0"
+      },
+      "components": [
+        {
+          "name": "AppSidebar",
+          "id": "43234587-5088-4a80-81f0-15e6010e5782",
+          "sourcePath": "frontend/src/layouts/MainLayout.vue"
+        },
+        {
+          "name": "AppHeader",
+          "id": "1104bcc8-2d29-4801-b0cc-cb6b86ce5e5e",
+          "sourcePath": "frontend/src/layouts/MainLayout.vue"
+        }
+      ],
+      "drafts": {
+        "431b5b4f-2025-4444-b767-01ff3db9c96b": {
+          "title": "番茄钟 - 柔和成长风格",
+          "visualDirection": "soft growth",
+          "parentDraftId": "b3f360ae-98fc-4c3c-b63a-83373099a273",
+          "currentVersion": 1
+        }
+      },
+      "updatedAt": "2026-09-20T07:36:00.000Z"
+    }
+  }
+}

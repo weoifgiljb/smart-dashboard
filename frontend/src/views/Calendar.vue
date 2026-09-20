@@ -163,9 +163,9 @@
               <el-timeline-item
                 v-if="sortedTimelineEvents.length === 0"
                 timestamp=""
-                color="#e4e7ed"
+                color="var(--color-border)"
               >
-                <span style="color: #909399">暂无活动记录</span>
+                <span style="color: var(--color-text-muted)">暂无活动记录</span>
               </el-timeline-item>
             </el-timeline>
           </div>
@@ -182,6 +182,7 @@ import { ArrowLeft, ArrowRight, InfoFilled, Calendar, Check } from '@element-plu
 import { getCalendarData, getCalendarDay } from '@/api/calendar'
 import { checkIn, getCheckInStats } from '@/api/checkin'
 import BaseChart from '@/components/charts/BaseChart.vue'
+import { chartPalette } from '@/utils/themeTokens'
 
 // Avoid conflict with local component registration
 const CalendarIcon = Calendar
@@ -348,7 +349,13 @@ const loadCheckinHeatmap = async () => {
         min: 0,
         max: maxHeat,
         inRange: {
-          color: ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'], // GitHub Green Style
+          color: [
+            chartPalette().border,
+            chartPalette().primary,
+            chartPalette().success,
+            chartPalette().primary,
+            chartPalette().secondary,
+          ],
         },
       },
       calendar: {
@@ -358,10 +365,10 @@ const loadCheckinHeatmap = async () => {
         range: `${year}`,
         cellSize: ['auto', 14],
         splitLine: { show: false },
-        itemStyle: { borderWidth: 3, borderColor: '#fff' }, // 白色边框模拟间距
+        itemStyle: { borderWidth: 3, borderColor: chartPalette().bg },
         yearLabel: { show: false },
-        monthLabel: { nameMap: 'cn', fontSize: 10, color: '#9ca3af' },
-        dayLabel: { nameMap: 'cn', fontSize: 10, color: '#9ca3af' },
+        monthLabel: { nameMap: 'cn', fontSize: 10, color: chartPalette().text },
+        dayLabel: { nameMap: 'cn', fontSize: 10, color: chartPalette().text },
       },
       series: [
         {
@@ -422,7 +429,7 @@ const sortedTimelineEvents = computed(() => {
       timestamp: new Date(c.checkInTime || 0).getTime(),
       title: '每日打卡',
       type: 'success',
-      color: '#10b981',
+      color: chartPalette().primary,
       tag: 'Check-in',
       tagType: 'success',
     })
@@ -436,7 +443,7 @@ const sortedTimelineEvents = computed(() => {
       title: p.type === 'work' ? '专注时间' : '休息时间',
       desc: `时长：${p.duration}分钟`,
       type: p.type === 'work' ? 'primary' : 'warning',
-      color: p.type === 'work' ? '#3b82f6' : '#f59e0b',
+      color: p.type === 'work' ? chartPalette().secondary : chartPalette().warning,
       tag: p.type === 'work' ? 'Focus' : 'Break',
       tagType: p.type === 'work' ? '' : 'warning',
     })
@@ -456,7 +463,7 @@ const sortedTimelineEvents = computed(() => {
           .slice(0, 5)
           .join(', ') + (d.words.length > 5 ? '...' : ''),
       type: 'info',
-      color: '#06b6d4',
+      color: chartPalette().info,
       tag: 'Vocabulary',
       tagType: 'info',
     })
@@ -471,7 +478,7 @@ const sortedTimelineEvents = computed(() => {
         timestamp: 9999999999999,
         title: `完成任务：${t.title}`,
         type: 'success',
-        color: '#8b5cf6',
+        color: chartPalette().secondary,
         tag: 'Task',
         tagType: '',
       })
@@ -509,7 +516,7 @@ function formatTime(s?: string | null) {
 }
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .calendar-page {
   padding: 24px;
   max-width: 1200px;
@@ -737,7 +744,7 @@ function formatTime(s?: string | null) {
   background-color: var(--info);
 }
 .dot.task {
-  background-color: #8b5cf6;
+  background-color: var(--color-secondary);
 }
 
 /* Drawer Styles */

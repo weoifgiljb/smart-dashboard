@@ -20,18 +20,12 @@ withDefaults(
 )
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .app-card {
   border: none;
   border-radius: var(--radius-md);
-  background: var(--card-bg);
-  transition: all 0.3s ease;
+  background: var(--color-bg-elevated);
   margin-bottom: 16px;
-}
-
-.app-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
 }
 
 .card-header {
@@ -39,11 +33,11 @@ withDefaults(
   justify-content: space-between;
   align-items: center;
   font-weight: 600;
-  color: var(--app-text);
+  color: var(--color-text);
 }
 
 :deep(.el-card__header) {
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  border-bottom: 1px solid var(--color-border);
   padding: 16px 20px;
 }
 </style>

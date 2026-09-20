@@ -389,7 +389,7 @@ const displayKanbanItems = (key: string) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .tasks-page {
   padding: 24px;
   max-width: 1200px;
@@ -437,7 +437,7 @@ const displayKanbanItems = (key: string) => {
   border-radius: var(--radius-md);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
-  --el-table-header-bg-color: #f8fafc;
+  --el-table-header-bg-color: var(--color-bg);
 }
 
 .custom-checkbox {
@@ -538,7 +538,7 @@ const displayKanbanItems = (key: string) => {
 }
 
 .kanban-column {
-  background: #f1f5f9;
+  background: var(--color-bg-muted);
   border-radius: var(--radius-md);
   padding: 12px;
   min-width: 240px;
@@ -561,7 +561,7 @@ const displayKanbanItems = (key: string) => {
 }
 
 .kanban-card {
-  background: white;
+  background: var(--color-bg-elevated);
   border-radius: 8px;
   padding: 12px;
   margin-bottom: 12px;
@@ -610,7 +610,7 @@ const displayKanbanItems = (key: string) => {
 }
 
 .stat-box {
-  background: white;
+  background: var(--color-bg-elevated);
   padding: 20px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
@@ -645,7 +645,7 @@ const displayKanbanItems = (key: string) => {
 }
 .chart-box {
   flex: 1;
-  background: white;
+  background: var(--color-bg-elevated);
   border-radius: var(--radius-md);
   padding: 20px;
   border: 1px solid var(--border);

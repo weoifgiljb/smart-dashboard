@@ -205,11 +205,11 @@ const form = reactive<Diary>({
 })
 
 const moodOptions = [
-  { value: 'happy', label: '开心', emoji: '😄', type: 'success', color: '#10b981' },
-  { value: 'neutral', label: '平淡', emoji: '😐', type: 'info', color: '#909399' },
-  { value: 'sad', label: '难过', emoji: '😭', type: 'info', color: '#606266' },
-  { value: 'energetic', label: '充满活力', emoji: '💪', type: 'warning', color: '#f59e0b' },
-  { value: 'tired', label: '疲惫', emoji: '😫', type: 'danger', color: '#ef4444' },
+  { value: 'happy', label: '开心', emoji: '😄', type: 'success', color: 'var(--color-success)' },
+  { value: 'neutral', label: '平淡', emoji: '😐', type: 'info', color: 'var(--color-text-muted)' },
+  { value: 'sad', label: '难过', emoji: '😭', type: 'info', color: 'var(--color-text-secondary)' },
+  { value: 'energetic', label: '充满活力', emoji: '💪', type: 'warning', color: 'var(--color-warning)' },
+  { value: 'tired', label: '疲惫', emoji: '😫', type: 'danger', color: 'var(--color-danger)' },
 ]
 
 const moodMap = moodOptions.reduce(
@@ -222,7 +222,8 @@ const moodMap = moodOptions.reduce(
 
 const getMoodLabel = (mood?: string) => (mood && moodMap[mood] ? moodMap[mood].label : '未知')
 const getMoodType = (mood?: string) => (mood && moodMap[mood] ? moodMap[mood].type : 'info')
-const getMoodColor = (mood?: string) => (mood && moodMap[mood] ? moodMap[mood].color : '#909399')
+const getMoodColor = (mood?: string) =>
+  mood && moodMap[mood] ? moodMap[mood].color : 'var(--color-text-muted)'
 
 const formatTime = (timeStr: string) => {
   if (!timeStr) return ''
@@ -366,7 +367,7 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .diary-page {
   max-width: 1000px;
   margin: 0 auto;

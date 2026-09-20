@@ -11,7 +11,7 @@
 defineOptions({ name: 'SkeletonPage' })
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .skeleton-page {
   display: flex;
   flex-direction: column;
@@ -30,7 +30,12 @@ defineOptions({ name: 'SkeletonPage' })
 }
 .sk-card {
   height: 120px;
-  background: linear-gradient(90deg, #f2f3f5 25%, #e9ecef 37%, #f2f3f5 63%);
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-muted) 25%,
+    var(--color-border) 37%,
+    var(--color-bg-muted) 63%
+  );
   background-size: 400% 100%;
   border-radius: 8px;
   animation: shine 1.4s ease infinite;

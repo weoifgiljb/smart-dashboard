@@ -2,7 +2,7 @@
   <el-container class="layout-container">
     <el-header class="header">
       <div class="header-left">
-        <el-button link style="margin-right: 16px; color: var(--app-text)" @click="toggleCollapse">
+        <el-button link style="margin-right: 16px; color: var(--color-text)" @click="toggleCollapse">
           <el-icon :size="24">
             <Fold v-if="!isCollapse" />
             <Expand v-else />
@@ -96,6 +96,7 @@ import { ElMessage } from 'element-plus'
 import ErrorBoundary from '@/components/ErrorBoundary.vue'
 import SkeletonPage from '@/components/SkeletonPage.vue'
 import UiButton from '@/components/ui/AppButton.vue'
+import { useTheme } from '@/composables/useTheme'
 import {
   House,
   Calendar,
@@ -125,92 +126,95 @@ const handleLogout = () => {
   router.push('/login')
 }
 
-// 主题切换
-const isDark = ref(localStorage.getItem('theme') === 'dark')
-const toggleTheme = () => {
-  const theme = isDark.value ? 'dark' : 'light'
-  document.documentElement.setAttribute('data-theme', theme)
-  localStorage.setItem('theme', theme)
-}
+const { isDark, toggleTheme } = useTheme()
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .layout-container {
   height: 100vh;
-  background-color: var(--app-bg);
+  background: var(--color-bg);
 }
 
 .header {
-  background: var(--header-bg);
-  color: var(--app-text);
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 24px;
-  height: 64px;
-  box-shadow: var(--shadow-sm);
+  height: 56px;
+  border-bottom: 1px solid var(--color-border);
   z-index: 10;
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
-}
-
+.header-left,
 .header-right {
   display: flex;
   align-items: center;
+  gap: 8px;
 }
 
 .aside {
-  background: var(--sidebar-bg);
-  border-right: 1px solid var(--el-border-color-light);
+  --color-bg: var(--sidebar-local-bg);
+  --color-text: var(--sidebar-local-text);
+  --color-text-secondary: var(--sidebar-local-text-secondary);
+  --color-border: var(--sidebar-local-border);
+  --color-primary-soft: rgba(52, 211, 153, 0.16);
+  background: var(--color-bg);
+  color: var(--color-text);
+  border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
-  transition: width 0.3s;
+  transition: width 0.2s ease;
 }
 
 .logo-container {
-  height: 64px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 1px solid var(--el-border-color-light);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .app-title {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   background: var(--gradient-primary);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
 }
 
 .menu {
   border-right: none;
   flex: 1;
-  padding: 16px 8px;
+  padding: 12px 8px;
   background: transparent;
 }
 
+:deep(.el-menu) {
+  background: transparent;
+  border-right: none;
+}
+
 :deep(.el-menu-item) {
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   margin-bottom: 4px;
-  color: var(--text-secondary);
-  height: 50px;
-  line-height: 50px;
+  color: var(--color-text-secondary);
+  height: 46px;
+  line-height: 46px;
 }
 
 :deep(.el-menu-item:hover) {
-  background-color: var(--app-bg);
-  color: var(--primary);
+  background-color: rgba(255, 255, 255, 0.06);
+  color: var(--color-primary);
 }
 
 :deep(.el-menu-item.is-active) {
-  background-color: var(--primary-light);
-  color: var(--primary);
+  background-color: var(--color-primary-soft);
+  color: var(--color-primary);
   font-weight: 600;
 }
 
@@ -219,7 +223,7 @@ const toggleTheme = () => {
 }
 
 .main {
-  background: var(--app-bg);
+  background: var(--color-bg);
   padding: 24px;
   overflow-y: auto;
 }

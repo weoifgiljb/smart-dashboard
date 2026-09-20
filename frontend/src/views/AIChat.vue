@@ -394,7 +394,7 @@ const exportChat = () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .ai-chat-page {
   height: calc(100vh - 20px);
   padding: 10px;
@@ -405,7 +405,7 @@ const exportChat = () => {
 .chat-layout {
   display: flex;
   height: 100%;
-  background: white;
+  background: var(--color-bg-elevated);
   border-radius: 16px;
   overflow: hidden;
   box-shadow: var(--shadow-md);
@@ -415,7 +415,7 @@ const exportChat = () => {
 /* Sidebar */
 .chat-sidebar {
   width: 260px;
-  background: #f8fafc;
+  background: var(--color-bg);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -456,11 +456,11 @@ const exportChat = () => {
 }
 
 .history-item:hover {
-  background: #e2e8f0;
+  background: var(--color-border);
 }
 
 .history-item.active {
-  background: #eff6ff;
+  background: var(--color-info-soft);
   color: var(--primary);
 }
 
@@ -479,7 +479,7 @@ const exportChat = () => {
 
 .chat-header {
   height: 60px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--color-bg-muted);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -501,7 +501,7 @@ const exportChat = () => {
   flex: 1;
   overflow-y: auto;
   padding: 24px;
-  background: white;
+  background: var(--color-bg-elevated);
 }
 
 .empty-welcome {
@@ -530,8 +530,8 @@ const exportChat = () => {
 
 .suggestion-card {
   padding: 16px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s;
@@ -541,7 +541,7 @@ const exportChat = () => {
 
 .suggestion-card:hover {
   border-color: var(--primary);
-  background: #eff6ff;
+  background: var(--color-info-soft);
 }
 
 /* Message Rows */
@@ -566,7 +566,7 @@ const exportChat = () => {
 }
 
 .avatar-img.ai {
-  background: #f1f5f9;
+  background: var(--color-bg-muted);
   color: var(--primary);
 }
 
@@ -585,9 +585,9 @@ const exportChat = () => {
 }
 
 .message-row.ai .message-bubble {
-  background: #f8fafc;
+  background: var(--color-bg);
   border-top-left-radius: 2px;
-  color: #334155;
+  color: var(--color-text);
 }
 
 .message-row.user .message-bubble {
@@ -597,8 +597,8 @@ const exportChat = () => {
 }
 
 .bubble-content :deep(pre) {
-  background: #1e293b;
-  color: #e2e8f0;
+  background: var(--color-text);
+  color: var(--color-border);
   padding: 12px;
   border-radius: 8px;
   overflow-x: auto;
@@ -647,7 +647,7 @@ const exportChat = () => {
   display: inline-block;
   width: 6px;
   height: 6px;
-  background: #94a3b8;
+  background: var(--color-text-muted);
   border-radius: 50%;
   margin: 0 2px;
   animation: typing 1.4s infinite both;
@@ -677,14 +677,14 @@ const exportChat = () => {
 /* Input Area */
 .input-area {
   padding: 20px;
-  background: white;
-  border-top: 1px solid #f1f5f9;
+  background: var(--color-bg-elevated);
+  border-top: 1px solid var(--color-bg-muted);
 }
 
 .input-box {
   position: relative;
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 4px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
@@ -714,7 +714,7 @@ const exportChat = () => {
   text-align: center;
   margin-top: 8px;
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--color-text-muted);
 }
 
 @media (max-width: 768px) {
