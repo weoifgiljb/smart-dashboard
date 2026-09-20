@@ -145,5 +145,33 @@ Out of scope unless tokens break them: individual `views/*` one-off colors. Pref
 2. Glass recipes + logo/sidebar cleanup
 3. `useTheme` mood API + boot wiring
 4. Mood picker in header
-5. Sweep hardcoded emerald/blue in shared UI if any remain
-6. Tests + manual 4×2 pass
+5. Add importable mood materials (SVG / textures / icons) + SOURCES.md`n6. Wire mood wash + EmptyState/KPI icons`n7. Sweep hardcoded emerald/blue in shared UI if any remain`n8. Tests + manual 4×2 pass
+
+## Importable materials (approved add-on)
+
+User wants richer style via **importable frontend assets**, not only tokens. Categories:
+
+1. **SVG decorations** — lightweight motifs: water ripples, soft waves, rain streaks, crystal facets/edges. Prefer inline or `?url` / Vue SFC-friendly SVGs under `src/assets/moods/`.
+2. **Transparent texture PNGs** — soft fog, water sheen, mist noise tiles (true alpha). Used sparingly as CSS `background-image` on layout wash or card overlays (medium intensity: low opacity).
+3. **Icon set** — empty-state / KPI / menu-adjacent icons in the same liquid-natural language (pool / ocean / crystal / rain variants or a shared monoline set tinted via `currentColor`).
+
+### Placement & usage
+
+| Asset | Path (proposed) | How used |
+| --- | --- | --- |
+| SVG motifs | `src/assets/moods/{pool,ocean,crystal,rain}/*.svg` | Optional corner/empty accents; CSS mask or `<img>` / inline component |
+| Textures | `src/assets/moods/textures/*.png` | `--mood-wash` background on `.main` / dashboard hero only |
+| Icons | `src/assets/moods/icons/*.svg` | EmptyState, KPI chips; color via `currentColor` |
+
+Rules:
+
+- License: original or clearly CC0 / public-domain; keep a short `SOURCES.md` next to assets
+- Intensity: decorative only — never block text/controls; opacity typically 0.06–0.18
+- Switching mood swaps which wash/motif set is active (via CSS variables pointing at URLs or class on `html`)
+- Not shipping a separate CSS/token “片段包” for external reuse in this pass
+
+### Spec deltas
+
+- Non-goals remain: no video textures, no particle systems
+- Success criteria +: at least one SVG motif + one texture wash + a small icon set wired for default (ocean) and available for other moods
+- Implementation order +: after glass recipes, add assets folder + wire wash/icons; generate or source CC0 assets before polish
