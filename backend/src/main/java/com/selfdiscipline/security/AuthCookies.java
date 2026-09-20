@@ -5,6 +5,10 @@ import com.selfdiscipline.dto.AuthResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+
+import java.time.Duration;
 
 public final class AuthCookies {
     public static final String ACCESS = "access_token";
@@ -40,12 +44,13 @@ public final class AuthCookies {
     }
 
     private static void add(HttpServletResponse response, String name, String value, long maxAgeSeconds) {
-        Cookie cookie = new Cookie(name, value == null ? "" : value);
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setMaxAge((int) Math.min(Integer.MAX_VALUE, Math.max(0, maxAgeSeconds)));
-        cookie.setAttribute("SameSite", "Lax");
-        response.addCookie(cookie);
+        ResponseCookie cookie = ResponseCookie.from(name, value == null ? "" : value)
+                .httpOnly(true)
+                .path("/")
+                .maxAge(Duration.ofSeconds(Math.max(0, maxAgeSeconds)))
+                .sameSite("Lax")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
     private static long seconds(Long millis, long fallbackSeconds) {

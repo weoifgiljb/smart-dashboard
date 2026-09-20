@@ -59,8 +59,19 @@ export default defineConfig(({ mode }) => {
           target: `http://localhost:${backendPort}`,
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ''),
+          cookieDomainRewrite: '',
+          cookiePathRewrite: '/',
           ws: true,
           secure: false,
+          configure: (proxy) => {
+            proxy.on('proxyRes', (proxyRes) => {
+              const cookies = proxyRes.headers['set-cookie']
+              if (!cookies) return
+              proxyRes.headers['set-cookie'] = cookies.map((cookie) =>
+                cookie.replace(/;\s*Domain=[^;]*/gi, '').replace(/;\s*Secure/gi, ''),
+              )
+            })
+          },
         },
       },
     },

@@ -55,6 +55,11 @@ function isAuthRefreshRequest(config: InternalAxiosRequestConfig) {
   return requestUrl(config).includes('/auth/refresh')
 }
 
+function isAuthCredentialRequest(config: InternalAxiosRequestConfig) {
+  const url = requestUrl(config)
+  return url.includes('/auth/login') || url.includes('/auth/register')
+}
+
 function isSilentAuthProbe(config: InternalAxiosRequestConfig) {
   const url = requestUrl(config)
   return url.includes('/auth/me') || url.includes('/auth/logout')
@@ -95,7 +100,11 @@ request.interceptors.response.use(
     const status = error.response?.status
 
     if (status === 401) {
-      if (isAuthRefreshRequest(config) || config.__retriedAfterRefresh) {
+      if (
+        isAuthRefreshRequest(config) ||
+        isAuthCredentialRequest(config) ||
+        config.__retriedAfterRefresh
+      ) {
         expireSession(config)
         return Promise.reject(error)
       }

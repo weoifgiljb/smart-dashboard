@@ -21,7 +21,7 @@
 | 子任务扫描 | `TaskRepository.findByOwnerUserIdAndParentId`；`getSubtasks` 不再 `findAll` |
 | 无主单词认领 | `ImageService.generateWordImage` 对空 owner / 非本人 403，不认领 |
 | 弱注册密码 | `RegisterRequest` `@Size(min=8)`；`AuthService.register` 拒绝不足 8 位 |
-| JWT 存储 | `AuthCookies` httpOnly；前端 `authTokens.ts` 内存 token；`request.ts`/`user.ts` 不写 `localStorage` 的 token |
+| JWT 存储 | `AuthCookies` 用 `ResponseCookie` 写 `HttpOnly; Path=/; SameSite=Lax`；Vite `/api` 代理 `cookieDomainRewrite` 去掉 Domain，避免刷新后 cookie 留在 8080 |
 | 日记 owner | `DiaryService` 写入 `user.getId()`，列表/删除兼容旧 username 行 |
 | 日记 VNode JSON | `DiaryTimeline` / `DiaryTags` 为 setup 返回 render；禁止 `{{ h(ElTag) }}` / `:is="h(ElTimelineItem)"` |
 | 日记历史回看 | `Diary.vue` 默认列出全部；`全部`/`上一月`/`本月`/`查看某一天` 筛选，不默认藏过去月份 |

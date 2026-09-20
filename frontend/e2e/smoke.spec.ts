@@ -26,6 +26,13 @@ test.describe('unauthenticated pages', () => {
     await expect(page).toHaveURL(/\/register/)
     await expect(page.getByRole('heading', { name: '创建账号' })).toBeVisible()
   })
+
+  test('login page uses the same app chrome as the dashboard', async ({ page }) => {
+    await page.goto('/login')
+    await expect(page.getByRole('heading', { name: '自律组件' })).toBeVisible()
+    await expect(page.getByRole('switch')).toBeVisible()
+    await expect(page.getByRole('heading', { name: '欢迎回来' })).toBeVisible()
+  })
 })
 
 test.describe('authenticated smoke', () => {

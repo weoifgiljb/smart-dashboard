@@ -79,7 +79,10 @@ export const useUserStore = defineStore('user', () => {
       setUser(userData)
       isAuthenticated.value = true
     } catch {
-      clearSession()
+      user.value = null
+      token.value = null
+      isAuthenticated.value = false
+      clearAuthTokens()
     }
   }
 
