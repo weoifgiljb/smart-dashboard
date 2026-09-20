@@ -441,9 +441,6 @@ export function useDashboard() {
       dateRange.value = [rangeStart, rangeEnd]
       updateCharts()
 
-      const wordList = Array.isArray(words) ? words : []
-      stats.value.wordCount = wordList.length
-
       const dateSet = new Set<string>(
         (asData<Array<{ checkInDate?: string }>>(checkins) || [])
           .map((c) => c?.checkInDate)

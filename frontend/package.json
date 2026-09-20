@@ -14,6 +14,7 @@
     "test": "vitest run",
     "test:ui": "vitest --ui",
     "e2e": "playwright test",
+    "smoketest": "playwright test",
     "prepare": "cd .. && husky frontend/.husky"
   },
   "dependencies": {

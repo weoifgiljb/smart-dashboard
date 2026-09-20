@@ -234,7 +234,7 @@
         </el-table-column>
         <el-table-column prop="duration" label="时长(分钟)" width="100">
           <template #default="{ row }">
-            {{ Math.floor((row.duration || 0) / 60) }}
+            {{ formatDurationMinutes(row.duration) }}
           </template>
         </el-table-column>
         <el-table-column prop="tag" label="标签">
@@ -319,6 +319,12 @@ const heatMax = computed(() =>
 )
 
 const heatWidth = (score: number) => `${Math.round((score / heatMax.value) * 100)}%`
+
+const formatDurationMinutes = (duration: unknown) => {
+  const n = Number(duration)
+  if (!Number.isFinite(n) || n < 0) return 0
+  return Math.round(n)
+}
 
 const goRhythm = () => {
   router.push(rhythm.value.ctaPath || '/calendar')
