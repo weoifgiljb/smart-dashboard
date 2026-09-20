@@ -21,9 +21,45 @@ const SMOKE_USER = {
   createTime: '2026-01-01T00:00:00',
 }
 
-function json(route: Route, data: unknown) {
+export type MockDiary = {
+  id: string
+  content: string
+  mood: string
+  tags?: string[]
+  imageUrl?: string
+  diaryDate: string
+  updatedAt?: string
+}
+
+export type MockApiOptions = {
+  diaries?: MockDiary[]
+  deleteNotFoundIds?: string[]
+  exportJsonError?: boolean
+}
+
+export function previousMonthKey(now = new Date()) {
+  const d = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`
+}
+
+export function sampleDiary(overrides: Partial<MockDiary> = {}): MockDiary {
+  const day = todayDateKey()
+  return {
+    id: 'd1',
+    content: '今天很好',
+    mood: 'happy',
+    tags: ['生活', '学习'],
+    imageUrl: 'https://example.com/diary.png',
+    diaryDate: day,
+    updatedAt: `${day}T18:31:32`,
+    ...overrides,
+  }
+}
+
+function json(route: Route, data: unknown, status = 200) {
   return route.fulfill({
-    status: 200,
+    status,
     contentType: 'application/json; charset=utf-8',
     headers: { 'access-control-allow-origin': '*' },
     body: JSON.stringify(data),
@@ -43,10 +79,11 @@ function isApiRequest(url: URL) {
   )
 }
 
-function payloadFor(url: URL, method: string) {
+function payloadFor(url: URL, method: string, diaries: MockDiary[] = []) {
   const path = apiPath(url)
 
   if (path.endsWith('/auth/me')) return SMOKE_USER
+  if (method === 'GET' && /\/diaries\/?$/.test(path)) return diaries
   if (path.includes('/dashboard/rhythm')) {
     return {
       nextAction: 'CHECK_IN',
@@ -106,8 +143,91 @@ function payloadFor(url: URL, method: string) {
   return {}
 }
 
-export async function mockApi(page: Page) {
+function isDiariesCollection(path: string) {
+  return /\/diaries\/?$/.test(path) || path === 'diaries'
+}
+
+function handleDiaryRoutes(
+  route: Route,
+  path: string,
+  method: string,
+  options: MockApiOptions,
+  diaries: MockDiary[],
+) {
+  if (path.includes('/diaries/match-meme') && method === 'POST') {
+    return json(route, 'https://example.com/meme.png')
+  }
+
+  if (path.includes('/diaries/export/pdf') || path.includes('/diaries/export/word')) {
+    if (options.exportJsonError) {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json; charset=utf-8',
+        headers: { 'access-control-allow-origin': '*' },
+        body: JSON.stringify({ message: '导出失败' }),
+      })
+    }
+    const isPdf = path.includes('/export/pdf')
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(
+          route.fulfill({
+            status: 200,
+            contentType: isPdf
+              ? 'application/pdf'
+              : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            headers: { 'access-control-allow-origin': '*' },
+            body: isPdf ? '%PDF-1.4 mock' : 'PK mock-docx',
+          }),
+        )
+      }, 80)
+    })
+  }
+
+  if (isDiariesCollection(path) && method === 'GET') {
+    return json(route, diaries)
+  }
+
+  if (isDiariesCollection(path) && method === 'POST') {
+    const body = (route.request().postDataJSON() || {}) as Partial<MockDiary>
+    const diaryDate = String(body.diaryDate || todayDateKey())
+    const idx = diaries.findIndex((item) => item.diaryDate === diaryDate)
+    const existing = idx >= 0 ? diaries[idx] : undefined
+    const saved: MockDiary = {
+      id: existing?.id || `d-${diaries.length + 1}`,
+      content: String(body.content || ''),
+      mood: String(body.mood || 'neutral'),
+      tags: body.tags || [],
+      imageUrl: body.imageUrl || '',
+      diaryDate,
+      updatedAt: new Date().toISOString(),
+    }
+    if (idx >= 0) diaries[idx] = saved
+    else diaries.push(saved)
+    return json(route, saved)
+  }
+
+  const deleteMatch = path.match(/\/diaries\/([^/]+)$/)
+  if (method === 'DELETE' && deleteMatch && !path.includes('/export/')) {
+    const id = deleteMatch[1]
+    const idx = diaries.findIndex((item) => item.id === id)
+    if (options.deleteNotFoundIds?.includes(id) || idx < 0) {
+      return json(route, { message: '日记不存在' }, 404)
+    }
+    diaries.splice(idx, 1)
+    return route.fulfill({
+      status: 200,
+      headers: { 'access-control-allow-origin': '*' },
+      body: '',
+    })
+  }
+
+  return json(route, method === 'GET' ? diaries : {})
+}
+
+export async function mockApi(page: Page, options: MockApiOptions = {}) {
   let sessionLive = true
+  const diaries = [...(options.diaries || [])]
   await page.route(isApiRequest, async (route) => {
     const url = new URL(route.request().url())
     if (url.hostname === 'api.github.com') {
@@ -136,6 +256,9 @@ export async function mockApi(page: Page) {
         body: JSON.stringify({ message: 'Unauthorized' }),
       })
     }
-    return json(route, payloadFor(url, method))
+    if (path.includes('/diaries')) {
+      return handleDiaryRoutes(route, path, method, options, diaries)
+    }
+    return json(route, payloadFor(url, method, diaries))
   })
 }

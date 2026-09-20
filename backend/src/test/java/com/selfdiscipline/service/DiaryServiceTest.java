@@ -1,5 +1,6 @@
 package com.selfdiscipline.service;
 
+import com.selfdiscipline.exception.ApiException;
 import com.selfdiscipline.model.Diary;
 import com.selfdiscipline.model.User;
 import com.selfdiscipline.repository.DiaryRepository;
@@ -18,6 +19,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -107,8 +109,33 @@ class DiaryServiceTest {
         when(diaryRepository.findById("d1")).thenReturn(Optional.of(other));
 
         assertNull(diaryService.getDiary("alice", "d1"));
-        diaryService.deleteDiary("alice", "d1");
+    }
+
+    @Test
+    void deleteMissingOrForeignDiaryThrowsNotFound() {
+        when(diaryRepository.findById("missing")).thenReturn(Optional.empty());
+        ApiException missing = assertThrows(ApiException.class, () -> diaryService.deleteDiary("alice", "missing"));
+        assertEquals("日记不存在", missing.getMessage());
+
+        Diary other = diary("d1", "u-other", "2026-09-20");
+        when(diaryRepository.findById("d1")).thenReturn(Optional.of(other));
+        assertThrows(ApiException.class, () -> diaryService.deleteDiary("alice", "d1"));
         verify(diaryRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void unknownMoodFallsBackToNeutralOnSave() {
+        when(diaryRepository.findByUserIdAndDiaryDate("u1", "2026-09-20")).thenReturn(Optional.empty());
+        when(diaryRepository.findByUserIdAndDiaryDate("alice", "2026-09-20")).thenReturn(Optional.empty());
+        when(diaryRepository.save(any(Diary.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Diary input = new Diary();
+        input.setDiaryDate("2026-09-20");
+        input.setContent("hello");
+        input.setMood("angry");
+        Diary saved = diaryService.createOrUpdateDiary("alice", input);
+
+        assertEquals("neutral", saved.getMood());
     }
 
     private static Diary diary(String id, String userId, String date) {

@@ -1,8 +1,8 @@
 import type { Page } from '@playwright/test'
-import { mockApi } from './mockApi'
+import { mockApi, type MockApiOptions } from './mockApi'
 
-export async function seedAuthenticatedSession(page: Page) {
-  await mockApi(page)
+export async function seedAuthenticatedSession(page: Page, options?: MockApiOptions) {
+  await mockApi(page, options)
 }
 
 export async function seedAnonymousSession(page: Page) {

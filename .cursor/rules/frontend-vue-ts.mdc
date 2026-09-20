@@ -26,16 +26,22 @@ function applyTheme(theme: ThemeName) {
 ## 模板禁止 `v-for`
 
 - 不要写 `v-for`。固定少量节点在模板里写死。
-- 动态列表：在 `<script>` 里对**已类型化**的数组 `.map` 成 `h(Comp, props)`，或拆成具名子组件由父级逐个放置。
-- 禁止 `v-for` + `v-if` 写在同一元素上（即便以后有人加回列表指令也不许这样写）。
+- 动态列表：在 `<script>` 里 `.map` + `h()`，或拆成 **setup 返回 render 的具名子组件**，模板只挂组件。
+- 禁止 `v-for` + `v-if` 写在同一元素上。
+
+### 组件 VNode 禁止插值（会炸页面）
+
+**现象**：日记页控制台 `TypeError: Converting circular structure to JSON`，列表整页空白、只剩 loading，过去日记也看不见。
+
+**原因**：模板 `{{ tagNodes }}` 或 `<component :is="h(ElTimelineItem)">` 会走 `JSON.stringify`。`h(ElTag)` / `h(ElTimelineItem)` 这类组件 VNode 有 `vnode ↔ component` 循环引用，stringify 直接抛错，后续渲染中断。
+
+**解决**：拆成 setup 返回 render 的真实子组件（`DiaryTags.vue`、`DiaryTimeline.vue`），模板只写 `<DiaryTags :tags="tags" />`，不要把组件 VNode 插进 mustache。
 
 ```ts
-// ✅ 迭代留在 TS，模板只挂节点
-const weekdayNodes = weekdayLabels.map((label) => h('span', { class: 'weekday' }, label))
+// ❌ 模板 {{ tagNodes }}、:is="h(ElTimeline, ...)"
+const tagNodes = tags.map((tag) => h(ElTag, { key: tag }, () => tag))
+
+// ✅ 具名子组件：setup 里 return () => h(...)，模板 <DiaryTags :tags="tags" />
 ```
 
-```vue
-<template>
-  <div class="weekday-col">{{ weekdayNodes }}</div>
-</template>
-```
+原生 `h('span')` 仍可插值；**Element Plus / 自定义组件 VNode 一律走 render 子组件**，不要插进 mustache。

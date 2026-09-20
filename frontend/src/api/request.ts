@@ -27,6 +27,26 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+async function readErrorMessage(error: AxiosError, fallback: string) {
+  const data = error.response?.data
+  if (data instanceof Blob) {
+    try {
+      const parsed: unknown = JSON.parse(await data.text())
+      if (parsed && typeof parsed === 'object' && 'message' in parsed) {
+        const message = (parsed as { message?: unknown }).message
+        if (typeof message === 'string' && message) return message
+      }
+    } catch {
+      return fallback
+    }
+  }
+  if (data && typeof data === 'object' && 'message' in data) {
+    const message = (data as { message?: unknown }).message
+    if (typeof message === 'string' && message) return message
+  }
+  return fallback
+}
+
 function requestUrl(config: InternalAxiosRequestConfig) {
   return String(config.url || '')
 }
@@ -59,8 +79,10 @@ request.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+    if (config.responseType !== 'blob') {
+      config.headers['Accept'] = 'application/json'
+    }
     config.headers['Content-Type'] = 'application/json'
-    config.headers['Accept'] = 'application/json'
     return config
   },
   (error) => Promise.reject(error),
@@ -125,8 +147,7 @@ request.interceptors.response.use(
     }
 
     if (error.response) {
-      const payload = error.response.data as { message?: string } | undefined
-      const msg = payload?.message || `请求失败（${error.response.status}）`
+      const msg = await readErrorMessage(error, `请求失败（${error.response.status}）`)
       ElMessage.error(msg)
     } else {
       ElMessage.error('网络错误，请稍后重试')

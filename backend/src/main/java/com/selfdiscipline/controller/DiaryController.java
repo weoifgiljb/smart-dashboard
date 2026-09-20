@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 
@@ -60,7 +61,7 @@ public class DiaryController {
     @GetMapping("/export/pdf")
     public void exportPdf(Authentication auth, jakarta.servlet.http.HttpServletResponse response) throws IOException {
         response.setContentType("application/pdf");
-        response.setHeader("Content-Disposition", "attachment; filename=diaries.pdf");
+        response.setHeader("Content-Disposition", "attachment; filename=diaries-" + LocalDate.now() + ".pdf");
         List<Diary> diaries = diaryService.listDiaries(Objects.requireNonNull(auth.getName()));
         diaryExportService.exportToPdf(diaries, response.getOutputStream());
     }
@@ -68,7 +69,7 @@ public class DiaryController {
     @GetMapping("/export/word")
     public void exportWord(Authentication auth, jakarta.servlet.http.HttpServletResponse response) throws IOException {
         response.setContentType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
-        response.setHeader("Content-Disposition", "attachment; filename=diaries.docx");
+        response.setHeader("Content-Disposition", "attachment; filename=diaries-" + LocalDate.now() + ".docx");
         List<Diary> diaries = diaryService.listDiaries(Objects.requireNonNull(auth.getName()));
         diaryExportService.exportToWord(diaries, response.getOutputStream());
     }

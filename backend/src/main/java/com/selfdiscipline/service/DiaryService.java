@@ -2,6 +2,7 @@ package com.selfdiscipline.service;
 
 import com.selfdiscipline.exception.ApiException;
 import com.selfdiscipline.model.Diary;
+import com.selfdiscipline.model.DiaryMood;
 import com.selfdiscipline.model.User;
 import com.selfdiscipline.repository.DiaryRepository;
 import com.selfdiscipline.repository.UserRepository;
@@ -39,6 +40,7 @@ public class DiaryService {
         User user = requireUser(username);
         String ownerId = user.getId();
         diary.setUserId(ownerId);
+        diary.setMood(DiaryMood.normalize(diary.getMood()));
 
         Optional<Diary> existing = diaryRepository.findByUserIdAndDiaryDate(ownerId, diary.getDiaryDate());
         if (existing.isEmpty()) {
@@ -61,10 +63,10 @@ public class DiaryService {
 
     public void deleteDiary(String username, String id) {
         User user = requireUser(username);
-        Optional<Diary> diary = diaryRepository.findById(id);
-        if (diary.isPresent() && owns(user, diary.get())) {
-            diaryRepository.deleteById(id);
-        }
+        Diary diary = diaryRepository.findById(id)
+                .filter(d -> owns(user, d))
+                .orElseThrow(() -> ApiException.notFound("日记不存在"));
+        diaryRepository.deleteById(diary.getId());
     }
 
     public Diary getDiary(String username, String id) {

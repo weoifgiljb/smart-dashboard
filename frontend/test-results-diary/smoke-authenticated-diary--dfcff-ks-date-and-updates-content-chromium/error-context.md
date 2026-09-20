@@ -1,0 +1,59 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - button [ref=e6] [cursor=pointer]:
+      - img [ref=e9]
+    - generic [ref=e11]:
+      - generic [ref=e12]:
+        - switch
+        - generic [ref=e15] [cursor=pointer]: 亮
+      - generic [ref=e17]: 欢迎，alice
+      - button "退出" [ref=e18] [cursor=pointer]:
+        - generic [ref=e19]: 退出
+  - generic [ref=e20]:
+    - complementary [ref=e21]:
+      - heading "自律组件" [level=2] [ref=e23]
+      - menubar [ref=e24]:
+        - menuitem "首页" [ref=e25] [cursor=pointer]:
+          - img [ref=e27]
+          - generic [ref=e29]: 首页
+        - menuitem "日历 & 打卡" [ref=e30] [cursor=pointer]:
+          - img [ref=e32]
+          - generic [ref=e34]: 日历 & 打卡
+        - menuitem "背单词" [ref=e35] [cursor=pointer]:
+          - img [ref=e37]
+          - generic [ref=e40]: 背单词
+        - menuitem "番茄钟" [ref=e41] [cursor=pointer]:
+          - img [ref=e43]
+          - generic [ref=e47]: 番茄钟
+        - menuitem "任务（增强）" [ref=e48] [cursor=pointer]:
+          - img [ref=e50]
+          - generic [ref=e52]: 任务（增强）
+        - menuitem "我的日记" [ref=e53] [cursor=pointer]:
+          - img [ref=e55]
+          - generic [ref=e58]: 我的日记
+        - menuitem "AI问答" [ref=e59] [cursor=pointer]:
+          - img [ref=e61]
+          - generic [ref=e64]: AI问答
+        - menuitem "书籍推送" [ref=e65] [cursor=pointer]:
+          - img [ref=e67]
+          - generic [ref=e70]: 书籍推送
+    - main [ref=e71]:
+      - generic [ref=e72]:
+        - generic [ref=e75]:
+          - generic [ref=e76]:
+            - heading "我的日记" [level=2] [ref=e77]
+            - text: 记录生活，反思成长
+          - generic [ref=e78]:
+            - button "导出 PDF" [disabled] [ref=e79]:
+              - generic [ref=e80]: 导出 PDF
+            - button "导出 Word" [disabled] [ref=e81]:
+              - generic [ref=e82]: 导出 Word
+            - button "写日记" [ref=e83] [cursor=pointer]:
+              - generic [ref=e84]:
+                - img [ref=e86]
+                - text: 写日记
+        - img [ref=e92]
+```

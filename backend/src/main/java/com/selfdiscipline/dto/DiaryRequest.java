@@ -1,6 +1,7 @@
 package com.selfdiscipline.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 import java.util.List;
 
@@ -9,7 +10,11 @@ public class DiaryRequest {
     private String content;
     private String mood;
     private List<String> tags;
+
+    @NotBlank(message = "日期不能为空")
+    @Pattern(regexp = "\\d{4}-\\d{2}-\\d{2}", message = "日期格式应为 YYYY-MM-DD")
     private String diaryDate;
+
     private String imageUrl;
 
     public String getContent() {
