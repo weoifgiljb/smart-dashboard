@@ -43,190 +43,169 @@
         end-placeholder="结束"
         :shortcuts="shortcuts"
         size="default"
-        style="width: 240px"
+        class="date-range"
       />
     </div>
 
-    <!-- KPI Cards -->
-    <el-row :gutter="16" class="kpi-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <el-card shadow="never" class="kpi-card">
-          <div class="kpi-body">
-            <div class="kpi-icon icon-streak">
-              <el-icon><Trophy /></el-icon>
-            </div>
-            <div class="kpi-info">
-              <div class="stat-value">{{ stats.checkInDays }} <span class="unit">天</span></div>
-              <div class="stat-label">连续打卡</div>
-            </div>
+    <section class="kpi-row">
+      <el-card shadow="never" class="kpi-card">
+        <div class="kpi-body">
+          <div class="kpi-icon icon-streak">
+            <el-icon><Trophy /></el-icon>
           </div>
-        </el-card>
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <el-card shadow="never" class="kpi-card">
-          <div class="kpi-body">
-            <div class="kpi-icon icon-words">
+          <div class="kpi-info">
+            <div class="stat-value">{{ stats.checkInDays }} <span class="unit">天</span></div>
+            <div class="stat-label">连续打卡</div>
+          </div>
+        </div>
+      </el-card>
+      <el-card shadow="never" class="kpi-card">
+        <div class="kpi-body">
+          <div class="kpi-icon icon-words">
+            <el-icon><Reading /></el-icon>
+          </div>
+          <div class="kpi-info">
+            <div class="stat-value">{{ stats.wordCount }} <span class="unit">词</span></div>
+            <div class="stat-label">已学单词</div>
+          </div>
+        </div>
+      </el-card>
+      <el-card shadow="never" class="kpi-card">
+        <div class="kpi-body">
+          <div class="kpi-icon icon-pomodoro">
+            <el-icon><Timer /></el-icon>
+          </div>
+          <div class="kpi-info">
+            <div class="stat-value">{{ stats.pomodoroCount }} <span class="unit">个</span></div>
+            <div class="stat-label">完成番茄</div>
+          </div>
+        </div>
+      </el-card>
+      <el-card shadow="never" class="kpi-card">
+        <div class="kpi-body">
+          <div class="kpi-icon icon-total">
+            <el-icon><DataLine /></el-icon>
+          </div>
+          <div class="kpi-info">
+            <div class="stat-value">{{ stats.totalDays }} <span class="unit">天</span></div>
+            <div class="stat-label">累计坚持</div>
+          </div>
+        </div>
+      </el-card>
+    </section>
+
+    <section class="chart-row">
+      <el-card shadow="never" class="chart-card">
+        <template #header>
+          <div class="card-header">
+            <span>近30天热力值</span>
+            <el-tag size="small" effect="plain">趋势</el-tag>
+          </div>
+        </template>
+        <BaseChart :option="heatValueOption" height="var(--dashboard-chart-height)" />
+      </el-card>
+      <el-card shadow="never" class="chart-card">
+        <template #header>
+          <div class="card-header">
+            <span>番茄专注</span>
+            <el-tag type="warning" size="small" effect="plain">近7天</el-tag>
+          </div>
+        </template>
+        <BaseChart
+          :option="pomodoroOption"
+          height="var(--dashboard-chart-height)"
+          @chart-click="(p) => handleChartClick('pomodoro', p)"
+        />
+      </el-card>
+      <el-card shadow="never" class="chart-card">
+        <template #header>
+          <div class="card-header">
+            <span>单词积累</span>
+            <el-tag type="success" size="small" effect="plain">近7天</el-tag>
+          </div>
+        </template>
+        <BaseChart
+          :option="wordsOption"
+          height="var(--dashboard-chart-height)"
+          @chart-click="(p) => handleChartClick('word', p)"
+        />
+      </el-card>
+    </section>
+
+    <section class="list-row">
+      <el-card shadow="never" class="list-card">
+        <template #header>
+          <div class="card-header">
+            <span>今日任务</span>
+            <el-button link type="primary" @click="router.push('/tasks')">查看全部</el-button>
+          </div>
+        </template>
+        <div class="tasks-list">
+          <div class="task-item" :class="{ completed: todayTasks.hasCheckedIn }">
+            <div class="task-icon-wrapper">
+              <el-icon><Calendar /></el-icon>
+            </div>
+            <div class="task-info">
+              <span class="task-title">每日打卡</span>
+              <span class="task-desc">记录今天的成长足迹</span>
+            </div>
+            <el-tag
+              v-if="todayTasks.hasCheckedIn || rhythm.hasCheckedIn"
+              type="success"
+              size="small"
+              effect="dark"
+              >已完成</el-tag
+            >
+            <el-tag v-else size="small" type="info">未完成</el-tag>
+          </div>
+          <div class="task-item">
+            <div class="task-icon-wrapper">
               <el-icon><Reading /></el-icon>
             </div>
-            <div class="kpi-info">
-              <div class="stat-value">{{ stats.wordCount }} <span class="unit">词</span></div>
-              <div class="stat-label">已学单词</div>
+            <div class="task-info">
+              <span class="task-title">学习单词</span>
+              <span class="task-desc">今日需复习与新学单词</span>
             </div>
+            <el-tag type="primary" size="small">{{ rhythm.dueWordCount }} 个到期</el-tag>
           </div>
-        </el-card>
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <el-card shadow="never" class="kpi-card">
-          <div class="kpi-body">
-            <div class="kpi-icon icon-pomodoro">
+          <div class="task-item">
+            <div class="task-icon-wrapper">
               <el-icon><Timer /></el-icon>
             </div>
-            <div class="kpi-info">
-              <div class="stat-value">{{ stats.pomodoroCount }} <span class="unit">个</span></div>
-              <div class="stat-label">完成番茄</div>
+            <div class="task-info">
+              <span class="task-title">{{ rhythm.focusTask ? '绑任务专注' : '番茄专注' }}</span>
+              <span class="task-desc">{{
+                rhythm.focusTask ? rhythm.focusTask.title : '保持高效工作节奏'
+              }}</span>
+            </div>
+            <el-tag type="warning" size="small"
+              >今日 {{ rhythm.heat.pomodoroCount || todayTasks.todayPomodoroCount }} 个</el-tag
+            >
+          </div>
+        </div>
+      </el-card>
+      <el-card shadow="never" class="list-card">
+        <template #header>
+          <div class="card-header">
+            <span>最近活动</span>
+          </div>
+        </template>
+        <div v-if="recentActivities.length > 0" class="activities-list">
+          <div v-for="(activity, index) in recentActivities" :key="index" class="activity-item">
+            <div class="activity-icon" :class="activity.type">
+              <el-icon v-if="activity.type === 'checkin'"><Calendar /></el-icon>
+              <el-icon v-else-if="activity.type === 'pomodoro'"><Timer /></el-icon>
+              <el-icon v-else><Reading /></el-icon>
+            </div>
+            <div class="activity-content">
+              <div class="activity-title">{{ activity.title }}</div>
+              <div class="activity-time">{{ formatActivityTime(activity.time) }}</div>
             </div>
           </div>
-        </el-card>
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <el-card shadow="never" class="kpi-card">
-          <div class="kpi-body">
-            <div class="kpi-icon icon-total">
-              <el-icon><DataLine /></el-icon>
-            </div>
-            <div class="kpi-info">
-              <div class="stat-value">{{ stats.totalDays }} <span class="unit">天</span></div>
-              <div class="stat-label">累计坚持</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <!-- Charts Row -->
-    <el-row :gutter="20" class="chart-row">
-      <el-col :xs="24" :lg="8">
-        <el-card shadow="never" class="chart-card">
-          <template #header>
-            <div class="card-header">
-              <span>近30天热力值</span>
-              <el-tag size="small" effect="plain">趋势</el-tag>
-            </div>
-          </template>
-          <BaseChart :option="heatValueOption" height="200px" />
-        </el-card>
-      </el-col>
-      <el-col :xs="24" :lg="8">
-        <el-card shadow="never" class="chart-card">
-          <template #header>
-            <div class="card-header">
-              <span>番茄专注</span>
-              <el-tag type="warning" size="small" effect="plain">近7天</el-tag>
-            </div>
-          </template>
-          <BaseChart
-            :option="pomodoroOption"
-            height="200px"
-            @chart-click="(p) => handleChartClick('pomodoro', p)"
-          />
-        </el-card>
-      </el-col>
-      <el-col :xs="24" :lg="8">
-        <el-card shadow="never" class="chart-card">
-          <template #header>
-            <div class="card-header">
-              <span>单词积累</span>
-              <el-tag type="success" size="small" effect="plain">近7天</el-tag>
-            </div>
-          </template>
-          <BaseChart
-            :option="wordsOption"
-            height="200px"
-            @chart-click="(p) => handleChartClick('word', p)"
-          />
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <!-- Bottom Row: Today Tasks & Recent Activity -->
-    <el-row :gutter="20" class="list-row">
-      <el-col :xs="24" :lg="12">
-        <el-card shadow="never" class="list-card">
-          <template #header>
-            <div class="card-header">
-              <span>今日任务</span>
-              <el-button link type="primary" @click="router.push('/tasks')">查看全部</el-button>
-            </div>
-          </template>
-          <div class="tasks-list">
-            <div class="task-item" :class="{ completed: todayTasks.hasCheckedIn }">
-              <div class="task-icon-wrapper">
-                <el-icon><Calendar /></el-icon>
-              </div>
-              <div class="task-info">
-                <span class="task-title">每日打卡</span>
-                <span class="task-desc">记录今天的成长足迹</span>
-              </div>
-              <el-tag
-                v-if="todayTasks.hasCheckedIn || rhythm.hasCheckedIn"
-                type="success"
-                size="small"
-                effect="dark"
-                >已完成</el-tag
-              >
-              <el-tag v-else size="small" type="info">未完成</el-tag>
-            </div>
-            <div class="task-item">
-              <div class="task-icon-wrapper">
-                <el-icon><Reading /></el-icon>
-              </div>
-              <div class="task-info">
-                <span class="task-title">学习单词</span>
-                <span class="task-desc">今日需复习与新学单词</span>
-              </div>
-              <el-tag type="primary" size="small">{{ rhythm.dueWordCount }} 个到期</el-tag>
-            </div>
-            <div class="task-item">
-              <div class="task-icon-wrapper">
-                <el-icon><Timer /></el-icon>
-              </div>
-              <div class="task-info">
-                <span class="task-title">{{ rhythm.focusTask ? '绑任务专注' : '番茄专注' }}</span>
-                <span class="task-desc">{{
-                  rhythm.focusTask ? rhythm.focusTask.title : '保持高效工作节奏'
-                }}</span>
-              </div>
-              <el-tag type="warning" size="small"
-                >今日 {{ rhythm.heat.pomodoroCount || todayTasks.todayPomodoroCount }} 个</el-tag
-              >
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <el-card shadow="never" class="list-card">
-          <template #header>
-            <div class="card-header">
-              <span>最近活动</span>
-            </div>
-          </template>
-          <div v-if="recentActivities.length > 0" class="activities-list">
-            <div v-for="(activity, index) in recentActivities" :key="index" class="activity-item">
-              <div class="activity-icon" :class="activity.type">
-                <el-icon v-if="activity.type === 'checkin'"><Calendar /></el-icon>
-                <el-icon v-else-if="activity.type === 'pomodoro'"><Timer /></el-icon>
-                <el-icon v-else><Reading /></el-icon>
-              </div>
-              <div class="activity-content">
-                <div class="activity-title">{{ activity.title }}</div>
-                <div class="activity-time">{{ formatActivityTime(activity.time) }}</div>
-              </div>
-            </div>
-          </div>
-          <el-empty v-else description="暂无活动" :image-size="80" />
-        </el-card>
-      </el-col>
-    </el-row>
+        </div>
+        <el-empty v-else description="暂无活动" :image-size="80" />
+      </el-card>
+    </section>
 
     <!-- Dialogs -->
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="600px" align-center>
@@ -338,14 +317,17 @@ defineExpose({ formatDurationMinutes })
 </script>
 
 <style scoped lang="less">
+@import '../styles/space.less';
+
 .dashboard {
   max-width: 1200px;
   margin: 0 auto;
+  container-type: inline-size;
 }
 
 .rhythm-card {
-  margin-bottom: 16px;
-  padding: 24px;
+  margin-bottom: var(--dashboard-section-gap);
+  padding: var(--dashboard-rhythm-pad);
   background: var(--color-bg-elevated);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
@@ -355,11 +337,11 @@ defineExpose({ formatDurationMinutes })
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .rhythm-kicker {
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-2);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.16em;
@@ -371,12 +353,12 @@ defineExpose({ formatDurationMinutes })
   font-size: 28px;
   font-weight: 700;
   color: var(--color-text);
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-2);
   letter-spacing: -0.5px;
 }
 
 .subtitle {
-  margin: 0 0 20px;
+  margin: 0 0 var(--space-5);
   color: var(--color-text-secondary);
   font-size: 14px;
   line-height: 1.6;
@@ -389,7 +371,7 @@ defineExpose({ formatDurationMinutes })
 }
 
 .rhythm-heat {
-  padding: 4px 0;
+  padding: var(--space-1) 0;
 }
 
 .heat-total {
@@ -407,7 +389,7 @@ defineExpose({ formatDurationMinutes })
 }
 
 .heat-total span {
-  margin-top: 6px;
+  margin-top: var(--space-2);
   font-size: 13px;
   color: var(--color-text-secondary);
 }
@@ -415,14 +397,14 @@ defineExpose({ formatDurationMinutes })
 .heat-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  margin-top: 20px;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
 }
 
 .heat-row {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-1);
   font-size: 12px;
   color: var(--color-text-secondary);
   min-width: 0;
@@ -431,7 +413,7 @@ defineExpose({ formatDurationMinutes })
 .heat-heading {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .heat-label {
@@ -461,24 +443,50 @@ defineExpose({ formatDurationMinutes })
 }
 
 .heat-formula {
-  margin: 12px 0 0;
+  margin: var(--space-3) 0 0;
   font-size: 12px;
   color: var(--color-text-muted);
 }
 
 .chart-toolbar {
   display: flex;
-  justify-content: flex-end;
-  margin-bottom: 16px;
+  margin-bottom: var(--dashboard-section-gap);
+}
+
+.date-range {
+  width: 100%;
+}
+
+.kpi-row,
+.chart-row,
+.list-row {
+  display: grid;
+  gap: var(--dashboard-kpi-gap);
 }
 
 .kpi-row {
-  margin-bottom: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .chart-row,
 .list-row {
-  margin-top: 20px;
+  grid-template-columns: 1fr;
+  margin-top: var(--dashboard-section-gap);
+  gap: var(--dashboard-chart-gap);
+}
+
+@container (min-width: @dashboard-break-dense) {
+  .kpi-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .chart-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .list-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .kpi-card,
@@ -492,13 +500,23 @@ defineExpose({ formatDurationMinutes })
 }
 
 .kpi-card :deep(.el-card__body) {
-  padding: 16px 20px;
+  padding: var(--dashboard-card-pad-y) var(--dashboard-card-pad-x);
+}
+
+.chart-card :deep(.el-card__header),
+.list-card :deep(.el-card__header) {
+  padding: var(--dashboard-card-pad-y) var(--dashboard-card-pad-x);
+}
+
+.chart-card :deep(.el-card__body),
+.list-card :deep(.el-card__body) {
+  padding: var(--space-2) var(--dashboard-card-pad-x) var(--dashboard-card-pad-y);
 }
 
 .kpi-body {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .kpi-icon {
@@ -549,7 +567,7 @@ defineExpose({ formatDurationMinutes })
 .stat-label {
   font-size: 13px;
   color: var(--color-text-secondary);
-  margin-top: 4px;
+  margin-top: var(--space-1);
 }
 
 .card-header {
@@ -566,13 +584,13 @@ defineExpose({ formatDurationMinutes })
 
 .tasks-list,
 .activities-list {
-  padding: 4px 0;
+  padding: var(--space-1) 0;
 }
 
 .task-item {
   display: flex;
   align-items: center;
-  padding: 16px 0;
+  padding: var(--space-3) 0;
   border-bottom: 1px solid var(--color-bg-muted);
 }
 
@@ -588,7 +606,7 @@ defineExpose({ formatDurationMinutes })
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 16px;
+  margin-right: var(--space-4);
   color: var(--color-text-secondary);
 }
 
@@ -601,7 +619,7 @@ defineExpose({ formatDurationMinutes })
   font-size: 15px;
   font-weight: 500;
   color: var(--color-text);
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 
 .task-desc {
@@ -616,7 +634,7 @@ defineExpose({ formatDurationMinutes })
 .activity-item {
   display: flex;
   align-items: flex-start;
-  padding: 12px 0;
+  padding: var(--space-3) 0;
   border-bottom: 1px dashed var(--color-border);
 }
 
@@ -631,7 +649,7 @@ defineExpose({ formatDurationMinutes })
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 12px;
+  margin-right: var(--space-3);
   flex-shrink: 0;
   font-size: 14px;
 }
@@ -658,7 +676,7 @@ defineExpose({ formatDurationMinutes })
 .activity-title {
   font-size: 14px;
   color: var(--color-text);
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 
 .activity-time {
@@ -666,13 +684,9 @@ defineExpose({ formatDurationMinutes })
   color: var(--color-text-muted);
 }
 
-@media (max-width: 768px) {
-  .kpi-row,
-  .chart-row,
-  .list-row {
-    :deep(.el-col) {
-      margin-bottom: 16px;
-    }
+@media (max-width: 767px) {
+  .kpi-row {
+    grid-template-columns: 1fr;
   }
 }
 </style>

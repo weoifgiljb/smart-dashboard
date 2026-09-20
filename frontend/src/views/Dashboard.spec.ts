@@ -84,6 +84,8 @@ describe('Dashboard.vue', () => {
     expect(wrapper.text()).toContain('番茄')
     expect(wrapper.text()).toContain('单词')
     expect(wrapper.text()).toContain('任务')
+    expect(wrapper.findAll('.kpi-card')).toHaveLength(4)
+    expect(wrapper.findAll('.chart-card')).toHaveLength(3)
   })
 
   it('navigates to the rhythm CTA path', async () => {
