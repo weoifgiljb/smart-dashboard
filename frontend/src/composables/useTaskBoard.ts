@@ -13,6 +13,7 @@ import {
   useTasksQuery,
 } from '@/api/hooks/useTasks'
 import { chartPalette } from '@/utils/themeTokens'
+import { buildTaskPayload, minutesProgress } from '@/utils/taskPayload'
 
 export function useTaskBoard() {
   const store = useTasksStore()
@@ -62,6 +63,7 @@ export function useTaskBoard() {
     startDate: '',
     dueDate: '',
     estimateMinutes: 0,
+    actualMinutes: 0,
     remindAt: '',
   })
 
@@ -130,6 +132,7 @@ export function useTaskBoard() {
       startDate: '',
       dueDate: '',
       estimateMinutes: 0,
+      actualMinutes: 0,
       remindAt: '',
     }
   }
@@ -158,16 +161,7 @@ export function useTaskBoard() {
 
   function saveTask() {
     if (!form.value.title || !form.value.title.trim()) return
-    const payload: Partial<Task> = { ...form.value }
-    if (!payload.startDate) delete payload.startDate
-    if (!payload.dueDate) delete payload.dueDate
-    if (!payload.remindAt) delete payload.remindAt
-    if (payload.startDate && /^\d{4}-\d{2}-\d{2}$/.test(payload.startDate)) {
-      payload.startDate = `${payload.startDate}T00:00:00`
-    }
-    if (payload.dueDate && /^\d{4}-\d{2}-\d{2}$/.test(payload.dueDate)) {
-      payload.dueDate = `${payload.dueDate}T00:00:00`
-    }
+    const payload = buildTaskPayload(form.value)
     const action =
       isEdit.value && form.value.id ? apiUpdate(form.value.id, payload) : apiCreate(payload)
     action.then(() => {
@@ -286,5 +280,6 @@ export function useTaskBoard() {
     statusType,
     statusPieOption,
     priorityPieOption,
+    minutesProgress,
   }
 }

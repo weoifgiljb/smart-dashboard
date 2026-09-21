@@ -19,7 +19,7 @@
               <el-icon><Menu /></el-icon>
             </el-button>
             <span class="model-name">AI 助手</span>
-            <el-tag size="small" type="success" effect="light" round>Online</el-tag>
+            <el-tag size="small" effect="plain" round>带着今日节律</el-tag>
           </div>
           <div class="header-actions">
             <el-input
@@ -143,10 +143,10 @@ const searchQuery = ref('')
 const sidebarOpen = ref(false)
 
 const presetQuestions = [
-  '📅 帮我规划今天的日程',
-  '🍅 解释一下番茄工作法',
-  '📝 帮我写一份周报摘要',
-  '💪 制定一周健身计划',
+  '帮我按今天的节律排今晚',
+  '解释一下今天的热力构成',
+  '用一枚番茄推进当前任务',
+  '帮我写今日日记的提纲',
 ] as const
 
 const filteredMessages = computed(() => {

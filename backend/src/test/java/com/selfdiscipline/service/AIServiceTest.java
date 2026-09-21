@@ -300,6 +300,14 @@ class AIServiceTest {
     }
 
     @Test
+    void llmContextPrependsRhythmSystemMessage() {
+        List<Map<String, String>> messages = AIService.buildLlmMessages(List.of(), "now", "今日节律");
+        assertEquals("system", messages.get(0).get("role"));
+        assertEquals("今日节律", messages.get(0).get("content"));
+        assertEquals("now", messages.get(messages.size() - 1).get("content"));
+    }
+
+    @Test
     void firstMessageAutoTitlesDefaultConversation() {
         User user = user("u1", "alice");
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(user));

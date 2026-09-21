@@ -142,6 +142,10 @@
               <div class="s-val">{{ (dayDetails.tasks || []).length }}</div>
               <div class="s-label">任务</div>
             </div>
+            <div class="summary-item">
+              <div class="s-val">{{ (dayDetails.diaries || []).length }}</div>
+              <div class="s-label">日记</div>
+            </div>
           </div>
 
           <div class="timeline-section">
@@ -415,6 +419,19 @@ const sortedTimelineEvents = computed(() => {
       tagType: 'info',
     })
   }
+
+  ;(d.diaries || []).forEach((entry: { content?: string; mood?: string; updatedAt?: string }) => {
+    events.push({
+      time: entry.updatedAt ? formatTime(entry.updatedAt) : '',
+      timestamp: entry.updatedAt ? new Date(entry.updatedAt).getTime() : 0,
+      title: '写下日记',
+      desc: entry.content ? String(entry.content).slice(0, 80) : '',
+      type: 'success',
+      color: chartPalette().primary,
+      tag: 'Diary',
+      tagType: 'success',
+    })
+  })
 
   // Tasks - 完成的任务
   ;(d.tasks || [])

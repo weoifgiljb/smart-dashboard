@@ -9,7 +9,12 @@ import App from './App.vue'
 import router from './router'
 import './styles/global.less'
 import { VueQueryPlugin, QueryClient, type VueQueryPluginOptions } from '@tanstack/vue-query'
-import { applyTheme, resolveInitialTheme } from './composables/useTheme'
+import {
+  applyMood,
+  applyTheme,
+  resolveInitialMood,
+  resolveInitialTheme,
+} from './composables/useTheme'
 import { initOfflineQueue } from './utils/offlineQueue'
 import request from './api/request'
 import * as Sentry from '@sentry/vue'
@@ -38,6 +43,7 @@ const queryClient = new QueryClient({
 app.use(VueQueryPlugin, { queryClient } as VueQueryPluginOptions)
 
 applyTheme(resolveInitialTheme())
+applyMood(resolveInitialMood())
 
 app.mount('#app')
 

@@ -3,6 +3,7 @@ package com.selfdiscipline.service;
 import com.selfdiscipline.config.AliyunAIConfig;
 import com.selfdiscipline.config.OllamaConfig;
 import com.selfdiscipline.dto.ChatResponse;
+import com.selfdiscipline.dto.RhythmResponse;
 import com.selfdiscipline.exception.ApiException;
 import com.selfdiscipline.model.Chat;
 import com.selfdiscipline.model.Conversation;
@@ -43,6 +44,7 @@ public class AIService {
     private final OllamaConfig ollamaConfig;
     private final WebClient webClient;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private DashboardService dashboardService;
 
     @Autowired
     public AIService(ChatRepository chatRepository,
@@ -65,6 +67,30 @@ public class AIService {
         this.aliyunAIConfig = aliyunAIConfig;
         this.ollamaConfig = ollamaConfig;
         this.webClient = webClient;
+    }
+
+    @Autowired(required = false)
+    void setDashboardService(DashboardService dashboardService) {
+        this.dashboardService = dashboardService;
+    }
+
+    String rhythmContext(String username) {
+        if (dashboardService == null) {
+            return "";
+        }
+        try {
+            RhythmResponse rhythm = dashboardService.getRhythm(username);
+            String task = rhythm.getFocusTask() == null ? "无" : rhythm.getFocusTask().getTitle();
+            int heat = rhythm.getHeat() == null ? 0 : rhythm.getHeat().getTotal();
+            return "今日节律（只读，不要改数据）：下一动作=" + rhythm.getNextAction()
+                    + "，到期词=" + rhythm.getDueWordCount()
+                    + "，专注任务=" + task
+                    + "，今日热力=" + heat
+                    + "。请据此帮助用户安排今晚或解释热力，不要声称已改任务或打卡。";
+        } catch (Exception e) {
+            log.debug("注入节律上下文失败: {}", e.getMessage());
+            return "";
+        }
     }
 
     public Conversation createConversation(String username) {
@@ -134,7 +160,7 @@ public class AIService {
             }
             contextHistory = history.subList(0, history.size() - 1);
         }
-        String answer = complete(buildLlmMessages(contextHistory, question));
+        String answer = complete(buildLlmMessages(contextHistory, question, rhythmContext(username)));
         if (lastTurn != null) {
             lastTurn.setAnswer(answer);
             chatRepository.save(lastTurn);
@@ -148,9 +174,16 @@ public class AIService {
     }
 
     static List<Map<String, String>> buildLlmMessages(List<Chat> history, String question) {
+        return buildLlmMessages(history, question, "");
+    }
+
+    static List<Map<String, String>> buildLlmMessages(List<Chat> history, String question, String rhythmContext) {
         List<Chat> turns = history == null ? List.of() : history;
         int start = Math.max(0, turns.size() - CONTEXT_TURNS);
         List<Map<String, String>> messages = new ArrayList<>();
+        if (rhythmContext != null && !rhythmContext.isBlank()) {
+            messages.add(Map.of("role", "system", "content", rhythmContext));
+        }
         for (int i = start; i < turns.size(); i++) {
             Chat turn = turns.get(i);
             messages.add(Map.of("role", "user", "content", nullToEmpty(turn.getQuestion())));

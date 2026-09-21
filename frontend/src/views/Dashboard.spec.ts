@@ -6,6 +6,8 @@ import { useRouter } from 'vue-router'
 import Dashboard from './Dashboard.vue'
 
 const push = vi.fn()
+const loadError = ref('')
+const longTermOpen = ref(false)
 
 vi.mock('vue-router', () => ({
   useRouter: vi.fn(),
@@ -56,6 +58,8 @@ vi.mock('@/composables/useDashboard', () => ({
     shortcuts: [],
     handleChartClick: vi.fn(),
     formatActivityTime: vi.fn(),
+    loadError,
+    longTermOpen,
   }),
 }))
 
@@ -69,6 +73,8 @@ vi.mock('@/components/charts/BaseChart.vue', () => ({
 describe('Dashboard.vue', () => {
   beforeEach(() => {
     push.mockReset()
+    loadError.value = ''
+    longTermOpen.value = false
     vi.mocked(useRouter).mockReturnValue({ push } as never)
   })
 
@@ -84,8 +90,17 @@ describe('Dashboard.vue', () => {
     expect(wrapper.text()).toContain('番茄')
     expect(wrapper.text()).toContain('单词')
     expect(wrapper.text()).toContain('任务')
-    expect(wrapper.findAll('.kpi-card')).toHaveLength(4)
-    expect(wrapper.findAll('.chart-card')).toHaveLength(3)
+    expect(wrapper.text()).toContain('查看长期指标')
+    expect(wrapper.findAll('.kpi-card')).toHaveLength(0)
+    expect(wrapper.findAll('.chart-card')).toHaveLength(0)
+  })
+
+  it('shows a load error instead of a silent empty dashboard', () => {
+    loadError.value = '首页数据加载失败，请刷新重试'
+    const wrapper = mount(Dashboard, {
+      global: { plugins: [ElementPlus] },
+    })
+    expect(wrapper.text()).toContain('首页数据加载失败，请刷新重试')
   })
 
   it('navigates to the rhythm CTA path', async () => {

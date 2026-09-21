@@ -519,18 +519,24 @@ const advanceReview = () => {
 
 <style scoped lang="less">
 .pomodoro-page {
+  width: 100%;
   max-width: 800px;
+  min-width: 0;
   margin: 0 auto;
+  container-type: inline-size;
 }
 
 .timer-card {
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
+  min-width: 0;
   padding: 32px;
   background: var(--color-bg-elevated);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
+  overflow: hidden;
 }
 
 .card-header {
@@ -538,18 +544,22 @@ const advanceReview = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   margin-bottom: 40px;
 }
 
 .card-header h3 {
   margin: 0;
+  flex: 0 0 auto;
   font-size: 18px;
   font-weight: 700;
   color: var(--color-text);
+  white-space: nowrap;
 }
 
 .mode-switch {
   display: flex;
+  flex: 0 0 auto;
   padding: 4px;
   background: var(--color-bg-muted);
   border-radius: 12px;
@@ -564,6 +574,7 @@ const advanceReview = () => {
   padding: 6px 24px;
   border-radius: 8px;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .mode-btn.active {
@@ -575,8 +586,9 @@ const advanceReview = () => {
 
 .progress-container {
   position: relative;
-  width: 288px;
-  height: 288px;
+  width: min(288px, 100%);
+  aspect-ratio: 1;
+  height: auto;
   margin-bottom: 32px;
 }
 
@@ -606,7 +618,7 @@ const advanceReview = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 60px;
+  font-size: clamp(32px, 18cqi, 60px);
   font-weight: 700;
   letter-spacing: -2px;
   color: var(--color-text);
@@ -657,6 +669,7 @@ const advanceReview = () => {
   gap: 32px;
   width: 100%;
   max-width: 380px;
+  min-width: 0;
   padding: 16px 24px;
   background: color-mix(in srgb, var(--color-bg-muted) 70%, transparent);
   border-radius: var(--radius-md);
@@ -739,6 +752,7 @@ const advanceReview = () => {
   grid-template-columns: 1fr 1fr;
   gap: 24px;
   margin-top: 24px;
+  min-width: 0;
 }
 
 .chart-card {
@@ -814,12 +828,61 @@ const advanceReview = () => {
   }
 
   .progress-container {
-    width: 240px;
-    height: 240px;
+    width: min(240px, 100%);
   }
 
   .time-display {
     font-size: 48px;
+  }
+
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@container (max-width: 560px) {
+  .timer-card {
+    padding: 20px 12px;
+  }
+
+  .card-header {
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+
+  .mode-btn {
+    padding: 6px 14px;
+  }
+
+  .progress-container {
+    width: min(220px, 100%);
+    margin-bottom: 20px;
+  }
+
+  .time-display {
+    font-size: clamp(32px, 12cqi, 48px);
+    letter-spacing: 0;
+  }
+
+  .timer-controls {
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .ctrl-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .ctrl-btn.play {
+    width: 64px;
+    height: 64px;
+  }
+
+  .timer-config {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 12px;
   }
 
   .charts-row {

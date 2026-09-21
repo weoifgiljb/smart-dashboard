@@ -10,6 +10,7 @@ import com.selfdiscipline.model.Word;
 import com.selfdiscipline.service.AIService;
 import com.selfdiscipline.service.ImageService;
 import jakarta.validation.Valid;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,7 +22,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 
@@ -73,6 +76,25 @@ public class AIController {
                 request.getConversationId(),
                 request.getQuestion(),
                 request.getReplaceLast()));
+    }
+
+    @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_PLAIN_VALUE)
+    public StreamingResponseBody chatStream(@Valid @RequestBody ChatRequest request, Authentication authentication) {
+        ChatResponse response = aiService.chat(
+                Objects.requireNonNull(authentication.getName()),
+                request.getConversationId(),
+                request.getQuestion(),
+                request.getReplaceLast());
+        String answer = response.getAnswer() == null ? "" : response.getAnswer();
+        return outputStream -> {
+            byte[] bytes = answer.getBytes(StandardCharsets.UTF_8);
+            int step = 24;
+            for (int i = 0; i < bytes.length; i += step) {
+                int len = Math.min(step, bytes.length - i);
+                outputStream.write(bytes, i, len);
+                outputStream.flush();
+            }
+        };
     }
 
     @GetMapping("/history")

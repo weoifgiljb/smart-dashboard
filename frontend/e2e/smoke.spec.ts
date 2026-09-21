@@ -62,7 +62,7 @@ test.describe('authenticated smoke', () => {
       { menu: '任务（增强）', heading: '任务清单' },
       { menu: '我的日记', heading: '我的日记' },
       { menu: 'AI问答', heading: 'AI 助手' },
-      { menu: '书籍推送', heading: '发现下一本好书' },
+      { menu: '书籍推送（扩展）', heading: '发现下一本好书' },
     ]
 
     for (const { menu, heading } of visits) {

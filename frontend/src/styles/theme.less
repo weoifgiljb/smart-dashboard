@@ -1,4 +1,5 @@
 @import './palette.less';
+@import './moods.less';
 @import './space.less';
 
 :root {
@@ -47,6 +48,11 @@
   --sidebar-local-text: @sidebar-text;
   --sidebar-local-text-secondary: @sidebar-text-secondary;
   --sidebar-local-border: @sidebar-border;
+  --glass-bg: rgba(255, 255, 255, 0.64);
+  --glass-border: rgba(255, 255, 255, 0.38);
+  --glass-blur: 16px;
+  --glass-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  --mood-wash: url('../assets/moods/wash.svg');
 
   /* Legacy aliases */
   --app-bg: var(--color-bg);
@@ -102,6 +108,9 @@
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.45);
   --gradient-primary: linear-gradient(135deg, @primary-dark 0%, @secondary-dark 100%);
+  --glass-bg: rgba(20, 20, 20, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -131,5 +140,88 @@
     --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.45);
     --gradient-primary: linear-gradient(135deg, @primary-dark 0%, @secondary-dark 100%);
+    --glass-bg: rgba(20, 20, 20, 0.55);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
   }
+}
+
+[data-mood='pool'] {
+  --color-primary: @pool-primary-light;
+  --color-primary-hover: @pool-primary-hover-light;
+  --color-primary-soft: rgba(@pool-primary-rgb-light, 0.12);
+  --color-primary-rgb: @pool-primary-rgb-light;
+  --color-secondary: @pool-secondary-light;
+  --gradient-primary: linear-gradient(160deg, @pool-primary-light 0%, @pool-secondary-light 100%);
+  --sidebar-local-bg: @pool-sidebar-light;
+}
+
+[data-mood='pool'][data-theme='dark'] {
+  --color-primary: @pool-primary-dark;
+  --color-primary-hover: @pool-primary-hover-dark;
+  --color-primary-soft: rgba(@pool-primary-rgb-dark, 0.16);
+  --color-primary-rgb: @pool-primary-rgb-dark;
+  --color-secondary: @pool-secondary-dark;
+  --gradient-primary: linear-gradient(160deg, @pool-primary-dark 0%, @pool-secondary-dark 100%);
+  --sidebar-local-bg: @pool-sidebar-dark;
+}
+
+[data-mood='ocean'] {
+  --color-primary: @ocean-primary-light;
+  --color-primary-hover: @ocean-primary-hover-light;
+  --color-primary-soft: rgba(@ocean-primary-rgb-light, 0.12);
+  --color-primary-rgb: @ocean-primary-rgb-light;
+  --color-secondary: @ocean-secondary-light;
+  --gradient-primary: linear-gradient(160deg, @ocean-primary-light 0%, @ocean-secondary-light 100%);
+  --sidebar-local-bg: @ocean-sidebar-light;
+}
+
+[data-mood='ocean'][data-theme='dark'] {
+  --color-primary: @ocean-primary-dark;
+  --color-primary-hover: @ocean-primary-hover-dark;
+  --color-primary-soft: rgba(@ocean-primary-rgb-dark, 0.16);
+  --color-primary-rgb: @ocean-primary-rgb-dark;
+  --color-secondary: @ocean-secondary-dark;
+  --gradient-primary: linear-gradient(160deg, @ocean-primary-dark 0%, @ocean-secondary-dark 100%);
+  --sidebar-local-bg: @ocean-sidebar-dark;
+}
+
+[data-mood='crystal'] {
+  --color-primary: @crystal-primary-light;
+  --color-primary-hover: @crystal-primary-hover-light;
+  --color-primary-soft: rgba(@crystal-primary-rgb-light, 0.12);
+  --color-primary-rgb: @crystal-primary-rgb-light;
+  --color-secondary: @crystal-secondary-light;
+  --gradient-primary: linear-gradient(160deg, @crystal-primary-light 0%, @crystal-secondary-light 100%);
+  --sidebar-local-bg: @crystal-sidebar-light;
+}
+
+[data-mood='crystal'][data-theme='dark'] {
+  --color-primary: @crystal-primary-dark;
+  --color-primary-hover: @crystal-primary-hover-dark;
+  --color-primary-soft: rgba(@crystal-primary-rgb-dark, 0.16);
+  --color-primary-rgb: @crystal-primary-rgb-dark;
+  --color-secondary: @crystal-secondary-dark;
+  --gradient-primary: linear-gradient(160deg, @crystal-primary-dark 0%, @crystal-secondary-dark 100%);
+  --sidebar-local-bg: @crystal-sidebar-dark;
+}
+
+[data-mood='rain'] {
+  --color-primary: @rain-primary-light;
+  --color-primary-hover: @rain-primary-hover-light;
+  --color-primary-soft: rgba(@rain-primary-rgb-light, 0.12);
+  --color-primary-rgb: @rain-primary-rgb-light;
+  --color-secondary: @rain-secondary-light;
+  --gradient-primary: linear-gradient(160deg, @rain-primary-light 0%, @rain-secondary-light 100%);
+  --sidebar-local-bg: @rain-sidebar-light;
+}
+
+[data-mood='rain'][data-theme='dark'] {
+  --color-primary: @rain-primary-dark;
+  --color-primary-hover: @rain-primary-hover-dark;
+  --color-primary-soft: rgba(@rain-primary-rgb-dark, 0.16);
+  --color-primary-rgb: @rain-primary-rgb-dark;
+  --color-secondary: @rain-secondary-dark;
+  --gradient-primary: linear-gradient(160deg, @rain-primary-dark 0%, @rain-secondary-dark 100%);
+  --sidebar-local-bg: @rain-sidebar-dark;
 }
