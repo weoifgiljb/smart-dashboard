@@ -160,11 +160,15 @@ public class DashboardService {
                 })
                 .limit(10)
                 .forEach(diary -> {
+                    String time = diaryActivityTime(diary);
+                    if (time.isBlank()) {
+                        return;
+                    }
                     Map<String, Object> activity = new HashMap<>();
                     activity.put("type", "diary");
                     activity.put("title", "写下日记");
                     activity.put("date", diary.getDiaryDate());
-                    activity.put("time", safeTime(diary.getUpdatedAt(), diary.getCreatedAt()));
+                    activity.put("time", time);
                     activities.add(activity);
                 });
 
@@ -286,6 +290,14 @@ public class DashboardService {
     private static String safeTime(LocalDateTime preferred, LocalDateTime fallback) {
         LocalDateTime value = preferred != null ? preferred : fallback;
         return value == null ? "" : value.toString();
+    }
+
+    private static String diaryActivityTime(Diary diary) {
+        String time = safeTime(diary.getUpdatedAt(), diary.getCreatedAt());
+        if (!time.isBlank() || diary.getDiaryDate() == null) {
+            return time;
+        }
+        return LocalDate.parse(diary.getDiaryDate()).atStartOfDay().toString();
     }
 }
 

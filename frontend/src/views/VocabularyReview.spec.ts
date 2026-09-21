@@ -95,4 +95,14 @@ describe('VocabularyReview.vue', () => {
     expect(wrapper.text()).toContain('今日没有到期单词')
     expect(wrapper.text()).not.toContain('加载中或暂无单词')
   })
+
+  it('shows retry when loading today words fails', async () => {
+    vi.mocked(getTodayWords).mockRejectedValue(new Error('network'))
+    const wrapper = mount(VocabularyReview, {
+      global: { plugins: [ElementPlus] },
+    })
+    await flushPromises()
+    expect(wrapper.text()).toContain('加载到期单词失败，请重试')
+    expect(wrapper.text()).not.toContain('今日没有到期单词')
+  })
 })

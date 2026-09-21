@@ -45,6 +45,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
 class AIServiceTest {
@@ -297,6 +298,23 @@ class AIServiceTest {
         assertEquals("now", messages.get(messages.size() - 1).get("content"));
         assertEquals(21, messages.size());
         assertTrue(messages.stream().noneMatch(m -> "fromA".equals(m.get("content"))));
+    }
+
+    @Test
+    void prepareChatStreamDoesNotPersistBeforeFinalize() {
+        User user = user("u1", "alice");
+        when(userRepository.findByUsername("alice")).thenReturn(Optional.of(user));
+        Conversation conv = conversation("conv1", "u1", AIService.DEFAULT_TITLE);
+        when(conversationRepository.findById("conv1")).thenReturn(Optional.of(conv));
+        when(chatRepository.findByConversationIdAndUserIdOrderByCreateTimeAsc("conv1", "u1"))
+                .thenReturn(List.of());
+        stubSaveReturnsArg(chatRepository, Chat.class);
+
+        AIService.ChatStreamHandle handle = aiService.prepareChatStream("alice", "conv1", "hello", false);
+        verify(chatRepository, never()).save(any(Chat.class));
+
+        aiService.finalizeChatStream(handle, "world");
+        verify(chatRepository).save(any(Chat.class));
     }
 
     @Test

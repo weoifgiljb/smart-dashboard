@@ -141,6 +141,11 @@
       <div v-else-if="queueLoading" class="empty-state">
         <el-empty description="正在加载到期单词" />
       </div>
+      <div v-else-if="queueError" class="empty-state">
+        <el-empty :description="queueError">
+          <el-button type="primary" @click="initQueue">重试</el-button>
+        </el-empty>
+      </div>
       <div v-else-if="queue.length === 0 && !summary.total" class="empty-state">
         <el-empty description="今日没有到期单词" />
       </div>
@@ -222,6 +227,7 @@ const resultType = ref<'correct' | 'wrong'>('correct')
 const inputRef = ref<HTMLInputElement>()
 const showSettings = ref(false)
 const queueLoading = ref(true)
+const queueError = ref('')
 
 const settings = ref({
   autoPlayAudio: true,
@@ -260,6 +266,7 @@ const initQueue = async () => {
 
   let list: WordItem[] = []
   queueLoading.value = true
+  queueError.value = ''
   try {
     if (ids.length) {
       const all = await getWords()
@@ -269,6 +276,8 @@ const initQueue = async () => {
     }
   } catch (e) {
     console.error(e)
+    queueError.value = '加载到期单词失败，请重试'
+    list = []
   } finally {
     queueLoading.value = false
   }

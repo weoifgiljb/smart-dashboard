@@ -275,6 +275,25 @@ class DashboardServiceTest {
     }
 
     @Test
+    void recentActivitiesUsesDiaryDateWhenTimestampsMissing() {
+        stubUser();
+        when(checkInRepository.findByUserIdOrderByCheckInDateDesc("u1")).thenReturn(List.of());
+        when(pomodoroRepository.findByUserIdOrderByStartTimeDesc("u1")).thenReturn(List.of());
+        when(wordRepository.findByUserIdOrderByCreateTimeDesc("u1")).thenReturn(List.of());
+        Diary diary = new Diary();
+        diary.setDiaryDate(LocalDate.now().toString());
+        diary.setCreatedAt(null);
+        diary.setUpdatedAt(null);
+        when(diaryRepository.findByUserIdOrderByDiaryDateDesc("u1")).thenReturn(List.of(diary));
+
+        List<Map<String, Object>> activities = dashboardService.getRecentActivities("alice");
+
+        assertEquals(1, activities.size());
+        assertEquals("diary", activities.get(0).get("type"));
+        assertEquals(LocalDate.now().atStartOfDay().toString(), activities.get(0).get("time"));
+    }
+
+    @Test
     void statsThrowsWhenUserMissing() {
         when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
         ApiException ex = assertThrows(ApiException.class, () -> dashboardService.getStats("ghost"));
