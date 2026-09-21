@@ -6,7 +6,6 @@ import {
   getAccessToken,
   getRefreshToken,
   hydrateAuthTokens,
-  setAuthTokens,
 } from '@/api/authTokens'
 
 describe('authTokens session restore', () => {

@@ -62,7 +62,11 @@
             换一批
           </el-button>
           <el-divider direction="vertical" />
-          <span class="filter-tag" :class="{ active: showOnlyFavorited }" @click="toggleShowFavorite">
+          <span
+            class="filter-tag"
+            :class="{ active: showOnlyFavorited }"
+            @click="toggleShowFavorite"
+          >
             <el-icon><StarFilled /></el-icon>
             仅看收藏
           </span>
@@ -101,7 +105,9 @@
     </div>
 
     <el-dialog v-model="importOpen" title="导入书目" width="520px" align-center destroy-on-close>
-      <p class="import-hint">CSV 需为 Book32 格式：ASIN, 书名, 作者, 分类, 封面URL。地址必须是公网 http/https。</p>
+      <p class="import-hint">
+        CSV 需为 Book32 格式：ASIN, 书名, 作者, 分类, 封面URL。地址必须是公网 http/https。
+      </p>
       <el-form label-position="top">
         <el-form-item label="CSV 地址">
           <el-input v-model="importUrl" placeholder="https://example.com/books.csv" clearable />
@@ -113,7 +119,9 @@
       <template #footer>
         <el-button @click="importOpen = false">取消</el-button>
         <el-button :loading="importingSample" @click="handleSampleImport">导入示例书架</el-button>
-        <el-button type="primary" :loading="importingCsv" @click="handleCsvImport">开始导入</el-button>
+        <el-button type="primary" :loading="importingCsv" @click="handleCsvImport"
+          >开始导入</el-button
+        >
       </template>
     </el-dialog>
   </div>
@@ -122,11 +130,18 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { isAxiosError } from 'axios'
-import { useRouter } from 'vue-router'
+import { useRouter, type HistoryState } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Search, StarFilled } from '@element-plus/icons-vue'
 import { generateBookImage } from '@/api/ai'
-import { getBooks, getBooksByIds, getRandomBooks, importBooks, importSampleBooks, searchBooks } from '@/api/books'
+import {
+  getBooks,
+  getBooksByIds,
+  getRandomBooks,
+  importBooks,
+  importSampleBooks,
+  searchBooks,
+} from '@/api/books'
 import BookGrid from '@/components/BookGrid.vue'
 import { useUserStore } from '@/store/user'
 import {
@@ -369,7 +384,7 @@ function goDetail(book: BookItem) {
   router.push({
     name: 'BookDetail',
     params: { id: book.id },
-    state: { book },
+    state: { book: { ...book } } satisfies HistoryState,
   })
 }
 </script>

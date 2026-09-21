@@ -16,11 +16,7 @@ describe('yearHeatmap', () => {
   })
 
   it('pads 2026 to Monday and labels January on the first week', () => {
-    const built = buildYearHeatmap(
-      2026,
-      { '2026-01-01': { checkin: 1 } },
-      1,
-    )
+    const built = buildYearHeatmap(2026, { '2026-01-01': { checkin: 1 } }, 1)
     expect(built.weeks[0][0].date).toBeNull()
     expect(built.weeks[0][3].date).toBe('2026-01-01')
     expect(built.weeks[0][3].heat).toBe(1)
