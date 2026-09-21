@@ -52,7 +52,13 @@
           <el-button v-else-if="diaries.length" @click="showAll">查看全部日记</el-button>
         </el-empty>
       </div>
-      <DiaryTimeline v-else :diaries="visibleDiaries" @edit="openDialog" @delete="handleDelete" />
+      <DiaryTimeline v-else :diaries="pagedDiaries" @edit="openDialog" @delete="handleDelete" />
+      <AppPagination
+        v-model="currentPage"
+        :page-size="DIARY_PAGE_SIZE"
+        :total="visibleDiaries.length"
+        @change="scrollDiaryListIntoView"
+      />
     </el-card>
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="600px" destroy-on-close>
@@ -156,7 +162,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { isAxiosError } from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Close, EditPen, Picture } from '@element-plus/icons-vue'
@@ -172,11 +178,15 @@ import {
   type Diary,
 } from '@/api/diary'
 import DiaryTimeline from '@/components/DiaryTimeline.vue'
+import AppPagination from '@/components/ui/AppPagination.vue'
 import {
+  DIARY_PAGE_SIZE,
   DiaryMood,
+  clampPage,
   inMonth,
   monthKey,
   monthKeyFromDate,
+  paginateItems,
   parseDiaryMood,
   renderDiaryHtml,
   shiftMonth,
@@ -194,6 +204,7 @@ const dateLocked = ref(false)
 const viewMonth = ref('')
 const jumpDate = ref('')
 const focusDate = ref('')
+const currentPage = ref(1)
 
 const form = reactive({
   id: undefined as string | undefined,
@@ -226,6 +237,28 @@ const visibleDiaries = computed(() => {
   }
   return diaries.value
 })
+
+const pagedDiaries = computed(() =>
+  paginateItems(visibleDiaries.value, currentPage.value, DIARY_PAGE_SIZE),
+)
+
+watch([viewMonth, focusDate], () => {
+  currentPage.value = 1
+})
+
+watch(
+  () => visibleDiaries.value.length,
+  (len) => {
+    currentPage.value = clampPage(currentPage.value, len, DIARY_PAGE_SIZE)
+  },
+)
+
+function scrollDiaryListIntoView() {
+  const el = document.querySelector('.diary-list-card')
+  if (el && typeof el.scrollIntoView === 'function') {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+}
 
 const periodHint = computed(() => {
   const total = diaries.value.length

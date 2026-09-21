@@ -136,6 +136,21 @@ export function inMonth(dateKey: string, month: string) {
   return dateKey.startsWith(month)
 }
 
+export const DIARY_PAGE_SIZE = 5
+
+export function clampPage(page: number, total: number, size: number) {
+  if (total <= 0) return 1
+  const maxPage = Math.ceil(total / Math.max(1, size))
+  return Math.min(Math.max(1, page), maxPage)
+}
+
+export function paginateItems<T>(items: T[], page: number, size: number) {
+  const safeSize = Math.max(1, size)
+  const safePage = clampPage(page, items.length, safeSize)
+  const start = (safePage - 1) * safeSize
+  return items.slice(start, start + safeSize)
+}
+
 export function formatUpdatedAt(iso: string | undefined, diaryDate: string) {
   if (!iso) return ''
   const d = new Date(iso)

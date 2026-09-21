@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { asDownloadBlob } from '@/api/diary'
 import {
+  DIARY_PAGE_SIZE,
   DiaryMood,
+  clampPage,
   formatUpdatedAt,
   inMonth,
   monthKey,
   monthKeyFromDate,
   moodLabel,
+  paginateItems,
   parseDiaryMood,
   shiftMonth,
   todayDateKey,
@@ -38,6 +41,17 @@ describe('diaryDisplay', () => {
     expect(shiftMonth('2026-01', -1)).toBe('2025-12')
     expect(inMonth('2026-09-19', '2026-09')).toBe(true)
     expect(inMonth('2026-08-01', '2026-09')).toBe(false)
+  })
+
+  it('pages diary lists and clamps overflow pages', () => {
+    const items = [1, 2, 3, 4, 5, 6, 7]
+    expect(paginateItems(items, 1, DIARY_PAGE_SIZE)).toEqual([1, 2, 3, 4, 5])
+    expect(paginateItems(items, 2, DIARY_PAGE_SIZE)).toEqual([6, 7])
+    expect(paginateItems(items, 9, DIARY_PAGE_SIZE)).toEqual([6, 7])
+    expect(paginateItems([], 2, DIARY_PAGE_SIZE)).toEqual([])
+    expect(clampPage(3, 7, DIARY_PAGE_SIZE)).toBe(2)
+    expect(clampPage(0, 7, DIARY_PAGE_SIZE)).toBe(1)
+    expect(clampPage(2, 0, DIARY_PAGE_SIZE)).toBe(1)
   })
 })
 
