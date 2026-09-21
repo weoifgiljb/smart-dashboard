@@ -18,9 +18,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.selfdiscipline.testsupport.MockitoArgs.nullableArg;
+import static com.selfdiscipline.testsupport.MockitoArgs.stubSaveReturnsArg;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -110,8 +111,10 @@ class CheckInServiceTest {
     void successfulCheckInPersistsHeat() {
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
         when(checkInRepository.existsByUserIdAndCheckInDate("u1", LocalDate.now())).thenReturn(false);
-        when(calendarService.getCalendarData(any(), any(), any())).thenReturn(Map.of());
-        when(checkInRepository.save(any(CheckIn.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(calendarService.getCalendarData(
+                nullableArg(String.class), nullableArg(LocalDate.class), nullableArg(LocalDate.class)))
+                .thenReturn(Map.of());
+        stubSaveReturnsArg(checkInRepository, CheckIn.class);
 
         Map<String, Object> result = checkInService.checkIn("alice");
 

@@ -21,8 +21,15 @@ public class DiaryExportService {
 
     private String encodeUrl(String urlStr) {
         try {
-            java.net.URL url = new java.net.URL(urlStr);
-            java.net.URI uri = new java.net.URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(), url.getQuery(), url.getRef());
+            java.net.URI parsed = java.net.URI.create(urlStr);
+            java.net.URI uri = new java.net.URI(
+                    parsed.getScheme(),
+                    parsed.getUserInfo(),
+                    parsed.getHost(),
+                    parsed.getPort(),
+                    parsed.getPath(),
+                    parsed.getQuery(),
+                    parsed.getFragment());
             return uri.toASCIIString();
         } catch (Exception e) {
             return urlStr;
@@ -102,8 +109,7 @@ public class DiaryExportService {
                     try {
                         String encodedUrl = safeRemoteImageUrl(diary.getImageUrl());
                         if (encodedUrl != null) {
-                        java.net.URL url = new java.net.URL(encodedUrl);
-                        try (java.io.InputStream is = url.openStream()) {
+                        try (java.io.InputStream is = java.net.URI.create(encodedUrl).toURL().openStream()) {
                             byte[] bytes = is.readAllBytes();
                             
                             int format = XWPFDocument.PICTURE_TYPE_JPEG;

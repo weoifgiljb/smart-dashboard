@@ -4,16 +4,15 @@ import com.selfdiscipline.model.Book;
 import com.selfdiscipline.repository.BookRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
+import static com.selfdiscipline.testsupport.MockitoArgs.verifyNeverSavedAll;
+import static com.selfdiscipline.testsupport.MockitoArgs.verifySavedAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,7 +29,7 @@ class BookImportServiceTest {
         when(bookRepository.existsBySource(BookImportService.SAMPLE_SOURCE)).thenReturn(true);
 
         assertEquals(0, bookImportService.importSampleShelf());
-        verify(bookRepository, never()).saveAll(org.mockito.ArgumentMatchers.anyList());
+        verifyNeverSavedAll(bookRepository);
     }
 
     @Test
@@ -39,11 +38,9 @@ class BookImportServiceTest {
 
         assertEquals(8, bookImportService.importSampleShelf());
 
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<List<Book>> captor = ArgumentCaptor.forClass(List.class);
-        verify(bookRepository).saveAll(captor.capture());
-        assertEquals(8, captor.getValue().size());
-        assertEquals("深度工作", captor.getValue().get(0).getTitle());
-        assertEquals(BookImportService.SAMPLE_SOURCE, captor.getValue().get(0).getSource());
+        List<Book> saved = verifySavedAll(bookRepository);
+        assertEquals(8, saved.size());
+        assertEquals("深度工作", saved.get(0).getTitle());
+        assertEquals(BookImportService.SAMPLE_SOURCE, saved.get(0).getSource());
     }
 }

@@ -1,12 +1,43 @@
 import request from './request'
 import { getAccessToken } from './authTokens'
+import type { ChatTurn, Conversation } from '@/types/chat'
 
-export const sendChatMessage = (question: string) => {
-  return request.post('/ai/chat', { question })
+export type { ChatTurn, Conversation }
+
+export const listConversations = () => {
+  return request.get('/ai/conversations') as Promise<Conversation[]>
+}
+
+export const createConversation = () => {
+  return request.post('/ai/conversations') as Promise<Conversation>
+}
+
+export const renameConversation = (id: string, title: string) => {
+  return request.patch(`/ai/conversations/${id}`, { title }) as Promise<Conversation>
+}
+
+export const deleteConversation = (id: string) => {
+  return request.delete(`/ai/conversations/${id}`) as Promise<void>
+}
+
+export const listConversationMessages = (id: string) => {
+  return request.get(`/ai/conversations/${id}/messages`) as Promise<ChatTurn[]>
+}
+
+export const sendChatMessage = (
+  question: string,
+  conversationId: string,
+  options?: { replaceLast?: boolean },
+) => {
+  return request.post('/ai/chat', {
+    question,
+    conversationId,
+    replaceLast: options?.replaceLast === true,
+  }) as Promise<unknown>
 }
 
 export const getChatHistory = () => {
-  return request.get('/ai/history')
+  return request.get('/ai/history') as Promise<ChatTurn[]>
 }
 
 export const generateBookImage = (bookId: string) => {
@@ -17,12 +48,13 @@ export const generateWordImage = (wordId: string) => {
   return request.post(`/ai/image/word/${wordId}`)
 }
 
-// 流式聊天（优先使用，后端不支持时由调用方回退到 sendChatMessage）
 export async function streamChatMessage(
   question: string,
+  conversationId: string,
   onChunk: (text: string) => void,
+  options?: { replaceLast?: boolean },
 ): Promise<void> {
-  const apiBase = (import.meta as any).env?.VITE_API_BASE || '/api'
+  const apiBase = import.meta.env.VITE_API_BASE || '/api'
   const token = getAccessToken() || ''
   const res = await fetch(`${apiBase}/ai/chat/stream`, {
     method: 'POST',
@@ -32,7 +64,11 @@ export async function streamChatMessage(
       Accept: 'text/event-stream, text/plain, */*',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({
+      question,
+      conversationId,
+      replaceLast: options?.replaceLast === true,
+    }),
   })
   if (!res.ok || !res.body) {
     throw new Error('流式接口不可用')

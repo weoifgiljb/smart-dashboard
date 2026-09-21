@@ -14,14 +14,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.selfdiscipline.testsupport.MockitoArgs.nullableArg;
+import static com.selfdiscipline.testsupport.MockitoArgs.stubSaveReturnsArg;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -60,7 +61,7 @@ class PomodoroServiceTest {
     @Test
     void workPomodoroWithTaskWritesActualMinutes() {
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
-        when(pomodoroRepository.save(any(Pomodoro.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubSaveReturnsArg(pomodoroRepository, Pomodoro.class);
 
         Pomodoro saved = pomodoroService.startPomodoro("alice", request(25, "work", "t1"));
 
@@ -75,27 +76,28 @@ class PomodoroServiceTest {
     @Test
     void breakPomodoroDoesNotWriteTaskMinutes() {
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
-        when(pomodoroRepository.save(any(Pomodoro.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubSaveReturnsArg(pomodoroRepository, Pomodoro.class);
 
         pomodoroService.startPomodoro("alice", request(5, "break", "t1"));
 
-        verify(taskService, never()).addActualMinutes(anyString(), anyString(), anyInt());
+        verify(taskService, never()).addActualMinutes(nullableArg(String.class), nullableArg(String.class), anyInt());
     }
 
     @Test
     void workPomodoroWithoutTaskDoesNotWriteMinutes() {
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
-        when(pomodoroRepository.save(any(Pomodoro.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubSaveReturnsArg(pomodoroRepository, Pomodoro.class);
 
         pomodoroService.startPomodoro("alice", request(25, "work", null));
 
-        verify(taskService, never()).addActualMinutes(anyString(), anyString(), anyInt());
+        verify(taskService, never()).addActualMinutes(nullableArg(String.class), nullableArg(String.class), anyInt());
     }
 
     @Test
     void statsReturnsTodayAndTotalWorkCounts() {
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
-        when(pomodoroRepository.countByUserIdAndTypeAndStartTimeBetween(eq("u1"), eq("work"), any(), any()))
+        when(pomodoroRepository.countByUserIdAndTypeAndStartTimeBetween(
+                eq("u1"), eq("work"), nullableArg(LocalDateTime.class), nullableArg(LocalDateTime.class)))
                 .thenReturn(3L);
         when(pomodoroRepository.countByUserIdAndType("u1", "work")).thenReturn(10L);
 
@@ -103,7 +105,8 @@ class PomodoroServiceTest {
 
         assertEquals(3L, stats.get("todayCount"));
         assertEquals(10L, stats.get("totalCount"));
-        verify(pomodoroRepository).countByUserIdAndTypeAndStartTimeBetween(eq("u1"), eq("work"), any(), any());
+        verify(pomodoroRepository).countByUserIdAndTypeAndStartTimeBetween(
+                eq("u1"), eq("work"), nullableArg(LocalDateTime.class), nullableArg(LocalDateTime.class));
         verify(pomodoroRepository).countByUserIdAndType("u1", "work");
     }
 

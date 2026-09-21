@@ -1,33 +1,23 @@
 <template>
   <div class="ai-chat-page">
     <div class="chat-layout">
-      <!-- 侧边栏（可选：如果有历史记录列表，可放在这里，目前仅作为装饰或未来扩展） -->
-      <div class="chat-sidebar">
-        <div class="sidebar-header">
-          <el-button type="primary" class="new-chat-btn" @click="clearChat">
-            <el-icon><Plus /></el-icon> 新对话
-          </el-button>
-        </div>
-        <div class="history-list">
-          <div class="history-label">最近对话</div>
-          <!-- 模拟历史记录 -->
-          <div class="history-item active">
-            <el-icon><ChatLineSquare /></el-icon>
-            <span class="history-title">当前对话</span>
-          </div>
-        </div>
-        <div class="sidebar-footer">
-          <el-button link @click="exportChat"
-            ><el-icon><Download /></el-icon> 导出记录</el-button
-          >
-        </div>
-      </div>
+      <ChatSidebar
+        class="desktop-sidebar"
+        :conversations="conversations"
+        :active-id="activeId"
+        @new="onNewConversation"
+        @export="exportChat"
+        @select="onSelect"
+        @rename="onRename"
+        @delete="onDelete"
+      />
 
-      <!-- 主聊天区 -->
       <div class="chat-main">
-        <!-- 顶部栏 -->
         <div class="chat-header">
           <div class="model-info">
+            <el-button class="mobile-sidebar-btn" text @click="sidebarOpen = true">
+              <el-icon><Menu /></el-icon>
+            </el-button>
             <span class="model-name">AI 助手</span>
             <el-tag size="small" type="success" effect="light" round>Online</el-tag>
           </div>
@@ -42,74 +32,44 @@
           </div>
         </div>
 
-        <!-- 消息列表 -->
         <div ref="messagesRef" class="messages-container">
-          <div v-if="filteredMessages.length === 0 && !loading" class="empty-welcome">
+          <div v-if="messages.length === 0 && !loading && !loadingMessages" class="empty-welcome">
             <div class="welcome-icon">✨</div>
             <h2>你好，我是你的智能助手</h2>
             <p>我可以帮你解答问题、制定计划、翻译文本或提供建议。</p>
 
             <div class="suggestions-grid">
-              <div
-                v-for="(q, i) in presetQuestions"
-                :key="i"
-                class="suggestion-card"
-                @click="applyPreset(q)"
-              >
-                {{ q }}
+              <div class="suggestion-card" @click="applyPreset(presetQuestions[0])">
+                {{ presetQuestions[0] }}
+              </div>
+              <div class="suggestion-card" @click="applyPreset(presetQuestions[1])">
+                {{ presetQuestions[1] }}
+              </div>
+              <div class="suggestion-card" @click="applyPreset(presetQuestions[2])">
+                {{ presetQuestions[2] }}
+              </div>
+              <div class="suggestion-card" @click="applyPreset(presetQuestions[3])">
+                {{ presetQuestions[3] }}
               </div>
             </div>
           </div>
 
-          <div v-else class="messages-list">
-            <div
-              v-for="(msg, index) in filteredMessages"
-              :key="index"
-              :class="['message-row', msg.type]"
-            >
-              <div class="avatar">
-                <div class="avatar-img" :class="msg.type">
-                  <el-icon v-if="msg.type === 'ai'"><Cpu /></el-icon>
-                  <el-icon v-else><User /></el-icon>
-                </div>
-              </div>
-              <div class="message-bubble">
-                <div
-                  class="bubble-content markdown-body"
-                  v-html="renderMarkdown(msg.content)"
-                ></div>
-                <div class="bubble-footer">
-                  <span class="time">{{ formatTime(msg.time) }}</span>
-                  <div class="actions">
-                    <el-icon class="action-icon" @click="copyText(msg.content)"
-                      ><CopyDocument
-                    /></el-icon>
-                    <el-icon
-                      v-if="msg.type === 'ai'"
-                      class="action-icon"
-                      @click="regenerateResponse(index)"
-                      ><Refresh
-                    /></el-icon>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Loading Indicator -->
-            <div v-if="loading" class="message-row ai">
-              <div class="avatar">
-                <div class="avatar-img ai">
-                  <el-icon><Cpu /></el-icon>
-                </div>
-              </div>
-              <div class="message-bubble loading-bubble">
-                <div class="typing-dots"><span></span><span></span><span></span></div>
-              </div>
-            </div>
+          <div
+            v-else-if="filteredMessages.length === 0 && !loading && !loadingMessages"
+            class="empty-search"
+          >
+            无匹配消息
           </div>
+
+          <ChatMessageList
+            v-else
+            :messages="filteredMessages"
+            :loading="loading || loadingMessages"
+            @copy="copyText"
+            @regenerate="regenerateResponse"
+          />
         </div>
 
-        <!-- 输入区域 -->
         <div class="input-area">
           <div class="input-box">
             <el-input
@@ -137,38 +97,58 @@
         </div>
       </div>
     </div>
+
+    <el-drawer v-model="sidebarOpen" title="对话" size="280px" direction="ltr" class="chat-drawer">
+      <ChatSidebar
+        :conversations="conversations"
+        :active-id="activeId"
+        @new="onNewConversationFromDrawer"
+        @export="exportChat"
+        @select="onSelectFromDrawer"
+        @rename="onRename"
+        @delete="onDelete"
+      />
+    </el-drawer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, computed } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import {
-  Plus,
-  Download,
-  ChatLineSquare,
-  Cpu,
-  User,
-  CopyDocument,
-  Refresh,
-  Promotion,
-} from '@element-plus/icons-vue'
-import { sendChatMessage, getChatHistory, streamChatMessage } from '@/api/ai'
+import { Menu, Promotion } from '@element-plus/icons-vue'
+import ChatMessageList from '@/components/ChatMessageList.vue'
+import ChatSidebar from '@/components/ChatSidebar.vue'
+import { sendChatMessage, streamChatMessage } from '@/api/ai'
+import { useConversations } from '@/composables/useConversations'
+import { ChatMessageType, type ChatMessage, type Conversation } from '@/types/chat'
 
-const messages = ref<any[]>([])
+const {
+  conversations,
+  activeId,
+  messages,
+  loadingMessages,
+  loadSeq,
+  createConversation,
+  selectConversation,
+  rename,
+  remove,
+  ensureActive,
+  refreshList,
+} = useConversations()
+
 const inputMessage = ref('')
 const loading = ref(false)
 const messagesRef = ref<HTMLElement>()
 const searchQuery = ref('')
+const sidebarOpen = ref(false)
 
-const presetQuestions = ref<string[]>([
+const presetQuestions = [
   '📅 帮我规划今天的日程',
   '🍅 解释一下番茄工作法',
   '📝 帮我写一份周报摘要',
   '💪 制定一周健身计划',
-])
+] as const
 
-// 过滤消息
 const filteredMessages = computed(() => {
   if (!searchQuery.value.trim()) return messages.value
   const query = searchQuery.value.toLowerCase()
@@ -176,7 +156,8 @@ const filteredMessages = computed(() => {
 })
 
 onMounted(async () => {
-  await loadHistory()
+  await ensureActive()
+  await scrollToBottom()
 })
 
 const onEnter = () => {
@@ -185,29 +166,15 @@ const onEnter = () => {
   }
 }
 
-const loadHistory = async () => {
-  try {
-    const data: any = await getChatHistory()
-    const allMessages: any[] = []
-    data.forEach((item: any) => {
-      allMessages.push({
-        type: 'user',
-        content: item.question,
-        time: item.createTime,
-      })
-      allMessages.push({
-        type: 'ai',
-        content: item.answer,
-        time: item.createTime,
-      })
-    })
-    messages.value = allMessages.sort(
-      (a: any, b: any) => new Date(a.time).getTime() - new Date(b.time).getTime(),
-    )
-    await scrollToBottom()
-  } catch (error) {
-    console.error('获取聊天历史失败', error)
+function chatAnswer(response: unknown): string {
+  if (typeof response === 'string') return response
+  if (response && typeof response === 'object') {
+    const record = response as Record<string, unknown>
+    if (typeof record.answer === 'string') return record.answer
+    if (typeof record.text === 'string') return record.text
+    if (typeof record.content === 'string') return record.content
   }
+  return ''
 }
 
 const typeStream = async (fullText: string, onChunk: (s: string) => void) => {
@@ -218,61 +185,69 @@ const typeStream = async (fullText: string, onChunk: (s: string) => void) => {
   }
 }
 
-const persist = () => {
-  try {
-    localStorage.setItem('aiChatMessages', JSON.stringify(messages.value))
-  } catch {
-    /* ignore */
-  }
+async function requireConversationId() {
+  if (activeId.value) return activeId.value
+  const created = await createConversation()
+  return created.id
+}
+
+function stillCurrent(startedId: string, startedSeq: number) {
+  return activeId.value === startedId && loadSeq.value === startedSeq
 }
 
 const sendMessage = async () => {
-  if (!inputMessage.value.trim()) return
+  if (!inputMessage.value.trim() || loading.value) return
 
   const question = inputMessage.value
   inputMessage.value = ''
-  messages.value.push({
-    type: 'user',
+  const conversationId = await requireConversationId()
+  const startedSeq = loadSeq.value
+  const userMsg: ChatMessage = {
+    type: ChatMessageType.User,
     content: question,
-    time: new Date(),
-  })
+    time: new Date().toISOString(),
+  }
+  const aiMsg: ChatMessage = {
+    type: ChatMessageType.Ai,
+    content: '',
+    time: new Date().toISOString(),
+  }
+  messages.value.push(userMsg, aiMsg)
+  const insertedAt = messages.value.length - 2
 
   await scrollToBottom()
   loading.value = true
 
-  try {
-    const aiMsg = {
-      type: 'ai',
-      content: '',
-      time: new Date(),
-    } as any
-    messages.value.push(aiMsg)
-    await scrollToBottom()
+  const rollbackSend = () => {
+    if (!stillCurrent(conversationId, startedSeq)) return
+    if (messages.value.length === insertedAt + 2) {
+      messages.value.splice(insertedAt, 2)
+    }
+  }
 
+  try {
     try {
-      await streamChatMessage(question, async (chunk) => {
+      await streamChatMessage(question, conversationId, async (chunk) => {
+        if (!stillCurrent(conversationId, startedSeq)) return
         aiMsg.content += chunk
         await scrollToBottom()
       })
     } catch (e) {
       console.warn('Stream failed, falling back to normal request:', e)
-      const response: any = await sendChatMessage(question)
-      // 兼容多种返回格式
-      const ans =
-        typeof response === 'string'
-          ? response
-          : response.answer || response.text || response.content || ''
-      await typeStream(String(ans), (chunk) => {
+      const response = await sendChatMessage(question, conversationId)
+      if (!stillCurrent(conversationId, startedSeq)) {
+        await refreshList()
+        return
+      }
+      await typeStream(chatAnswer(response), (chunk) => {
+        if (!stillCurrent(conversationId, startedSeq)) return
         aiMsg.content += chunk
       })
     }
-    persist()
-  } catch (error: any) {
-    // 如果是取消请求或非关键错误，可以忽略
+    await refreshList()
+  } catch (error: unknown) {
     console.error(error)
-    ElMessage.error(error.response?.data?.message || '发送失败')
-    // 移除失败的消息占位
-    messages.value.pop()
+    rollbackSend()
   } finally {
     loading.value = false
   }
@@ -280,41 +255,16 @@ const sendMessage = async () => {
 
 const scrollToBottom = async () => {
   await nextTick()
-  if (messagesRef.value) {
-    messagesRef.value.scrollTo({
-      top: messagesRef.value.scrollHeight,
-      behavior: 'smooth',
-    })
-  }
-}
-
-const formatTime = (time: Date | string) => {
-  const date = typeof time === 'string' ? new Date(time) : time
-  return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  const el = messagesRef.value
+  if (!el || typeof el.scrollTo !== 'function') return
+  el.scrollTo({
+    top: el.scrollHeight,
+    behavior: 'smooth',
+  })
 }
 
 const applyPreset = (q: string) => {
   inputMessage.value = q
-  // remove emoji if present at start for cleaner input
-  // 使用简单的 Unicode 范围匹配 Emoji，避免复杂的代理对问题
-  if (/^[\u2000-\u3300]/.test(q) || /^[\uD83C-\uD83E]/.test(q)) {
-    // keep it or remove it, user preference. Let's keep it.
-  }
-}
-
-const renderMarkdown = (text: string) => {
-  if (!text) return ''
-  let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-
-  // Code blocks
-  html = html.replace(/```([\s\S]*?)```/g, (_, code) => `<pre><code>${code.trim()}</code></pre>`)
-  // Inline code
-  html = html.replace(/`([^`\n]+?)`/g, '<code>$1</code>')
-  // Bold
-  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-  // Line breaks
-  html = html.replace(/\n/g, '<br/>')
-  return html
 }
 
 const copyText = async (text: string) => {
@@ -326,56 +276,80 @@ const copyText = async (text: string) => {
   }
 }
 
-const regenerateResponse = async (index: number) => {
+const regenerateResponse = async (aiMessage: ChatMessage) => {
   if (loading.value) return
-  const userMsgIndex = index - 1
-  if (userMsgIndex < 0 || messages.value[userMsgIndex].type !== 'user') return
+  const index = messages.value.indexOf(aiMessage)
+  if (index <= 0) return
+  const userMsg = messages.value[index - 1]
+  if (userMsg.type !== ChatMessageType.User) return
 
-  const question = messages.value[userMsgIndex].content
-  messages.value.splice(index, 1) // remove old
-
+  const question = userMsg.content
+  const conversationId = await requireConversationId()
+  const startedSeq = loadSeq.value
+  const previousContent = aiMessage.content
+  aiMessage.content = ''
   loading.value = true
   try {
-    const aiMsg = { type: 'ai', content: '', time: new Date() } as any
-    messages.value.splice(index, 0, aiMsg)
-    await scrollToBottom()
-
-    // Logic same as sendMessage
-    try {
-      await streamChatMessage(question, async (chunk) => {
-        aiMsg.content += chunk
-        await scrollToBottom()
-      })
-    } catch (e) {
-      console.warn('Stream regeneration failed:', e)
-      const response: any = await sendChatMessage(question)
-      const ans =
-        typeof response === 'string'
-          ? response
-          : response.answer || response.text || response.content || ''
-      await typeStream(String(ans), (chunk) => {
-        aiMsg.content += chunk
-      })
+    const response = await sendChatMessage(question, conversationId, { replaceLast: true })
+    if (!stillCurrent(conversationId, startedSeq)) {
+      await refreshList()
+      return
     }
-    persist()
+    await typeStream(chatAnswer(response), (chunk) => {
+      if (!stillCurrent(conversationId, startedSeq)) return
+      aiMessage.content += chunk
+    })
+    await refreshList()
   } catch {
-    ElMessage.error('重新生成失败')
-    // 恢复原来的空消息或删除
-    if (!messages.value[index].content) {
-      messages.value.splice(index, 1)
+    if (stillCurrent(conversationId, startedSeq) && !aiMessage.content) {
+      aiMessage.content = previousContent
     }
   } finally {
     loading.value = false
   }
 }
 
-const clearChat = async () => {
+const onNewConversation = async () => {
+  await createConversation()
+  await scrollToBottom()
+}
+
+const onNewConversationFromDrawer = async () => {
+  await onNewConversation()
+  sidebarOpen.value = false
+}
+
+const onSelect = async (conversation: Conversation) => {
+  await selectConversation(conversation.id)
+  await scrollToBottom()
+}
+
+const onSelectFromDrawer = async (conversation: Conversation) => {
+  await onSelect(conversation)
+  sidebarOpen.value = false
+}
+
+const onRename = async (conversation: Conversation) => {
   try {
-    await ElMessageBox.confirm('确定清空对话吗？', '提示', { type: 'warning' })
-    messages.value = []
-    persist()
+    const { value } = await ElMessageBox.prompt('请输入新的会话标题', '重命名', {
+      inputValue: conversation.title,
+      inputPattern: /^(?!\s*$).{1,40}$/,
+      inputErrorMessage: '标题需为 1–40 字',
+      confirmButtonText: '保存',
+      cancelButtonText: '取消',
+    })
+    await rename(conversation.id, String(value).trim())
   } catch {
-    // user cancelled confirm
+    // cancelled
+  }
+}
+
+const onDelete = async (conversation: Conversation) => {
+  try {
+    await ElMessageBox.confirm('删除后无法恢复', '删除对话', { type: 'warning' })
+    await remove(conversation.id)
+  } catch {
+    // cancelled
   }
 }
 
@@ -383,7 +357,8 @@ const exportChat = () => {
   if (!messages.value.length) return
   let content = '# 对话记录\n\n'
   messages.value.forEach((m) => {
-    content += `### ${m.type === 'user' ? 'User' : 'AI'}\n${m.content}\n\n`
+    const speaker = m.type === ChatMessageType.User ? 'User' : 'AI'
+    content += `### ${speaker}\n${m.content}\n\n`
   })
   const blob = new Blob([content], { type: 'text/markdown' })
   const url = URL.createObjectURL(blob)
@@ -412,69 +387,12 @@ const exportChat = () => {
   border: 1px solid var(--border);
 }
 
-/* Sidebar */
-.chat-sidebar {
-  width: 260px;
-  background: var(--color-bg);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-}
-
-.sidebar-header {
-  padding: 20px;
-}
-
-.new-chat-btn {
-  width: 100%;
-  justify-content: flex-start;
-  font-weight: 600;
-}
-
-.history-list {
-  flex: 1;
-  padding: 0 12px;
-  overflow-y: auto;
-}
-
-.history-label {
-  font-size: 12px;
-  color: var(--text-light);
-  margin-bottom: 8px;
-  padding-left: 8px;
-}
-
-.history-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  color: var(--text-secondary);
-  transition: all 0.2s;
-}
-
-.history-item:hover {
-  background: var(--color-border);
-}
-
-.history-item.active {
-  background: var(--color-info-soft);
-  color: var(--primary);
-}
-
-.sidebar-footer {
-  padding: 16px;
-  border-top: 1px solid var(--border);
-}
-
-/* Main Chat */
 .chat-main {
   flex: 1;
   display: flex;
   flex-direction: column;
   position: relative;
+  min-width: 0;
 }
 
 .chat-header {
@@ -486,17 +404,26 @@ const exportChat = () => {
   padding: 0 24px;
 }
 
+.model-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .model-name {
   font-weight: 700;
   margin-right: 8px;
   color: var(--app-text);
 }
 
+.mobile-sidebar-btn {
+  display: none;
+}
+
 .search-input {
   width: 200px;
 }
 
-/* Messages */
 .messages-container {
   flex: 1;
   overflow-y: auto;
@@ -504,7 +431,8 @@ const exportChat = () => {
   background: var(--color-bg-elevated);
 }
 
-.empty-welcome {
+.empty-welcome,
+.empty-search {
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -544,137 +472,6 @@ const exportChat = () => {
   background: var(--color-info-soft);
 }
 
-/* Message Rows */
-.message-row {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.message-row.user {
-  flex-direction: row-reverse;
-}
-
-.avatar-img {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-}
-
-.avatar-img.ai {
-  background: var(--color-bg-muted);
-  color: var(--primary);
-}
-
-.avatar-img.user {
-  background: var(--primary-light);
-  color: var(--primary);
-}
-
-.message-bubble {
-  max-width: 70%;
-  padding: 12px 16px;
-  border-radius: 12px;
-  position: relative;
-  font-size: 15px;
-  line-height: 1.6;
-}
-
-.message-row.ai .message-bubble {
-  background: var(--color-bg);
-  border-top-left-radius: 2px;
-  color: var(--color-text);
-}
-
-.message-row.user .message-bubble {
-  background: var(--primary);
-  color: white;
-  border-top-right-radius: 2px;
-}
-
-.bubble-content :deep(pre) {
-  background: var(--color-text);
-  color: var(--color-border);
-  padding: 12px;
-  border-radius: 8px;
-  overflow-x: auto;
-  margin: 8px 0;
-}
-
-.bubble-content :deep(code) {
-  font-family: monospace;
-}
-
-.message-row.user .bubble-content :deep(a) {
-  color: white;
-  text-decoration: underline;
-}
-
-.bubble-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 6px;
-  font-size: 11px;
-  opacity: 0.7;
-}
-
-.actions {
-  display: flex;
-  gap: 8px;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.message-bubble:hover .actions {
-  opacity: 1;
-}
-
-.action-icon {
-  cursor: pointer;
-}
-
-/* Loading Dots */
-.loading-bubble {
-  padding: 12px 20px;
-}
-
-.typing-dots span {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  background: var(--color-text-muted);
-  border-radius: 50%;
-  margin: 0 2px;
-  animation: typing 1.4s infinite both;
-}
-
-.typing-dots span:nth-child(1) {
-  animation-delay: 0s;
-}
-.typing-dots span:nth-child(2) {
-  animation-delay: 0.2s;
-}
-.typing-dots span:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-@keyframes typing {
-  0%,
-  80%,
-  100% {
-    transform: scale(0);
-  }
-  40% {
-    transform: scale(1);
-  }
-}
-
-/* Input Area */
 .input-area {
   padding: 20px;
   background: var(--color-bg-elevated);
@@ -717,12 +514,24 @@ const exportChat = () => {
   color: var(--color-text-muted);
 }
 
+.chat-drawer :deep(.el-drawer__body) {
+  padding: 0;
+}
+
+.chat-drawer :deep(.chat-sidebar) {
+  width: 100%;
+  border-right: none;
+}
+
 @media (max-width: 768px) {
-  .chat-sidebar {
+  .desktop-sidebar {
     display: none;
   }
-  .message-bubble {
-    max-width: 85%;
+  .mobile-sidebar-btn {
+    display: inline-flex;
+  }
+  .search-input {
+    width: 140px;
   }
 }
 </style>

@@ -2,15 +2,19 @@ package com.selfdiscipline.controller;
 
 import com.selfdiscipline.dto.ChatRequest;
 import com.selfdiscipline.dto.ChatResponse;
+import com.selfdiscipline.dto.ConversationPatchRequest;
 import com.selfdiscipline.model.Book;
 import com.selfdiscipline.model.Chat;
+import com.selfdiscipline.model.Conversation;
 import com.selfdiscipline.model.Word;
 import com.selfdiscipline.service.AIService;
 import com.selfdiscipline.service.ImageService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/ai")
@@ -32,9 +37,42 @@ public class AIController {
         this.imageService = imageService;
     }
 
+    @PostMapping("/conversations")
+    public ResponseEntity<Conversation> createConversation(Authentication authentication) {
+        return ResponseEntity.ok(aiService.createConversation(Objects.requireNonNull(authentication.getName())));
+    }
+
+    @GetMapping("/conversations")
+    public ResponseEntity<List<Conversation>> listConversations(Authentication authentication) {
+        return ResponseEntity.ok(aiService.listConversations(Objects.requireNonNull(authentication.getName())));
+    }
+
+    @PatchMapping("/conversations/{id}")
+    public ResponseEntity<Conversation> renameConversation(@PathVariable String id,
+                                                           @Valid @RequestBody ConversationPatchRequest request,
+                                                           Authentication authentication) {
+        return ResponseEntity.ok(aiService.renameConversation(
+                Objects.requireNonNull(authentication.getName()), id, request.getTitle()));
+    }
+
+    @DeleteMapping("/conversations/{id}")
+    public ResponseEntity<Void> deleteConversation(@PathVariable String id, Authentication authentication) {
+        aiService.deleteConversation(Objects.requireNonNull(authentication.getName()), id);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/conversations/{id}/messages")
+    public ResponseEntity<List<Chat>> listMessages(@PathVariable String id, Authentication authentication) {
+        return ResponseEntity.ok(aiService.listMessages(Objects.requireNonNull(authentication.getName()), id));
+    }
+
     @PostMapping("/chat")
     public ResponseEntity<ChatResponse> chat(@Valid @RequestBody ChatRequest request, Authentication authentication) {
-        return ResponseEntity.ok(aiService.chat(authentication.getName(), request.getQuestion()));
+        return ResponseEntity.ok(aiService.chat(
+                Objects.requireNonNull(authentication.getName()),
+                request.getConversationId(),
+                request.getQuestion(),
+                request.getReplaceLast()));
     }
 
     @GetMapping("/history")

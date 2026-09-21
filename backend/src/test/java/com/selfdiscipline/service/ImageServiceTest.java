@@ -17,9 +17,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Optional;
 
+import static com.selfdiscipline.testsupport.MockitoArgs.verifyNeverSaved;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -59,7 +59,7 @@ class ImageServiceTest {
 
         assertEquals("data:image/png;base64,abc", result.getCover());
         verify(imageRateLimiter).consumeOrThrow("user:alice");
-        verify(bookRepository, never()).save(any());
+        verifyNeverSaved(bookRepository, Book.class);
         verify(webClient, never()).post();
     }
 
@@ -76,7 +76,7 @@ class ImageServiceTest {
 
         ApiException ex = assertThrows(ApiException.class, () -> imageService.generateWordImage("alice", "w1"));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
-        verify(wordRepository, never()).save(any());
+        verifyNeverSaved(wordRepository, Word.class);
         verify(webClient, never()).post();
     }
 
@@ -93,6 +93,6 @@ class ImageServiceTest {
 
         ApiException ex = assertThrows(ApiException.class, () -> imageService.generateWordImage("alice", "w1"));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
-        verify(wordRepository, never()).save(any());
+        verifyNeverSaved(wordRepository, Word.class);
     }
 }

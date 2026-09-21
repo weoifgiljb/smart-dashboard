@@ -10,6 +10,7 @@ public class Chat {
     @Id
     private String id;
     private String userId;
+    private String conversationId;
     private String question;
     private String answer;
     private LocalDateTime createTime;
@@ -32,6 +33,14 @@ public class Chat {
 
     public void setUserId(String userId) {
         this.userId = userId;
+    }
+
+    public String getConversationId() {
+        return conversationId;
+    }
+
+    public void setConversationId(String conversationId) {
+        this.conversationId = conversationId;
     }
 
     public String getQuestion() {

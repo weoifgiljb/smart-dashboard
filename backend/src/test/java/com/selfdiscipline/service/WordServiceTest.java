@@ -20,11 +20,12 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
+import static com.selfdiscipline.testsupport.MockitoArgs.nullableArg;
+import static com.selfdiscipline.testsupport.MockitoArgs.stubSaveReturnsArg;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -55,7 +56,7 @@ class WordServiceTest {
         Word word = ownedWord("w1");
         word.setReviewCount(0);
         when(wordRepository.findById("w1")).thenReturn(Optional.of(word));
-        when(wordRepository.save(any(Word.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubSaveReturnsArg(wordRepository, Word.class);
 
         LocalDateTime before = LocalDateTime.now();
         Word saved = wordService.reviewWord("alice", "w1", WordReviewResult.KNOWN);
@@ -75,7 +76,7 @@ class WordServiceTest {
         Word word = ownedWord("w1");
         word.setReviewCount(2);
         when(wordRepository.findById("w1")).thenReturn(Optional.of(word));
-        when(wordRepository.save(any(Word.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubSaveReturnsArg(wordRepository, Word.class);
 
         LocalDateTime before = LocalDateTime.now();
         Word saved = wordService.reviewWord("alice", "w1", WordReviewResult.VAGUE);
@@ -93,7 +94,7 @@ class WordServiceTest {
         Word word = ownedWord("w1");
         word.setReviewCount(4);
         when(wordRepository.findById("w1")).thenReturn(Optional.of(word));
-        when(wordRepository.save(any(Word.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubSaveReturnsArg(wordRepository, Word.class);
 
         LocalDateTime before = LocalDateTime.now();
         Word saved = wordService.reviewWord("alice", "w1", WordReviewResult.UNKNOWN);
@@ -111,7 +112,7 @@ class WordServiceTest {
         Word word = ownedWord("w1");
         word.setReviewCount(9);
         when(wordRepository.findById("w1")).thenReturn(Optional.of(word));
-        when(wordRepository.save(any(Word.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubSaveReturnsArg(wordRepository, Word.class);
 
         Word saved = wordService.reviewWord("alice", "w1");
 
@@ -142,7 +143,7 @@ class WordServiceTest {
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
         Word due = ownedWord("w1");
         when(wordRepository.findByUserIdAndStatusNotAndDueDateLessThanEqualOrderByDueDateAsc(
-                eq("u1"), eq("done"), any()
+                eq("u1"), eq("done"), nullableArg(LocalDateTime.class)
         )).thenReturn(List.of(due));
 
         List<Word> words = wordService.getTodayWords("alice");
@@ -150,7 +151,7 @@ class WordServiceTest {
         assertEquals(1, words.size());
         assertEquals("w1", words.get(0).getId());
         verify(wordRepository).findByUserIdAndStatusNotAndDueDateLessThanEqualOrderByDueDateAsc(
-                eq("u1"), eq("done"), any()
+                eq("u1"), eq("done"), nullableArg(LocalDateTime.class)
         );
     }
 

@@ -27,12 +27,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
+import static com.selfdiscipline.testsupport.MockitoArgs.nullableArg;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -206,7 +206,8 @@ class DashboardServiceTest {
         stubUser();
         when(checkInRepository.existsByUserIdAndCheckInDate("u1", LocalDate.now())).thenReturn(true);
         stubDueWords(List.of(word("w1", "apple"), word("w2", "banana")));
-        when(pomodoroRepository.countByUserIdAndTypeAndStartTimeBetween(eq("u1"), eq("work"), any(), any()))
+        when(pomodoroRepository.countByUserIdAndTypeAndStartTimeBetween(
+                eq("u1"), eq("work"), nullableArg(LocalDateTime.class), nullableArg(LocalDateTime.class)))
                 .thenReturn(4L);
 
         Map<String, Object> tasks = dashboardService.getTodayTasks("alice");
@@ -214,7 +215,8 @@ class DashboardServiceTest {
         assertEquals(true, tasks.get("hasCheckedIn"));
         assertEquals(2, tasks.get("todayWordCount"));
         assertEquals(4L, tasks.get("todayPomodoroCount"));
-        verify(pomodoroRepository).countByUserIdAndTypeAndStartTimeBetween(eq("u1"), eq("work"), any(), any());
+        verify(pomodoroRepository).countByUserIdAndTypeAndStartTimeBetween(
+                eq("u1"), eq("work"), nullableArg(LocalDateTime.class), nullableArg(LocalDateTime.class));
     }
 
     @Test
@@ -258,7 +260,7 @@ class DashboardServiceTest {
 
     private void stubDueWords(List<Word> words) {
         when(wordRepository.findByUserIdAndStatusNotAndDueDateLessThanEqualOrderByDueDateAsc(
-                eq("u1"), eq("done"), any()
+                eq("u1"), eq("done"), nullableArg(LocalDateTime.class)
         )).thenReturn(words);
     }
 

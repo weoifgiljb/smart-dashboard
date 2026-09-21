@@ -9,7 +9,6 @@ import com.selfdiscipline.repository.TaskRepository;
 import com.selfdiscipline.repository.TaskShareRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -20,9 +19,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import static com.selfdiscipline.testsupport.MockitoArgs.firstArg;
+import static com.selfdiscipline.testsupport.MockitoArgs.nullableArg;
+import static com.selfdiscipline.testsupport.MockitoArgs.stubSaveReturnsArg;
+import static com.selfdiscipline.testsupport.MockitoArgs.verifyNeverSaved;
+import static com.selfdiscipline.testsupport.MockitoArgs.verifySaved;
+import static com.selfdiscipline.testsupport.MockitoArgs.whenSave;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -42,12 +46,12 @@ class TaskServiceTest {
 
     @Test
     void createTaskSetsOwnerAndRecordsHistory() {
-        when(taskRepository.save(any(Task.class))).thenAnswer(inv -> {
-            Task t = inv.getArgument(0);
+        whenSave(taskRepository, Task.class).thenAnswer(inv -> {
+            Task t = firstArg(inv, Task.class);
             t.setId("t1");
             return t;
         });
-        when(historyRepository.save(any(TaskHistory.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubSaveReturnsArg(historyRepository, TaskHistory.class);
 
         Task input = new Task();
         input.setTitle("写测试");
@@ -55,11 +59,10 @@ class TaskServiceTest {
 
         assertEquals("alice", saved.getOwnerUserId());
         assertEquals("t1", saved.getId());
-        ArgumentCaptor<TaskHistory> captor = ArgumentCaptor.forClass(TaskHistory.class);
-        verify(historyRepository).save(captor.capture());
-        assertEquals("CREATE", captor.getValue().getAction());
-        assertEquals("t1", captor.getValue().getTaskId());
-        assertEquals("alice", captor.getValue().getActorUserId());
+        TaskHistory history = verifySaved(historyRepository);
+        assertEquals("CREATE", history.getAction());
+        assertEquals("t1", history.getTaskId());
+        assertEquals("alice", history.getActorUserId());
     }
 
     @Test
@@ -68,22 +71,20 @@ class TaskServiceTest {
         existing.setActualMinutes(10);
         when(taskRepository.findById("t1")).thenReturn(Optional.of(existing));
         when(shareRepository.findByTaskId("t1")).thenReturn(List.of());
-        when(taskRepository.save(any(Task.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(historyRepository.save(any(TaskHistory.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubSaveReturnsArg(taskRepository, Task.class);
+        stubSaveReturnsArg(historyRepository, TaskHistory.class);
 
         taskService.addActualMinutes("alice", "t1", 25);
 
-        ArgumentCaptor<Task> captor = ArgumentCaptor.forClass(Task.class);
-        verify(taskRepository).save(captor.capture());
-        assertEquals(35, captor.getValue().getActualMinutes());
+        assertEquals(35, verifySaved(taskRepository).getActualMinutes());
     }
 
     @Test
     void addActualMinutesIgnoresNonPositive() {
         taskService.addActualMinutes("alice", "t1", 0);
         taskService.addActualMinutes("alice", "t1", -5);
-        verify(taskRepository, never()).findById(any());
-        verify(taskRepository, never()).save(any());
+        verify(taskRepository, never()).findById(nullableArg(String.class));
+        verifyNeverSaved(taskRepository, Task.class);
     }
 
     @Test

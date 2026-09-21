@@ -19,10 +19,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
+import static com.selfdiscipline.testsupport.MockitoArgs.firstArg;
+import static com.selfdiscipline.testsupport.MockitoArgs.whenSave;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -111,8 +112,8 @@ class AuthServiceTest {
     void registerPersistsAndReturnsTokens() {
         when(userRepository.existsByUsername("bob")).thenReturn(false);
         when(userRepository.existsByEmail("b@example.com")).thenReturn(false);
-        when(userRepository.save(any(User.class))).thenAnswer(inv -> {
-            User u = inv.getArgument(0);
+        whenSave(userRepository, User.class).thenAnswer(inv -> {
+            User u = firstArg(inv, User.class);
             u.setId("u2");
             return u;
         });

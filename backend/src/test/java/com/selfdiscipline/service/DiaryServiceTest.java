@@ -8,7 +8,6 @@ import com.selfdiscipline.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -16,11 +15,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.Optional;
 
+import static com.selfdiscipline.testsupport.MockitoArgs.nullableArg;
+import static com.selfdiscipline.testsupport.MockitoArgs.stubSaveReturnsArg;
+import static com.selfdiscipline.testsupport.MockitoArgs.verifySaved;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -64,7 +65,7 @@ class DiaryServiceTest {
     void createWritesMongoUserId() {
         when(diaryRepository.findByUserIdAndDiaryDate("u1", "2026-09-20")).thenReturn(Optional.empty());
         when(diaryRepository.findByUserIdAndDiaryDate("alice", "2026-09-20")).thenReturn(Optional.empty());
-        when(diaryRepository.save(any(Diary.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubSaveReturnsArg(diaryRepository, Diary.class);
 
         Diary input = new Diary();
         input.setDiaryDate("2026-09-20");
@@ -72,9 +73,7 @@ class DiaryServiceTest {
         Diary saved = diaryService.createOrUpdateDiary("alice", input);
 
         assertEquals("u1", saved.getUserId());
-        ArgumentCaptor<Diary> captor = ArgumentCaptor.forClass(Diary.class);
-        verify(diaryRepository).save(captor.capture());
-        assertEquals("u1", captor.getValue().getUserId());
+        assertEquals("u1", verifySaved(diaryRepository).getUserId());
     }
 
     @Test
@@ -82,7 +81,7 @@ class DiaryServiceTest {
         Diary legacy = diary("d1", "alice", "2026-09-20");
         when(diaryRepository.findByUserIdAndDiaryDate("u1", "2026-09-20")).thenReturn(Optional.empty());
         when(diaryRepository.findByUserIdAndDiaryDate("alice", "2026-09-20")).thenReturn(Optional.of(legacy));
-        when(diaryRepository.save(any(Diary.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubSaveReturnsArg(diaryRepository, Diary.class);
 
         Diary input = new Diary();
         input.setDiaryDate("2026-09-20");
@@ -120,14 +119,14 @@ class DiaryServiceTest {
         Diary other = diary("d1", "u-other", "2026-09-20");
         when(diaryRepository.findById("d1")).thenReturn(Optional.of(other));
         assertThrows(ApiException.class, () -> diaryService.deleteDiary("alice", "d1"));
-        verify(diaryRepository, never()).deleteById(any());
+        verify(diaryRepository, never()).deleteById(nullableArg(String.class));
     }
 
     @Test
     void unknownMoodFallsBackToNeutralOnSave() {
         when(diaryRepository.findByUserIdAndDiaryDate("u1", "2026-09-20")).thenReturn(Optional.empty());
         when(diaryRepository.findByUserIdAndDiaryDate("alice", "2026-09-20")).thenReturn(Optional.empty());
-        when(diaryRepository.save(any(Diary.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubSaveReturnsArg(diaryRepository, Diary.class);
 
         Diary input = new Diary();
         input.setDiaryDate("2026-09-20");
