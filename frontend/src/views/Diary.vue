@@ -163,6 +163,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { isAxiosError } from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Close, EditPen, Picture } from '@element-plus/icons-vue'
@@ -192,7 +193,9 @@ import {
   shiftMonth,
   todayDateKey,
 } from '@/utils/diaryDisplay'
+import { applyMood, moodFromDiary } from '@/composables/useTheme'
 
+const route = useRoute()
 const loading = ref(false)
 const saving = ref(false)
 const matchingMeme = ref(false)
@@ -416,6 +419,7 @@ const handleSave = async () => {
       imageUrl: form.imageUrl,
     })
     ElMessage.success('保存成功')
+    applyMood(moodFromDiary(form.mood))
     dialogVisible.value = false
     showPeriod(form.diaryDate, true)
     await loadData()
@@ -500,8 +504,27 @@ const handleMatchMeme = async () => {
   }
 }
 
-onMounted(() => {
-  loadData()
+onMounted(async () => {
+  await loadData()
+  const date = typeof route.query.date === 'string' ? route.query.date : ''
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return
+  showPeriod(date, true)
+  const existing = diaries.value.find((item) => item.diaryDate === date)
+  if (existing) {
+    fillForm(existing, true)
+  } else {
+    fillForm(
+      {
+        diaryDate: date,
+        content: '',
+        mood: DiaryMood.Neutral,
+        tags: [],
+        imageUrl: '',
+      },
+      true,
+    )
+  }
+  dialogVisible.value = true
 })
 </script>
 

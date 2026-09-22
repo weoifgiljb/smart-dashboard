@@ -3,6 +3,7 @@ package com.selfdiscipline.service;
 import com.selfdiscipline.config.AliyunAIConfig;
 import com.selfdiscipline.config.OllamaConfig;
 import com.selfdiscipline.dto.ChatResponse;
+import com.selfdiscipline.dto.RhythmResponse;
 import com.selfdiscipline.exception.ApiException;
 import com.selfdiscipline.model.Chat;
 import com.selfdiscipline.model.Conversation;
@@ -20,6 +21,9 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,6 +47,8 @@ public class AIService {
     private final OllamaConfig ollamaConfig;
     private final WebClient webClient;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private DashboardService dashboardService;
+    private volatile boolean rhythmContextInjectionWarned;
 
     @Autowired
     public AIService(ChatRepository chatRepository,
@@ -65,6 +71,34 @@ public class AIService {
         this.aliyunAIConfig = aliyunAIConfig;
         this.ollamaConfig = ollamaConfig;
         this.webClient = webClient;
+    }
+
+    @Autowired(required = false)
+    void setDashboardService(DashboardService dashboardService) {
+        this.dashboardService = dashboardService;
+    }
+
+    String rhythmContext(String username) {
+        if (dashboardService == null) {
+            if (!rhythmContextInjectionWarned) {
+                rhythmContextInjectionWarned = true;
+                log.warn("DashboardService 未注入，AI 对话将不带今日节律上下文");
+            }
+            return "";
+        }
+        try {
+            RhythmResponse rhythm = dashboardService.getRhythm(username);
+            String task = rhythm.getFocusTask() == null ? "无" : rhythm.getFocusTask().getTitle();
+            int heat = rhythm.getHeat() == null ? 0 : rhythm.getHeat().getTotal();
+            return "今日节律（只读，不要改数据）：下一动作=" + rhythm.getNextAction()
+                    + "，到期词=" + rhythm.getDueWordCount()
+                    + "，专注任务=" + task
+                    + "，今日热力=" + heat
+                    + "。请据此帮助用户安排今晚或解释热力，不要声称已改任务或打卡。";
+        } catch (Exception e) {
+            log.debug("注入节律上下文失败: {}", e.getMessage());
+            return "";
+        }
     }
 
     public Conversation createConversation(String username) {
@@ -119,38 +153,100 @@ public class AIService {
     }
 
     public ChatResponse chat(String username, String conversationId, String question, boolean replaceLast) {
+        ChatTurnPlan plan = planChatTurn(username, conversationId, question, replaceLast);
+        String answer = complete(buildLlmMessages(
+                plan.contextHistory(), plan.question(), rhythmContext(username)));
+        persistAnswer(plan, answer);
+        return new ChatResponse(answer);
+    }
+
+    public ChatStreamHandle prepareChatStream(
+            String username, String conversationId, String question, boolean replaceLast) {
+        ChatTurnPlan plan = planChatTurn(username, conversationId, question, replaceLast);
+        List<Map<String, String>> llmMessages = buildLlmMessages(
+                plan.contextHistory(), plan.question(), rhythmContext(username));
+        return new ChatStreamHandle(plan, llmMessages);
+    }
+
+    public void finalizeChatStream(ChatStreamHandle handle, String answer) {
+        persistAnswer(handle.plan(), answer == null ? "" : answer);
+    }
+
+    public void writeChatStream(ChatStreamHandle handle, OutputStream outputStream) throws IOException {
+        String answer = complete(handle.llmMessages);
+        byte[] bytes = answer.getBytes(StandardCharsets.UTF_8);
+        int step = 24;
+        for (int i = 0; i < bytes.length; i += step) {
+            int len = Math.min(step, bytes.length - i);
+            outputStream.write(bytes, i, len);
+            outputStream.flush();
+        }
+        finalizeChatStream(handle, answer);
+    }
+
+    public static final class ChatStreamHandle {
+        private final ChatTurnPlan plan;
+        private final List<Map<String, String>> llmMessages;
+
+        ChatStreamHandle(ChatTurnPlan plan, List<Map<String, String>> llmMessages) {
+            this.plan = plan;
+            this.llmMessages = llmMessages;
+        }
+
+        ChatTurnPlan plan() {
+            return plan;
+        }
+    }
+
+    private record ChatTurnPlan(
+            Conversation conversation,
+            Chat replaceTarget,
+            List<Chat> contextHistory,
+            String question) {}
+
+    private ChatTurnPlan planChatTurn(
+            String username, String conversationId, String question, boolean replaceLast) {
         Conversation conversation = requireOwnedConversation(username, conversationId);
         List<Chat> history = chatRepository.findByConversationIdAndUserIdOrderByCreateTimeAsc(
                 conversation.getId(), conversation.getUserId());
-        Chat lastTurn = null;
+        Chat replaceTarget = null;
         List<Chat> contextHistory = history;
         if (replaceLast) {
             if (history.isEmpty()) {
                 throw ApiException.badRequest("没有可重新生成的消息");
             }
-            lastTurn = history.get(history.size() - 1);
-            if (!nullToEmpty(question).equals(nullToEmpty(lastTurn.getQuestion()))) {
+            replaceTarget = history.get(history.size() - 1);
+            if (!nullToEmpty(question).equals(nullToEmpty(replaceTarget.getQuestion()))) {
                 throw ApiException.badRequest("只能重新生成最后一轮对话");
             }
             contextHistory = history.subList(0, history.size() - 1);
         }
-        String answer = complete(buildLlmMessages(contextHistory, question));
-        if (lastTurn != null) {
-            lastTurn.setAnswer(answer);
-            chatRepository.save(lastTurn);
-            conversation.setUpdatedAt(LocalDateTime.now());
-            conversationRepository.save(conversation);
-        } else {
-            persistChat(conversation.getUserId(), conversation.getId(), question, answer);
-            touchConversation(conversation, question);
+        return new ChatTurnPlan(conversation, replaceTarget, contextHistory, question);
+    }
+
+    private void persistAnswer(ChatTurnPlan plan, String answer) {
+        if (plan.replaceTarget() != null) {
+            plan.replaceTarget().setAnswer(answer);
+            chatRepository.save(plan.replaceTarget());
+            plan.conversation().setUpdatedAt(LocalDateTime.now());
+            conversationRepository.save(plan.conversation());
+            return;
         }
-        return new ChatResponse(answer);
+        persistChat(plan.conversation().getUserId(), plan.conversation().getId(), plan.question(), answer);
+        touchConversation(plan.conversation(), plan.question());
     }
 
     static List<Map<String, String>> buildLlmMessages(List<Chat> history, String question) {
+        return buildLlmMessages(history, question, "");
+    }
+
+    static List<Map<String, String>> buildLlmMessages(List<Chat> history, String question, String rhythmContext) {
         List<Chat> turns = history == null ? List.of() : history;
         int start = Math.max(0, turns.size() - CONTEXT_TURNS);
         List<Map<String, String>> messages = new ArrayList<>();
+        if (rhythmContext != null && !rhythmContext.isBlank()) {
+            messages.add(Map.of("role", "system", "content", rhythmContext));
+        }
         for (int i = start; i < turns.size(); i++) {
             Chat turn = turns.get(i);
             messages.add(Map.of("role", "user", "content", nullToEmpty(turn.getQuestion())));

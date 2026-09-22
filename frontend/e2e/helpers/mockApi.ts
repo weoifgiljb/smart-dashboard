@@ -91,7 +91,9 @@ function payloadFor(
   method: string,
   diaries: MockDiary[] = [],
   options: MockApiOptions = {},
-  catalog: Array<{ id: string; title: string; author: string; description: string }> = [SAMPLE_BOOK],
+  catalog: Array<{ id: string; title: string; author: string; description: string }> = [
+    SAMPLE_BOOK,
+  ],
 ) {
   const path = apiPath(url)
 
@@ -135,16 +137,50 @@ function payloadFor(
   if (path.includes('/tasks/aggregate/stats')) {
     return { byStatus: {}, byPriority: {}, overdue: 0 }
   }
+  if ((path === '/tasks' || path.endsWith('/tasks')) && method === 'GET') {
+    return [
+      {
+        id: 't1',
+        title: '写计划',
+        status: 'in_progress',
+        priority: 'med',
+        startDate: '2026-09-21T00:00:00',
+        dueDate: '2026-09-22T00:00:00',
+        estimateMinutes: 50,
+        actualMinutes: 25,
+      },
+    ]
+  }
   if (path.includes('/books/search')) return options.emptySearch ? [] : catalog
   if (path.includes('/books/by-ids')) {
     const ids = (url.searchParams.get('ids') || '').split(',').filter(Boolean)
     return catalog.filter((book) => ids.includes(book.id))
   }
   if (path.includes('/books/random')) return catalog
-  if (/\/books\/[^/]+$/.test(path) && !path.includes('/books/random') && !path.includes('/books/by-ids')) {
+  if (
+    /\/books\/[^/]+$/.test(path) &&
+    !path.includes('/books/random') &&
+    !path.includes('/books/by-ids')
+  ) {
     return SAMPLE_BOOK
   }
   if (path.includes('/books')) return { content: catalog, totalElements: catalog.length }
+  if (path.includes('/calendar/day')) {
+    return {
+      checkins: [{ id: 'c1', date: '2026-09-20' }],
+      pomodoros: [{ id: 'p1', duration: 25, type: 'work', startTime: '2026-09-20T09:00:00' }],
+      words: [{ id: 'w1', word: 'focus', createTime: '2026-09-20T10:00:00' }],
+      tasks: [{ id: 't1', title: '写计划', status: 'done' }],
+      diaries: [
+        {
+          id: 'd1',
+          content: '把这一天收口',
+          mood: 'happy',
+          updatedAt: '2026-09-20T21:00:00',
+        },
+      ],
+    }
+  }
   if ((path === '/calendar' || path.endsWith('/calendar')) && method === 'GET') {
     return {
       '2026-01-05': { checkin: 1 },
@@ -283,7 +319,9 @@ export async function mockApi(page: Page, options: MockApiOptions = {}) {
     }
     if (path.includes('/books/import') && method === 'POST') {
       catalog.splice(0, catalog.length, { ...SAMPLE_BOOK })
-      const message = path.includes('/sample') ? '已放入 1 本示例书' : '已开始后台导入，稍后刷新书架'
+      const message = path.includes('/sample')
+        ? '已放入 1 本示例书'
+        : '已开始后台导入，稍后刷新书架'
       return json(route, { message })
     }
     return json(route, payloadFor(url, method, diaries, options, catalog))

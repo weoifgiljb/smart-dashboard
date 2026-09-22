@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { favoriteStorageKey, loadFavoriteIds, saveFavoriteIds, toggleFavoriteId } from '@/utils/bookFavorites'
+import {
+  favoriteStorageKey,
+  loadFavoriteIds,
+  saveFavoriteIds,
+  toggleFavoriteId,
+} from '@/utils/bookFavorites'
 
 describe('bookFavorites', () => {
   afterEach(() => {

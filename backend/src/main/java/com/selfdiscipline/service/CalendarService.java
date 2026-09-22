@@ -2,10 +2,12 @@ package com.selfdiscipline.service;
 
 import com.selfdiscipline.exception.ApiException;
 import com.selfdiscipline.model.CheckIn;
+import com.selfdiscipline.model.Diary;
 import com.selfdiscipline.model.Pomodoro;
 import com.selfdiscipline.model.Task;
 import com.selfdiscipline.model.Word;
 import com.selfdiscipline.repository.CheckInRepository;
+import com.selfdiscipline.repository.DiaryRepository;
 import com.selfdiscipline.repository.PomodoroRepository;
 import com.selfdiscipline.repository.TaskRepository;
 import com.selfdiscipline.repository.UserRepository;
@@ -38,6 +40,9 @@ public class CalendarService {
 
     @Autowired
     private TaskRepository taskRepository;
+
+    @Autowired
+    private DiaryRepository diaryRepository;
 
     private static final DateTimeFormatter DAY_KEY = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -191,6 +196,17 @@ public class CalendarService {
             m.put("priority", t.getPriority() == null ? "med" : t.getPriority());
             m.put("dueDate", safeIso(t.getDueDate()));
             m.put("startDate", safeIso(t.getStartDate()));
+            return m;
+        }).collect(Collectors.toList()));
+        List<Diary> diaries = diaryRepository.findByUserIdOrderByDiaryDateDesc(userId).stream()
+                .filter(d -> date.toString().equals(d.getDiaryDate()))
+                .collect(Collectors.toList());
+        res.put("diaries", diaries.stream().map(d -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", d.getId());
+            m.put("mood", d.getMood());
+            m.put("content", d.getContent() == null ? "" : d.getContent());
+            m.put("updatedAt", safeIso(d.getUpdatedAt()));
             return m;
         }).collect(Collectors.toList()));
         return res;

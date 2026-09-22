@@ -1,24 +1,24 @@
 <template>
   <el-card class="diary-item-card" shadow="hover" :data-diary-date="diary.diaryDate">
-      <div class="diary-header">
-        <div class="diary-meta">
-          <el-tag v-if="mood" size="small" :type="tagType" effect="plain">
-            {{ label }}
-          </el-tag>
-          <span v-if="updatedLabel" class="diary-time">{{ updatedLabel }}</span>
-        </div>
-        <div class="diary-actions">
-          <el-button type="primary" link @click="emit('edit', diary)">编辑</el-button>
-          <el-button type="danger" link @click="emit('delete', diary)">删除</el-button>
-        </div>
+    <div class="diary-header">
+      <div class="diary-meta">
+        <el-tag v-if="mood" size="small" :type="tagType" effect="plain">
+          {{ label }}
+        </el-tag>
+        <span v-if="updatedLabel" class="diary-time">{{ updatedLabel }}</span>
       </div>
-      <!-- eslint-disable-next-line vue/no-v-html -->
-      <div class="diary-content" v-html="html"></div>
-      <div v-if="diary.imageUrl" class="diary-image">
-        <el-image :src="diary.imageUrl" fit="contain" :preview-src-list="[diary.imageUrl]" />
+      <div class="diary-actions">
+        <el-button type="primary" link @click="emit('edit', diary)">编辑</el-button>
+        <el-button type="danger" link @click="emit('delete', diary)">删除</el-button>
       </div>
-      <DiaryTags v-if="(diary.tags || []).length" :tags="diary.tags || []" />
-    </el-card>
+    </div>
+    <!-- eslint-disable-next-line vue/no-v-html -->
+    <div class="diary-content" v-html="html"></div>
+    <div v-if="diary.imageUrl" class="diary-image">
+      <el-image :src="diary.imageUrl" fit="contain" :preview-src-list="[diary.imageUrl]" />
+    </div>
+    <DiaryTags v-if="(diary.tags || []).length" :tags="diary.tags || []" />
+  </el-card>
 </template>
 
 <script setup lang="ts">

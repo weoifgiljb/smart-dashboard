@@ -2,7 +2,11 @@
   <el-container class="layout-container">
     <el-header class="header">
       <div class="header-left">
-        <el-button link style="margin-right: 16px; color: var(--color-text)" @click="toggleCollapse">
+        <el-button
+          link
+          style="margin-right: 16px; color: var(--color-text)"
+          @click="toggleCollapse"
+        >
           <el-icon :size="24">
             <Fold v-if="!isCollapse" />
             <Expand v-else />
@@ -11,6 +15,12 @@
         <!-- Breadcrumb or Page Title could go here -->
       </div>
       <div class="header-right">
+        <el-select v-model="mood" class="mood-select" size="small" @change="onMoodChange">
+          <el-option label="池核" :value="MoodName.Pool" />
+          <el-option label="海洋核" :value="MoodName.Ocean" />
+          <el-option label="水晶核" :value="MoodName.Crystal" />
+          <el-option label="雨核" :value="MoodName.Rain" />
+        </el-select>
         <el-switch
           v-model="isDark"
           inline-prompt
@@ -66,7 +76,7 @@
           </el-menu-item>
           <el-menu-item index="/books">
             <el-icon><Reading /></el-icon>
-            <span>书籍推送</span>
+            <span>书籍推送（扩展）</span>
           </el-menu-item>
         </el-menu>
       </el-aside>
@@ -96,7 +106,7 @@ import { ElMessage } from 'element-plus'
 import ErrorBoundary from '@/components/ErrorBoundary.vue'
 import SkeletonPage from '@/components/SkeletonPage.vue'
 import UiButton from '@/components/ui/AppButton.vue'
-import { useTheme } from '@/composables/useTheme'
+import { MoodName, useTheme } from '@/composables/useTheme'
 import {
   House,
   Calendar,
@@ -126,13 +136,32 @@ const handleLogout = async () => {
   router.push('/login')
 }
 
-const { isDark, toggleTheme } = useTheme()
+const { isDark, mood, toggleTheme, setMood } = useTheme()
+
+function onMoodChange(value: string | number | boolean) {
+  switch (value) {
+    case MoodName.Pool:
+    case MoodName.Ocean:
+    case MoodName.Crystal:
+    case MoodName.Rain:
+      setMood(value)
+      break
+    default:
+      setMood(MoodName.Ocean)
+  }
+}
 </script>
 
 <style scoped lang="less">
 .layout-container {
   height: 100vh;
   background: var(--color-bg);
+  min-width: 0;
+}
+
+.layout-container > :deep(.el-container) {
+  min-width: 0;
+  flex: 1;
 }
 
 .header {
@@ -145,6 +174,8 @@ const { isDark, toggleTheme } = useTheme()
   height: 56px;
   border-bottom: 1px solid var(--color-border);
   z-index: 10;
+  min-width: 0;
+  gap: 12px;
 }
 
 .header-left,
@@ -152,6 +183,28 @@ const { isDark, toggleTheme } = useTheme()
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+}
+
+.header-left {
+  flex-shrink: 0;
+}
+
+.header-right {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.header-right > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 12em;
+}
+
+.mood-select {
+  width: 112px;
+  margin-right: 8px;
 }
 
 .aside {
@@ -159,13 +212,14 @@ const { isDark, toggleTheme } = useTheme()
   --color-text: var(--sidebar-local-text);
   --color-text-secondary: var(--sidebar-local-text-secondary);
   --color-border: var(--sidebar-local-border);
-  --color-primary-soft: rgba(52, 211, 153, 0.16);
   background: var(--color-bg);
   color: var(--color-text);
   border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
   transition: width 0.2s ease;
+  flex-shrink: 0;
+  overflow: hidden;
 }
 
 .logo-container {
@@ -223,8 +277,10 @@ const { isDark, toggleTheme } = useTheme()
 }
 
 .main {
+  min-width: 0;
   background: var(--color-bg);
   padding: 24px;
+  overflow-x: hidden;
   overflow-y: auto;
 }
 </style>

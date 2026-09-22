@@ -3,11 +3,13 @@ package com.selfdiscipline.service;
 import com.selfdiscipline.dto.RhythmResponse;
 import com.selfdiscipline.exception.ApiException;
 import com.selfdiscipline.model.CheckIn;
+import com.selfdiscipline.model.Diary;
 import com.selfdiscipline.model.Pomodoro;
 import com.selfdiscipline.model.Task;
 import com.selfdiscipline.model.User;
 import com.selfdiscipline.model.Word;
 import com.selfdiscipline.repository.CheckInRepository;
+import com.selfdiscipline.repository.DiaryRepository;
 import com.selfdiscipline.repository.PomodoroRepository;
 import com.selfdiscipline.repository.UserRepository;
 import com.selfdiscipline.repository.WordRepository;
@@ -58,6 +60,8 @@ class DashboardServiceTest {
     private CalendarService calendarService;
     @Mock
     private TaskService taskService;
+    @Mock
+    private DiaryRepository diaryRepository;
 
     @InjectMocks
     private DashboardService dashboardService;
@@ -156,6 +160,10 @@ class DashboardServiceTest {
         stubOpenTasks(List.of());
         stubHeat(0, 0, 0);
         when(checkInRepository.existsByUserIdAndCheckInDate("u1", LocalDate.now())).thenReturn(true);
+        Diary diary = new Diary();
+        diary.setDiaryDate(LocalDate.now().toString());
+        when(diaryRepository.findByUserIdAndDiaryDate("u1", LocalDate.now().toString()))
+                .thenReturn(Optional.of(diary));
 
         RhythmResponse rhythm = dashboardService.getRhythm("alice");
 
@@ -163,6 +171,24 @@ class DashboardServiceTest {
         assertEquals("自由专注", rhythm.getCtaLabel());
         assertEquals("/pomodoro", rhythm.getCtaPath());
         assertNull(rhythm.getFocusTask());
+    }
+
+    @Test
+    void rhythmAsksForDiaryAfterMainLoop() {
+        stubUser();
+        stubDueWords(List.of());
+        stubOpenTasks(List.of());
+        stubHeat(0, 0, 0);
+        when(checkInRepository.existsByUserIdAndCheckInDate("u1", LocalDate.now())).thenReturn(true);
+        when(diaryRepository.findByUserIdAndDiaryDate("u1", LocalDate.now().toString()))
+                .thenReturn(Optional.empty());
+
+        RhythmResponse rhythm = dashboardService.getRhythm("alice");
+
+        assertEquals(RhythmPlanner.WRITE_DIARY, rhythm.getNextAction());
+        assertEquals("写今日日记", rhythm.getCtaLabel());
+        assertEquals("/diary?date=" + LocalDate.now(), rhythm.getCtaPath());
+        assertEquals("主线接上了，用日记把这一天收口。", rhythm.getReason());
     }
 
     @Test
@@ -239,12 +265,32 @@ class DashboardServiceTest {
         when(checkInRepository.findByUserIdOrderByCheckInDateDesc("u1")).thenReturn(List.of(checkIn));
         when(pomodoroRepository.findByUserIdOrderByStartTimeDesc("u1")).thenReturn(List.of(pomodoro));
         when(wordRepository.findByUserIdOrderByCreateTimeDesc("u1")).thenReturn(List.of(word));
+        when(diaryRepository.findByUserIdOrderByDiaryDateDesc("u1")).thenReturn(List.of());
 
         List<Map<String, Object>> activities = dashboardService.getRecentActivities("alice");
 
         assertEquals(2, activities.size());
         assertEquals("完成打卡", activities.stream().filter(a -> "checkin".equals(a.get("type"))).findFirst().orElseThrow().get("title"));
         assertEquals("完成工作番茄钟 (0分钟)", activities.stream().filter(a -> "pomodoro".equals(a.get("type"))).findFirst().orElseThrow().get("title"));
+    }
+
+    @Test
+    void recentActivitiesUsesDiaryDateWhenTimestampsMissing() {
+        stubUser();
+        when(checkInRepository.findByUserIdOrderByCheckInDateDesc("u1")).thenReturn(List.of());
+        when(pomodoroRepository.findByUserIdOrderByStartTimeDesc("u1")).thenReturn(List.of());
+        when(wordRepository.findByUserIdOrderByCreateTimeDesc("u1")).thenReturn(List.of());
+        Diary diary = new Diary();
+        diary.setDiaryDate(LocalDate.now().toString());
+        diary.setCreatedAt(null);
+        diary.setUpdatedAt(null);
+        when(diaryRepository.findByUserIdOrderByDiaryDateDesc("u1")).thenReturn(List.of(diary));
+
+        List<Map<String, Object>> activities = dashboardService.getRecentActivities("alice");
+
+        assertEquals(1, activities.size());
+        assertEquals("diary", activities.get(0).get("type"));
+        assertEquals(LocalDate.now().atStartOfDay().toString(), activities.get(0).get("time"));
     }
 
     @Test
@@ -256,6 +302,9 @@ class DashboardServiceTest {
 
     private void stubUser() {
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
+        org.mockito.Mockito.lenient()
+                .when(diaryRepository.findByUserIdAndDiaryDate(eq("u1"), nullableArg(String.class)))
+                .thenReturn(Optional.empty());
     }
 
     private void stubDueWords(List<Word> words) {

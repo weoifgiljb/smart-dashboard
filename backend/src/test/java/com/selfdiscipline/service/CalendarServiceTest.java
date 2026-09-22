@@ -1,11 +1,13 @@
 package com.selfdiscipline.service;
 
 import com.selfdiscipline.model.CheckIn;
+import com.selfdiscipline.model.Diary;
 import com.selfdiscipline.model.Pomodoro;
 import com.selfdiscipline.model.Task;
 import com.selfdiscipline.model.User;
 import com.selfdiscipline.model.Word;
 import com.selfdiscipline.repository.CheckInRepository;
+import com.selfdiscipline.repository.DiaryRepository;
 import com.selfdiscipline.repository.PomodoroRepository;
 import com.selfdiscipline.repository.TaskRepository;
 import com.selfdiscipline.repository.UserRepository;
@@ -41,6 +43,8 @@ class CalendarServiceTest {
     private UserRepository userRepository;
     @Mock
     private TaskRepository taskRepository;
+    @Mock
+    private DiaryRepository diaryRepository;
 
     @InjectMocks
     private CalendarService calendarService;
@@ -127,6 +131,30 @@ class CalendarServiceTest {
 
         Map<String, Integer> day = calendarService.getCalendarData("alice", today, today).get("2026-09-20");
         assertEquals(2, day.get("pomodoro"));
+    }
+
+    @Test
+    void dayDetailsIncludeDiaryWithoutChangingHeat() {
+        when(checkInRepository.findByUserIdOrderByCheckInDateDesc("u1")).thenReturn(List.of());
+        when(pomodoroRepository.findByUserIdOrderByStartTimeDesc("u1")).thenReturn(List.of());
+        when(wordRepository.findByUserIdOrderByCreateTimeDesc("u1")).thenReturn(List.of());
+        when(taskRepository.findByOwnerUserId("u1")).thenReturn(List.of());
+        Diary diary = new Diary();
+        diary.setId("d1");
+        diary.setDiaryDate("2026-09-20");
+        diary.setContent("收口");
+        diary.setMood("happy");
+        when(diaryRepository.findByUserIdOrderByDiaryDateDesc("u1")).thenReturn(List.of(diary));
+
+        Map<String, Integer> heat = calendarService.getCalendarData("alice", today, today).get("2026-09-20");
+        assertNull(heat);
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> diaries =
+                (List<Map<String, Object>>) calendarService.getDayDetails("alice", today).get("diaries");
+        assertEquals(1, diaries.size());
+        assertEquals("收口", diaries.get(0).get("content"));
+        assertEquals("happy", diaries.get(0).get("mood"));
     }
 
     private void stubSources(LocalDate inRange, LocalDate outOfRange) {

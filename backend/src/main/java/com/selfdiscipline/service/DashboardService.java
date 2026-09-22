@@ -3,11 +3,13 @@ package com.selfdiscipline.service;
 import com.selfdiscipline.dto.RhythmResponse;
 import com.selfdiscipline.exception.ApiException;
 import com.selfdiscipline.model.CheckIn;
+import com.selfdiscipline.model.Diary;
 import com.selfdiscipline.model.Pomodoro;
 import com.selfdiscipline.model.Task;
 import com.selfdiscipline.model.User;
 import com.selfdiscipline.model.Word;
 import com.selfdiscipline.repository.CheckInRepository;
+import com.selfdiscipline.repository.DiaryRepository;
 import com.selfdiscipline.repository.PomodoroRepository;
 import com.selfdiscipline.repository.UserRepository;
 import com.selfdiscipline.repository.WordRepository;
@@ -49,6 +51,9 @@ public class DashboardService {
 
     @Autowired
     private TaskService taskService;
+
+    @Autowired
+    private DiaryRepository diaryRepository;
 
     public Map<String, Object> getStats(String username) {
         User user = userRepository.findByUsername(username)
@@ -145,6 +150,28 @@ public class DashboardService {
             activities.add(activity);
         }
 
+        diaryRepository.findByUserIdOrderByDiaryDateDesc(userId).stream()
+                .filter(diary -> {
+                    if (diary.getDiaryDate() == null) {
+                        return false;
+                    }
+                    LocalDate day = LocalDate.parse(diary.getDiaryDate());
+                    return !day.isBefore(sevenDaysAgo);
+                })
+                .limit(10)
+                .forEach(diary -> {
+                    String time = diaryActivityTime(diary);
+                    if (time.isBlank()) {
+                        return;
+                    }
+                    Map<String, Object> activity = new HashMap<>();
+                    activity.put("type", "diary");
+                    activity.put("title", "写下日记");
+                    activity.put("date", diary.getDiaryDate());
+                    activity.put("time", time);
+                    activities.add(activity);
+                });
+
         activities.sort((a, b) -> {
             String timeA = (String) a.get("time");
             String timeB = (String) b.get("time");
@@ -171,7 +198,9 @@ public class DashboardService {
         List<Word> duePreview = dueToday.stream().limit(3).collect(Collectors.toList());
 
         Task focusTask = pickOpenTask(username);
-        String nextAction = RhythmPlanner.nextAction(hasCheckedIn, dueToday.size(), focusTask != null);
+        boolean hasDiaryToday = diaryRepository.findByUserIdAndDiaryDate(userId, today.toString()).isPresent();
+        String nextAction = RhythmPlanner.nextAction(
+                hasCheckedIn, dueToday.size(), focusTask != null, hasDiaryToday);
 
         Map<String, Integer> day = calendarService.getCalendarData(username, today, today)
                 .getOrDefault(today.toString(), new HashMap<>());
@@ -240,6 +269,16 @@ public class DashboardService {
                 rhythm.setCtaPath("/pomodoro?taskId=" + (focusTask != null ? focusTask.getId() : ""));
                 rhythm.setReason("任务「" + title + "」还没完成，开一枚番茄推它。");
             }
+            case RhythmPlanner.WRITE_DIARY -> {
+                rhythm.setCtaLabel("写今日日记");
+                rhythm.setCtaPath("/diary?date=" + LocalDate.now());
+                rhythm.setReason("主线接上了，用日记把这一天收口。");
+            }
+            case RhythmPlanner.FOCUS_FREE -> {
+                rhythm.setCtaLabel("自由专注");
+                rhythm.setCtaPath("/pomodoro");
+                rhythm.setReason("今天该接的都接上了，自由专注也很好。");
+            }
             default -> {
                 rhythm.setCtaLabel("自由专注");
                 rhythm.setCtaPath("/pomodoro");
@@ -251,6 +290,14 @@ public class DashboardService {
     private static String safeTime(LocalDateTime preferred, LocalDateTime fallback) {
         LocalDateTime value = preferred != null ? preferred : fallback;
         return value == null ? "" : value.toString();
+    }
+
+    private static String diaryActivityTime(Diary diary) {
+        String time = safeTime(diary.getUpdatedAt(), diary.getCreatedAt());
+        if (!time.isBlank() || diary.getDiaryDate() == null) {
+            return time;
+        }
+        return LocalDate.parse(diary.getDiaryDate()).atStartOfDay().toString();
     }
 }
 

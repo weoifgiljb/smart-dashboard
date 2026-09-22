@@ -162,5 +162,12 @@ describe('useDashboard', () => {
     expect(wrapper.vm.rhythm.ctaLabel).toBe('立即打卡')
     expect(wrapper.vm.stats.checkInDays).toBe(0)
     expect(wrapper.vm.recentActivities).toEqual([])
+    expect(wrapper.vm.loadError).toBe('首页数据加载失败，请刷新重试')
+  })
+
+  it('keeps long-term metrics collapsed after a successful load', async () => {
+    const wrapper = await mountDashboard()
+    expect(wrapper.vm.longTermOpen).toBe(false)
+    expect(wrapper.vm.loadError).toBe('')
   })
 })

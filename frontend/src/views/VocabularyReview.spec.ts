@@ -76,4 +76,33 @@ describe('VocabularyReview.vue', () => {
     await flushPromises()
     expect(reviewWord).toHaveBeenCalledWith('w2', WordReviewResult.Unknown)
   })
+
+  it('shows loading copy while today words are still fetching', () => {
+    vi.mocked(getTodayWords).mockReturnValue(new Promise(() => undefined) as never)
+    const wrapper = mount(VocabularyReview, {
+      global: { plugins: [ElementPlus] },
+    })
+    expect(wrapper.text()).toContain('正在加载到期单词')
+    expect(wrapper.text()).not.toContain('加载中或暂无单词')
+  })
+
+  it('shows an empty queue after today words resolve to none', async () => {
+    vi.mocked(getTodayWords).mockResolvedValue([])
+    const wrapper = mount(VocabularyReview, {
+      global: { plugins: [ElementPlus] },
+    })
+    await flushPromises()
+    expect(wrapper.text()).toContain('今日没有到期单词')
+    expect(wrapper.text()).not.toContain('加载中或暂无单词')
+  })
+
+  it('shows retry when loading today words fails', async () => {
+    vi.mocked(getTodayWords).mockRejectedValue(new Error('network'))
+    const wrapper = mount(VocabularyReview, {
+      global: { plugins: [ElementPlus] },
+    })
+    await flushPromises()
+    expect(wrapper.text()).toContain('加载到期单词失败，请重试')
+    expect(wrapper.text()).not.toContain('今日没有到期单词')
+  })
 })

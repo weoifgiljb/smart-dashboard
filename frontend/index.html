@@ -14,6 +14,11 @@
           }
           document.documentElement.setAttribute('data-theme', theme)
           document.documentElement.classList.toggle('dark', theme === 'dark')
+          var mood = localStorage.getItem('mood')
+          if (mood !== 'pool' && mood !== 'ocean' && mood !== 'crystal' && mood !== 'rain') {
+            mood = 'ocean'
+          }
+          document.documentElement.setAttribute('data-mood', mood)
         } catch (e) {}
       })()
     </script>

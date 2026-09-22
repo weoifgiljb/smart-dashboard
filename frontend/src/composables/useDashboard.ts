@@ -1,5 +1,10 @@
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
-import { getDashboardStats, getTodayTasks, getRecentActivities, getTodayRhythm } from '@/api/dashboard'
+import {
+  getDashboardStats,
+  getTodayTasks,
+  getRecentActivities,
+  getTodayRhythm,
+} from '@/api/dashboard'
 import { getCheckInHistory, getCheckInHistoryWithHeatValue } from '@/api/checkin'
 import { getCalendarData } from '@/api/calendar'
 import { getPomodoroHistory } from '@/api/pomodoro'
@@ -19,7 +24,12 @@ export interface TodayTaskSummary {
   todayPomodoroCount: number
 }
 
-export type RhythmNextAction = 'CHECK_IN' | 'REVIEW_WORDS' | 'FOCUS_TASK' | 'FOCUS_FREE'
+export type RhythmNextAction =
+  | 'CHECK_IN'
+  | 'REVIEW_WORDS'
+  | 'FOCUS_TASK'
+  | 'FOCUS_FREE'
+  | 'WRITE_DIARY'
 
 export interface TodayRhythm {
   nextAction: RhythmNextAction
@@ -100,6 +110,8 @@ export function useDashboard() {
   const dialogTitle = ref('')
   const dialogData = ref<Array<Record<string, unknown>>>([])
   const dialogType = ref<'pomodoro' | 'word'>('pomodoro')
+  const loadError = ref('')
+  const longTermOpen = ref(false)
 
   const shortcuts = [
     {
@@ -283,7 +295,11 @@ export function useDashboard() {
           symbolSize: 6,
           areaStyle: { color: 'rgba(59, 130, 246, 0.1)' },
           lineStyle: { color: chartPalette().secondary, width: 3 },
-          itemStyle: { color: chartPalette().secondary, borderWidth: 2, borderColor: chartPalette().bg },
+          itemStyle: {
+            color: chartPalette().secondary,
+            borderWidth: 2,
+            borderColor: chartPalette().bg,
+          },
         },
       ],
       tooltip: { trigger: 'axis' },
@@ -385,6 +401,7 @@ export function useDashboard() {
 
   onMounted(async () => {
     try {
+      loadError.value = ''
       const today = new Date()
       const start = new Date(today)
       start.setDate(today.getDate() - 29)
@@ -484,7 +501,7 @@ export function useDashboard() {
       }).length
       todayTasks.value.todayPomodoroCount = todayPomodoros
     } catch {
-      // keep empty dashboard on load failure
+      loadError.value = '首页数据加载失败，请刷新重试'
     }
   })
 
@@ -516,5 +533,7 @@ export function useDashboard() {
     shortcuts,
     handleChartClick,
     formatActivityTime,
+    loadError,
+    longTermOpen,
   }
 }

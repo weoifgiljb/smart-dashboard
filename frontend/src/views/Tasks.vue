@@ -88,6 +88,9 @@
                     <span v-if="row.dueDate" class="meta-item" :class="{ overdue: isOverdue(row) }">
                       <el-icon><Calendar /></el-icon> {{ row.dueDate.slice(0, 10) }}
                     </span>
+                    <span v-if="minutesProgress(row)" class="meta-item">{{
+                      minutesProgress(row)
+                    }}</span>
                     <el-tag
                       v-for="tag in row.tags"
                       :key="tag"
@@ -193,6 +196,7 @@
               <el-card shadow="hover" class="gantt-card">
                 <h4>{{ t.title }}</h4>
                 <p>{{ t.description || '无描述' }}</p>
+                <p v-if="minutesProgress(t)" class="gantt-minutes">{{ minutesProgress(t) }}</p>
               </el-card>
             </el-timeline-item>
           </el-timeline>
@@ -293,6 +297,17 @@
 
         <el-row :gutter="16">
           <el-col :span="12">
+            <el-form-item label="开始日期">
+              <el-date-picker
+                v-model="form.startDate"
+                type="date"
+                value-format="YYYY-MM-DD"
+                placeholder="选择开始日期"
+                style="width: 100%"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
             <el-form-item label="截止日期">
               <el-date-picker
                 v-model="form.dueDate"
@@ -303,12 +318,24 @@
               />
             </el-form-item>
           </el-col>
+        </el-row>
+        <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="预估时间(分钟)">
               <el-input-number
                 v-model="form.estimateMinutes"
                 :min="0"
                 :step="15"
+                controls-position="right"
+                style="width: 100%"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="实际耗时(分钟)">
+              <el-input-number
+                :model-value="form.actualMinutes || 0"
+                disabled
                 controls-position="right"
                 style="width: 100%"
               />
@@ -380,6 +407,7 @@ const {
   statusType,
   statusPieOption,
   priorityPieOption,
+  minutesProgress,
 } = useTaskBoard()
 
 const displayKanbanItems = (key: string) => {

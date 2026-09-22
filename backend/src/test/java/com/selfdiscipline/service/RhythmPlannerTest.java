@@ -23,7 +23,17 @@ class RhythmPlannerTest {
 
     @Test
     void fallsBackToFreeFocus() {
-        assertEquals(RhythmPlanner.FOCUS_FREE, RhythmPlanner.nextAction(true, 0, false));
+        assertEquals(RhythmPlanner.FOCUS_FREE, RhythmPlanner.nextAction(true, 0, false, true));
+    }
+
+    @Test
+    void prefersDiaryAfterMainLoopWhenTodayHasNoEntry() {
+        assertEquals(RhythmPlanner.WRITE_DIARY, RhythmPlanner.nextAction(true, 0, false, false));
+    }
+
+    @Test
+    void doesNotInsertDiaryBeforeCheckIn() {
+        assertEquals(RhythmPlanner.CHECK_IN, RhythmPlanner.nextAction(false, 0, false, false));
     }
 
     @Test

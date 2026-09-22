@@ -10,11 +10,17 @@ public final class RhythmPlanner {
     public static final String REVIEW_WORDS = "REVIEW_WORDS";
     public static final String FOCUS_TASK = "FOCUS_TASK";
     public static final String FOCUS_FREE = "FOCUS_FREE";
+    public static final String WRITE_DIARY = "WRITE_DIARY";
 
     private RhythmPlanner() {
     }
 
     public static String nextAction(boolean hasCheckedIn, int dueWordCount, boolean hasOpenTask) {
+        return nextAction(hasCheckedIn, dueWordCount, hasOpenTask, true);
+    }
+
+    public static String nextAction(
+            boolean hasCheckedIn, int dueWordCount, boolean hasOpenTask, boolean hasDiaryToday) {
         if (!hasCheckedIn) {
             return CHECK_IN;
         }
@@ -23,6 +29,9 @@ public final class RhythmPlanner {
         }
         if (hasOpenTask) {
             return FOCUS_TASK;
+        }
+        if (!hasDiaryToday) {
+            return WRITE_DIARY;
         }
         return FOCUS_FREE;
     }

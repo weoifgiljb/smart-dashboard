@@ -1,5 +1,13 @@
 <template>
   <div class="dashboard">
+    <el-alert
+      v-if="loadError"
+      class="load-error"
+      type="error"
+      :title="loadError"
+      show-icon
+      :closable="false"
+    />
     <section class="rhythm-card">
       <div class="rhythm-top">
         <div class="rhythm-main">
@@ -10,6 +18,7 @@
             <el-icon class="el-icon--left">
               <Calendar v-if="rhythm.nextAction === 'CHECK_IN'" />
               <Reading v-else-if="rhythm.nextAction === 'REVIEW_WORDS'" />
+              <Notebook v-else-if="rhythm.nextAction === 'WRITE_DIARY'" />
               <Timer v-else />
             </el-icon>
             {{ rhythm.ctaLabel }}
@@ -34,104 +43,6 @@
       </div>
       <p class="heat-formula">打卡×1 + 番茄×2 + 单词×1 + 任务×3</p>
     </section>
-    <div class="chart-toolbar">
-      <el-date-picker
-        v-model="dateRange"
-        type="daterange"
-        range-separator="-"
-        start-placeholder="开始"
-        end-placeholder="结束"
-        :shortcuts="shortcuts"
-        size="default"
-        class="date-range"
-      />
-    </div>
-
-    <section class="kpi-row">
-      <el-card shadow="never" class="kpi-card">
-        <div class="kpi-body">
-          <div class="kpi-icon icon-streak">
-            <el-icon><Trophy /></el-icon>
-          </div>
-          <div class="kpi-info">
-            <div class="stat-value">{{ stats.checkInDays }} <span class="unit">天</span></div>
-            <div class="stat-label">连续打卡</div>
-          </div>
-        </div>
-      </el-card>
-      <el-card shadow="never" class="kpi-card">
-        <div class="kpi-body">
-          <div class="kpi-icon icon-words">
-            <el-icon><Reading /></el-icon>
-          </div>
-          <div class="kpi-info">
-            <div class="stat-value">{{ stats.wordCount }} <span class="unit">词</span></div>
-            <div class="stat-label">已学单词</div>
-          </div>
-        </div>
-      </el-card>
-      <el-card shadow="never" class="kpi-card">
-        <div class="kpi-body">
-          <div class="kpi-icon icon-pomodoro">
-            <el-icon><Timer /></el-icon>
-          </div>
-          <div class="kpi-info">
-            <div class="stat-value">{{ stats.pomodoroCount }} <span class="unit">个</span></div>
-            <div class="stat-label">完成番茄</div>
-          </div>
-        </div>
-      </el-card>
-      <el-card shadow="never" class="kpi-card">
-        <div class="kpi-body">
-          <div class="kpi-icon icon-total">
-            <el-icon><DataLine /></el-icon>
-          </div>
-          <div class="kpi-info">
-            <div class="stat-value">{{ stats.totalDays }} <span class="unit">天</span></div>
-            <div class="stat-label">累计坚持</div>
-          </div>
-        </div>
-      </el-card>
-    </section>
-
-    <section class="chart-row">
-      <el-card shadow="never" class="chart-card">
-        <template #header>
-          <div class="card-header">
-            <span>近30天热力值</span>
-            <el-tag size="small" effect="plain">趋势</el-tag>
-          </div>
-        </template>
-        <BaseChart :option="heatValueOption" height="var(--dashboard-chart-height)" />
-      </el-card>
-      <el-card shadow="never" class="chart-card">
-        <template #header>
-          <div class="card-header">
-            <span>番茄专注</span>
-            <el-tag type="warning" size="small" effect="plain">近7天</el-tag>
-          </div>
-        </template>
-        <BaseChart
-          :option="pomodoroOption"
-          height="var(--dashboard-chart-height)"
-          @chart-click="(p) => handleChartClick('pomodoro', p)"
-        />
-      </el-card>
-      <el-card shadow="never" class="chart-card">
-        <template #header>
-          <div class="card-header">
-            <span>单词积累</span>
-            <el-tag type="success" size="small" effect="plain">近7天</el-tag>
-          </div>
-        </template>
-        <BaseChart
-          :option="wordsOption"
-          height="var(--dashboard-chart-height)"
-          @chart-click="(p) => handleChartClick('word', p)"
-        />
-      </el-card>
-    </section>
-
     <section class="list-row">
       <el-card shadow="never" class="list-card">
         <template #header>
@@ -195,6 +106,7 @@
             <div class="activity-icon" :class="activity.type">
               <el-icon v-if="activity.type === 'checkin'"><Calendar /></el-icon>
               <el-icon v-else-if="activity.type === 'pomodoro'"><Timer /></el-icon>
+              <el-icon v-else-if="activity.type === 'diary'"><Notebook /></el-icon>
               <el-icon v-else><Reading /></el-icon>
             </div>
             <div class="activity-content">
@@ -205,6 +117,109 @@
         </div>
         <el-empty v-else description="暂无活动" :image-size="80" />
       </el-card>
+    </section>
+
+    <section class="long-term">
+      <button type="button" class="long-term-toggle" @click="longTermOpen = !longTermOpen">
+        {{ longTermOpen ? '收起长期指标' : '查看长期指标' }}
+      </button>
+      <div v-if="longTermOpen" class="long-term-body">
+        <div class="chart-toolbar">
+          <el-date-picker
+            v-model="dateRange"
+            type="daterange"
+            range-separator="-"
+            start-placeholder="开始"
+            end-placeholder="结束"
+            :shortcuts="shortcuts"
+            size="default"
+            class="date-range"
+          />
+        </div>
+        <section class="kpi-row">
+          <el-card shadow="never" class="kpi-card">
+            <div class="kpi-body">
+              <div class="kpi-icon icon-streak">
+                <el-icon><Trophy /></el-icon>
+              </div>
+              <div class="kpi-info">
+                <div class="stat-value">{{ stats.checkInDays }} <span class="unit">天</span></div>
+                <div class="stat-label">连续打卡</div>
+              </div>
+            </div>
+          </el-card>
+          <el-card shadow="never" class="kpi-card">
+            <div class="kpi-body">
+              <div class="kpi-icon icon-words">
+                <el-icon><Reading /></el-icon>
+              </div>
+              <div class="kpi-info">
+                <div class="stat-value">{{ stats.wordCount }} <span class="unit">词</span></div>
+                <div class="stat-label">已学单词</div>
+              </div>
+            </div>
+          </el-card>
+          <el-card shadow="never" class="kpi-card">
+            <div class="kpi-body">
+              <div class="kpi-icon icon-pomodoro">
+                <el-icon><Timer /></el-icon>
+              </div>
+              <div class="kpi-info">
+                <div class="stat-value">{{ stats.pomodoroCount }} <span class="unit">个</span></div>
+                <div class="stat-label">完成番茄</div>
+              </div>
+            </div>
+          </el-card>
+          <el-card shadow="never" class="kpi-card">
+            <div class="kpi-body">
+              <div class="kpi-icon icon-total">
+                <el-icon><DataLine /></el-icon>
+              </div>
+              <div class="kpi-info">
+                <div class="stat-value">{{ stats.totalDays }} <span class="unit">天</span></div>
+                <div class="stat-label">累计坚持</div>
+              </div>
+            </div>
+          </el-card>
+        </section>
+        <section class="chart-row">
+          <el-card shadow="never" class="chart-card">
+            <template #header>
+              <div class="card-header">
+                <span>近30天热力值</span>
+                <el-tag size="small" effect="plain">趋势</el-tag>
+              </div>
+            </template>
+            <BaseChart :option="heatValueOption" height="var(--dashboard-chart-height)" />
+          </el-card>
+          <el-card shadow="never" class="chart-card">
+            <template #header>
+              <div class="card-header">
+                <span>番茄专注</span>
+                <el-tag type="warning" size="small" effect="plain">近7天</el-tag>
+              </div>
+            </template>
+            <BaseChart
+              :option="pomodoroOption"
+              height="var(--dashboard-chart-height)"
+              @chart-click="(p) => handleChartClick('pomodoro', p)"
+            />
+          </el-card>
+          <el-card shadow="never" class="chart-card">
+            <template #header>
+              <div class="card-header">
+                <span>单词积累</span>
+                <el-tag type="success" size="small" effect="plain">近7天</el-tag>
+              </div>
+            </template>
+            <BaseChart
+              :option="wordsOption"
+              height="var(--dashboard-chart-height)"
+              @chart-click="(p) => handleChartClick('word', p)"
+            />
+          </el-card>
+        </section>
+      </div>
     </section>
 
     <!-- Dialogs -->
@@ -247,7 +262,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Calendar, Reading, Timer, Trophy, DataLine } from '@element-plus/icons-vue'
+import { Calendar, Reading, Timer, Trophy, DataLine, Notebook } from '@element-plus/icons-vue'
 import BaseChart from '@/components/charts/BaseChart.vue'
 import { useDashboard } from '@/composables/useDashboard'
 
@@ -268,6 +283,8 @@ const {
   shortcuts,
   handleChartClick,
   formatActivityTime,
+  loadError,
+  longTermOpen,
 } = useDashboard()
 
 const heatParts = computed(() => [
@@ -446,6 +463,30 @@ defineExpose({ formatDurationMinutes })
   margin: var(--space-3) 0 0;
   font-size: 12px;
   color: var(--color-text-muted);
+}
+
+.load-error {
+  margin-bottom: var(--dashboard-section-gap);
+}
+
+.long-term {
+  margin-top: var(--dashboard-section-gap);
+}
+
+.long-term-toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.long-term-body {
+  margin-top: var(--space-4);
 }
 
 .chart-toolbar {
@@ -667,6 +708,11 @@ defineExpose({ formatDurationMinutes })
 .activity-icon.word {
   background-color: var(--color-info-soft);
   color: var(--color-info);
+}
+
+.activity-icon.diary {
+  background-color: var(--color-primary-soft);
+  color: var(--color-primary);
 }
 
 .activity-content {

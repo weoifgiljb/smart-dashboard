@@ -11,14 +11,10 @@ export interface RefreshResult {
 export async function refreshAuthToken(): Promise<RefreshResult | null> {
   const refreshToken = getRefreshToken()
   try {
-    const res = await axios.post(
-      `${apiBase}/auth/refresh`,
-      refreshToken ? { refreshToken } : {},
-      {
-        withCredentials: true,
-        headers: refreshToken ? { 'Refresh-Token': refreshToken } : {},
-      },
-    )
+    const res = await axios.post(`${apiBase}/auth/refresh`, refreshToken ? { refreshToken } : {}, {
+      withCredentials: true,
+      headers: refreshToken ? { 'Refresh-Token': refreshToken } : {},
+    })
     const data = res.data || {}
     const newToken = (data.token || data.accessToken) as string | undefined
     if (!newToken) return null
