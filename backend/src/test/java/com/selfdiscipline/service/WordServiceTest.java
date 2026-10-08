@@ -1,5 +1,6 @@
 package com.selfdiscipline.service;
 
+import com.selfdiscipline.dto.WordImportRequest;
 import com.selfdiscipline.dto.WordReviewResult;
 import com.selfdiscipline.exception.ApiException;
 import com.selfdiscipline.model.User;
@@ -17,15 +18,19 @@ import org.springframework.http.HttpStatus;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static com.selfdiscipline.testsupport.MockitoArgs.nullableArg;
 import static com.selfdiscipline.testsupport.MockitoArgs.stubSaveReturnsArg;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -159,6 +164,53 @@ class WordServiceTest {
     void reviewResultRejectsInvalidToken() {
         ApiException ex = assertThrows(ApiException.class, () -> WordReviewResult.from("maybe"));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
+    }
+
+    @Test
+    void importWordsRejectsStartDateBeforeToday() {
+        // Issue #3 Bug 6：不允许补录过去的开始日期。
+        // dueDay = startDate + (sectionIndex-1)，过去的日期会让整本书一导入就处于逾期状态。
+        when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
+        WordImportRequest req = new WordImportRequest();
+        req.setSourceUrl("https://example.com/words.txt");
+        req.setSectionSize(50);
+        req.setStartDate(LocalDate.now().minusDays(1).toString());
+
+        ApiException ex = assertThrows(ApiException.class, () -> wordService.importWords("alice", req));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
+        assertTrue(String.valueOf(ex.getMessage()).contains("不能早于今天"));
+    }
+
+    @Test
+    void importDefaultWordsCarriesExampleAndPhonetic() {
+        // Issue #3 Bug 4：默认词库第 3、4 列（例句、音标）必须落进实体，
+        // 否则复习页的 currentWord.example / currentWord.phonetic 永远是空的。
+        when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
+        List<Word> persisted = new ArrayList<>();
+        when(wordRepository.saveAll(anyList())).thenAnswer(invocation -> {
+            List<Word> arg = invocation.getArgument(0);
+            persisted.addAll(arg);
+            return arg;
+        });
+
+        Map<String, Object> resp = wordService.importDefaultWords("alice");
+
+        assertFalse(persisted.isEmpty());
+        assertEquals(persisted.size(), ((Number) resp.get("imported")).intValue());
+        assertTrue(
+                persisted.stream().allMatch(w -> w.getWord() != null && !w.getWord().isBlank()),
+                "每个词条都必须有单词");
+        assertTrue(
+                persisted.stream().allMatch(w -> w.getTranslation() != null && !w.getTranslation().isBlank()),
+                "每个词条都必须有翻译");
+        long withExample = persisted.stream()
+                .filter(w -> w.getExample() != null && !w.getExample().isBlank())
+                .count();
+        assertTrue(withExample > 0, "默认词库必须带例句，否则 Bug 4 的修复没有生效");
+        assertTrue(
+                persisted.stream().allMatch(w -> w.getSectionIndex() != null && w.getSectionIndex() > 0),
+                "分区序号必须被赋值");
     }
 
     private static Word ownedWord(String id) {

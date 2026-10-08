@@ -10,6 +10,7 @@ import com.selfdiscipline.model.Word;
 import com.selfdiscipline.repository.UserRepository;
 import com.selfdiscipline.repository.WordRepository;
 import com.selfdiscipline.util.RemoteUrlGuard;
+import com.selfdiscipline.util.WordLineParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
@@ -154,12 +155,19 @@ public class WordService {
         } catch (Exception e) {
             throw ApiException.badRequest("开始日期格式应为yyyy-MM-dd");
         }
+        // Issue #3 Bug 6：不允许补录过去的开始日期。
+        // dueDay = startDate + (sectionIndex - 1)，越早的开始日期会让越多分区一导入就处于逾期状态，
+        // 整本书立刻涌进复习队列（前端已置灰，这里做服务端兜底，前端限制可被绕过）。
+        if (startDate.isBefore(LocalDate.now())) {
+            throw ApiException.badRequest("开始学习日期不能早于今天");
+        }
 
         String content = fetchText(req.getSourceUrl());
         if (content == null || content.isBlank()) {
             throw ApiException.badRequest("未获取到词库内容");
         }
-        // 解析行：支持 "word|translation" / "word,translation" / "word\ttranslation" / "word"
+        // 解析行，最多 4 段："word|translation|example|phonetic"
+        // （兼容仅 "word" / "word|translation" 的历史词库）
         String[] lines = content.split("\\r?\\n");
         List<Word> toSave = new ArrayList<>();
         int sectionSize = req.getSectionSize();
@@ -171,23 +179,8 @@ public class WordService {
             String line = raw.trim();
             if (line.isEmpty() || line.startsWith("#")) continue;
 
-            String wordText = line;
-            String translation = "";
-            String[] parts;
-            if (line.contains("|")) {
-                parts = line.split("\\|", 2);
-                wordText = parts[0].trim();
-                translation = parts[1].trim();
-            } else if (line.contains("\t")) {
-                parts = line.split("\\t", 2);
-                wordText = parts[0].trim();
-                translation = parts[1].trim();
-            } else if (line.contains(",")) {
-                parts = line.split(",", 2);
-                wordText = parts[0].trim();
-                translation = parts[1].trim();
-            }
-
+            String[] fields = WordLineParser.parse(line);
+            String wordText = fields[0];
             if (wordText.isEmpty()) continue;
 
             // 分区计算
@@ -198,7 +191,9 @@ public class WordService {
             Word w = new Word();
             w.setUserId(user.getId());
             w.setWord(wordText);
-            w.setTranslation(translation);
+            w.setTranslation(fields[1]);
+            w.setExample(fields[2]);
+            w.setPhonetic(fields[3]);
             w.setBook(bookName);
             w.setSectionIndex(sectionIndex);
             w.setStatus("todo");
@@ -320,30 +315,20 @@ public class WordService {
                     if (raw == null) continue;
                     String line = raw.trim();
                     if (line.isEmpty() || line.startsWith("#")) continue;
-                    String wordText = line;
-                    String translation = "";
-                    String[] parts;
-                    if (line.contains("|")) {
-                        parts = line.split("\\|", 2);
-                        wordText = parts[0].trim();
-                        translation = parts[1].trim();
-                    } else if (line.contains("\t")) {
-                        parts = line.split("\\t", 2);
-                        wordText = parts[0].trim();
-                        translation = parts[1].trim();
-                    } else if (line.contains(",")) {
-                        parts = line.split(",", 2);
-                        wordText = parts[0].trim();
-                        translation = parts[1].trim();
-                    }
+
+                    String[] fields = WordLineParser.parse(line);
+                    String wordText = fields[0];
                     if (wordText.isEmpty()) continue;
+
                     int sectionIndex = (index / sectionSize) + 1;
                     LocalDate dueDay = startDate.plusDays(sectionIndex - 1L);
                     LocalDateTime dueDate = dueDay.atStartOfDay();
                     Word w = new Word();
                     w.setUserId(user.getId());
                     w.setWord(wordText);
-                    w.setTranslation(translation);
+                    w.setTranslation(fields[1]);
+                    w.setExample(fields[2]);
+                    w.setPhonetic(fields[3]);
                     w.setBook(bookName);
                     w.setSectionIndex(sectionIndex);
                     w.setStatus("todo");

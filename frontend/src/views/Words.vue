@@ -266,14 +266,18 @@
           <el-date-picker
             v-model="importForm.startDate"
             type="date"
-            placeholder="选择日期"
+            placeholder="默认为今天"
             style="width: 100%"
             value-format="YYYY-MM-DD"
+            :disabled-date="disablePastDates"
           />
         </el-form-item>
         <div class="dialog-tip">
           <el-icon><InfoFilled /></el-icon>
-          <span>支持格式：每行一个 "单词" 或 "单词|翻译"</span>
+          <span
+            >支持格式：每行一个 "单词"，可选追加 "|翻译|例句|音标"（例：abandon|放弃|They had to
+            abandon the car.|/əˈbæn.dən/）</span
+          >
         </div>
       </el-form>
       <template #footer>
@@ -315,6 +319,7 @@ import BaseChart from '@/components/charts/BaseChart.vue'
 import VirtualList from '@/components/virtual/VirtualList.vue'
 import { generateWordImage } from '@/api/ai'
 import { chartPalette } from '@/utils/themeTokens'
+import { disablePastDates } from '@/utils/dateLimits'
 
 interface WordItem {
   id: string
