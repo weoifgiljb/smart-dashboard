@@ -61,6 +61,28 @@ describe('VocabularyReview.vue', () => {
     expect(reviewWord).toHaveBeenCalledWith('w1', WordReviewResult.Known)
   })
 
+  it('renders the phonetic with exactly one pair of slashes, and shows the example', async () => {
+    // 音标在数据层存裸串，定界符由视图添加；两边都加会渲染成 //ə'bændən//。
+    vi.mocked(getTodayWords).mockResolvedValue([
+      {
+        id: 'w1',
+        word: 'abandon',
+        translation: '放弃',
+        example: 'I will never abandon you.',
+        phonetic: "ə'bændən",
+      },
+    ])
+    const wrapper = mount(VocabularyReview, {
+      global: { plugins: [ElementPlus] },
+    })
+    await flushPromises()
+
+    expect(wrapper.get('.word-phonetic').text()).toBe("/ə'bændən/")
+
+    await wrapper.get('.flip-card-wrapper').trigger('click')
+    expect(wrapper.get('.word-example').text()).toBe('I will never abandon you.')
+  })
+
   it('sends 模糊 and 不认识 as distinct review results', async () => {
     const wrapper = mount(VocabularyReview, {
       global: { plugins: [ElementPlus] },

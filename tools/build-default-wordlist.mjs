@@ -23,17 +23,24 @@
  *   node tools/build-default-wordlist.mjs --python <exe>   # 用于解压 .bz2 的 Python 解释器
  *   node tools/build-default-wordlist.mjs --sample 20      # 抽样打印条数
  *
- * 环境要求：Node >= 18（需要全局 fetch、WebStreams）、Python 3（标准库 bz2 解压）。
- *   若未显式传 --python，会依次尝试环境变量 DSH_PYTHON、python3、python、py -3。
- *   HTTPS 走 Node 的 fetch（本仓库运行环境里 schannel 被禁用，不要用 PowerShell/curl 发 HTTPS）。
+ * 环境要求：Node >= 18（需要全局 fetch 与 WebStreams）、Python 3（仅用标准库 bz2 解压）。
+ *   若未显式传 --python，会依次尝试 python3、python、py。
  *
- * 本脚本是幂等的：把原始词库 + 上述两个数据源喂进来，必然产出同一个结果文件。
+ * 关于可复现性（请注意边界）：
+ *   - 输入固定为已提交的 tools/wordlist-sources/default.source.txt（只含 单词|翻译），
+ *     生成物写到 backend/src/main/resources/wordlists/default.txt，不再原地覆写输入；
+ *   - 脚本不写任何时间戳，文件头只记录两个数据源的 SHA-256。只要数据源快照不变
+ *     （命中 .runtime/dl 缓存时即可保证），重复运行产出的文件逐字节一致；
+ *   - 两个上游都没有版本锁定（Tatoeba 导出会定期重生成、ECDICT 取 master），
+ *     所以换台机器或过一段时间重跑可能拿到不同快照——此时头部校验和会变化，
+ *     diff 会明确指出数据源漂移，而不是静默改写正文。
  */
 
 import fs from 'node:fs'
 import path from 'node:path'
-import os from 'node:os'
+import crypto from 'node:crypto'
 import readline from 'node:readline'
+import { pipeline } from 'node:stream/promises'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
@@ -50,14 +57,19 @@ const ECDICT_CSV = 'ecdict.csv'
 const MIN_LEN = 25
 const MAX_LEN = 70
 
-const DEFAULT_INPUT = path.join(PROJECT_ROOT, 'backend/src/main/resources/wordlists/default.txt')
-const DEFAULT_OUT = DEFAULT_INPUT
+// 输入是"只含 单词|翻译"的已提交词表，输出是应用实际加载的四段词库。
+// 两者分开，避免生成物被原地覆写、导致原始翻译无法追溯。
+const SOURCE_DIR = path.join(PROJECT_ROOT, 'tools/wordlist-sources')
+const DEFAULT_INPUT = path.join(SOURCE_DIR, 'default.source.txt')
+const DEFAULT_OUT = path.join(PROJECT_ROOT, 'backend/src/main/resources/wordlists/default.txt')
+const DEFAULT_ATTRIBUTION = path.join(SOURCE_DIR, 'default.attribution.md')
 
 // ── 命令行参数 ──────────────────────────────────────────────────────────────
 function parseArgs(argv) {
   const opts = {
     input: DEFAULT_INPUT,
     out: DEFAULT_OUT,
+    attribution: DEFAULT_ATTRIBUTION,
     cache: path.join(PROJECT_ROOT, '.runtime/dl'),
     python: null,
     check: false,
@@ -92,6 +104,13 @@ function readTextUtf8(p) {
 function writeTextLfNoBom(p, lines) {
   fs.mkdirSync(path.dirname(p), { recursive: true })
   fs.writeFileSync(p, lines.join('\n') + '\n', { encoding: 'utf8' }) // 显式 \n，无 BOM
+}
+
+/** 流式计算文件 SHA-256（大文件不整体读进内存），用于在产物头部锁定数据源快照。 */
+async function sha256File(p) {
+  const hash = crypto.createHash('sha256')
+  await pipeline(fs.createReadStream(p), hash)
+  return hash.digest('hex')
 }
 
 /**
@@ -190,7 +209,7 @@ function bunzip2(bz2Path, tsvPath, pythonExe) {
     console.log(`  [cache] ${path.basename(tsvPath)} (${(fs.statSync(tsvPath).size / 1048576).toFixed(1)} MB) 已存在，跳过解压`)
     return tsvPath
   }
-  const candidates = pythonExe ? [pythonExe] : [process.env.DSH_PYTHON, 'python3', 'python', 'py'].filter(Boolean)
+  const candidates = pythonExe ? [pythonExe] : ['python3', 'python', 'py'].filter(Boolean)
   const code = [
     'import bz2, shutil, sys',
     'src, dst = sys.argv[1], sys.argv[2]',
@@ -290,12 +309,13 @@ function isAcceptable(sentence) {
 /**
  * 从 Tatoeba TSV 中为每个单词挑选最适合学习的一句。
  * 策略：按「是否原形命中 → 句子长度」排序取最优；同一批结果内保证不重复。
+ * 同时保留句子 ID，用于在署名文件里逐条溯源（Tatoeba 句子是逐条授权的）。
  */
 async function pickExamples(words, tsvPath) {
   const lower = words.map((w) => w.toLowerCase())
   const regexes = lower.map((w) => wordRegex(w))
   const exact = lower.map((w) => new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'))
-  const best = new Array(words.length).fill(null) // { sentence, score }
+  const best = new Array(words.length).fill(null) // { id, sentence, score }
 
   // score 越大越好
   const scoreOf = (sentence, i) => {
@@ -319,6 +339,7 @@ async function pickExamples(words, tsvPath) {
     const secondTab = line.indexOf('\t', firstTab + 1)
     if (secondTab < 0) continue
     if (line.slice(firstTab + 1, secondTab).trim() !== 'eng') continue
+    const sentenceId = line.slice(0, firstTab).trim()
     const sentence = line.slice(secondTab + 1).replace(/[\r\n]+/g, ' ').trim()
     if (!sentence) continue
     if (!isAcceptable(sentence)) continue
@@ -327,7 +348,7 @@ async function pickExamples(words, tsvPath) {
       if (!regexes[i].test(sentence)) continue
       hit = true
       const s = scoreOf(sentence, i)
-      if (!best[i] || s > best[i].score) best[i] = { sentence, score: s }
+      if (!best[i] || s > best[i].score) best[i] = { id: sentenceId, sentence, score: s }
     }
     if (!hit) continue
   }
@@ -346,7 +367,12 @@ async function pickExamples(words, tsvPath) {
     for (const { i } of arr.slice(1)) best[i] = null // 冲突时让给更优的词，该词例句留空
     used.add(sentence)
   }
-  return { examples: best.map((b) => (b ? b.sentence : '')), scanned, usedSentences: used.size }
+  return {
+    examples: best.map((b) => (b ? b.sentence : '')),
+    sentenceIds: best.map((b) => (b ? b.id : '')),
+    scanned,
+    usedSentences: used.size,
+  }
 }
 
 // ── 音标（ECDICT CSV） ─────────────────────────────────────────────────────
@@ -416,12 +442,17 @@ function normalizePhonetic(raw) {
   return s
 }
 
-/** 清洗音标：归一化形近字，去空格/竖线，统一输出为 /.../ 形式。 */
+/**
+ * 清洗音标：归一化形近字，去空格/竖线，抹掉来源自带的外层定界符。
+ *
+ * 输出为**裸串**（如 `ə'bændən`），不带 `/.../`：定界符属于展示格式，应由视图层添加。
+ * 两边都加会渲染成 `//ə'bændən//`（这正是本 PR 评审时抓到的缺陷）。
+ */
 function cleanPhonetic(p) {
   if (!p) return ''
   let s = normalizePhonetic(p).replace(/[\r\n\t|]/g, '').trim()
   if (!s) return ''
-  // 去掉外层方括号/斜杠，统一输出为 /.../ 形式
+  // 去掉外层方括号/斜杠（ECDICT 部分词条自带 [..] 或 /../ 形式）
   s = s.replace(/^[[/]+/, '').replace(/[/\]]+$/, '').trim()
   if (!s) return ''
   if (!PHONETIC_ALLOWED.test(s)) {
@@ -432,7 +463,7 @@ function cleanPhonetic(p) {
     }
     return ''
   }
-  return `/${s}/`
+  return s
 }
 
 /** 报告被丢弃的音标字符，便于发现新的编码/音标源问题。 */
@@ -479,6 +510,13 @@ function selfCheck(originalRows, outLines, { sample = 18, quiet = false } = {}) 
 
   const withEx = parsed.filter((p) => p[2] && p[2].trim()).length
   const withPh = parsed.filter((p) => p[3] && p[3].trim()).length
+
+  // 覆盖率是这份词库的核心卖点，缺失即判为问题，使 --check 能在 CI 里真正挡住回归
+  // （此前只打印数字、不进 problems，等于守卫是空的）。
+  const missingExCount = parsed.length - withEx
+  const missingPhCount = parsed.length - withPh
+  if (missingExCount) problems.push(`有 ${missingExCount} 条缺少例句`)
+  if (missingPhCount) problems.push(`有 ${missingPhCount} 条缺少音标`)
 
   log('\n===== 自检报告 =====')
   log(`原始单词数            : ${originalRows.length}`)
@@ -551,7 +589,7 @@ async function main() {
   // 2. 例句
   console.log('\n[2/4] 从 Tatoeba 挑选例句')
   const words = originalRows.map((r) => r.word)
-  const { examples, scanned } = await pickExamples(words, tsv)
+  const { examples, sentenceIds, scanned } = await pickExamples(words, tsv)
   console.log(`  扫描英文句子 ${scanned} 行，命中例句 ${examples.filter(Boolean).length}/${words.length}`)
 
   // 3. 音标
@@ -569,13 +607,19 @@ async function main() {
 
   // 4. 写出
   console.log('\n[4/4] 写出四段格式')
+  const tatoebaSha = await sha256File(bz2)
+  const ecdictSha = csv ? await sha256File(csv) : ''
   const lines = [
     '# 默认词库：单词|中文翻译|例句|音标',
-    '# 例句来源：Tatoeba (https://tatoeba.org)，许可证 CC BY 2.0 FR',
+    '# 原始词表：tools/wordlist-sources/default.source.txt（只含 单词|翻译）',
+    '# 例句来源：Tatoeba https://tatoeba.org ，许可证 CC BY 2.0 FR',
+    `#   导出 ${TATOEBA_URL}`,
+    `#   导出文件 SHA-256 ${tatoebaSha}`,
     csv
-      ? '# 音标来源：ECDICT (https://github.com/skywind3000/ECDICT)，许可证 MIT'
+      ? `# 音标来源：ECDICT https://github.com/skywind3000/ECDICT ，许可证 MIT（导出文件 SHA-256 ${ecdictSha}）`
       : '# 音标：未获取（ECDICT 下载失败），本文件音标列为空',
-    '# 生成脚本：tools/build-default-wordlist.mjs（可重复运行以复现同样结果）',
+    '# 逐条溯源（单词 → Tatoeba 句子 ID）与署名细节见 tools/wordlist-sources/default.attribution.md',
+    '# 生成脚本：tools/build-default-wordlist.mjs',
   ]
   for (let i = 0; i < originalRows.length; i++) {
     const safe = (s) => String(s || '').replace(/[|\r\n]/g, ' ').replace(/\s+/g, ' ').trim()
@@ -583,6 +627,45 @@ async function main() {
   }
   writeTextLfNoBom(opts.out, lines)
   console.log(`  已写入 ${opts.out}（UTF-8 / LF / 无 BOM，${lines.length} 行）`)
+
+  // 署名与逐条溯源：CC BY 要求可归属，per-language 导出本身不含作者列，
+  // 所以把每个词选中的句子 ID 落盘，便于逐句回溯。
+  const attribution = [
+    '# default.txt 数据来源与署名',
+    '',
+    '- 生成脚本：`tools/build-default-wordlist.mjs`',
+    '- 原始词表：`tools/wordlist-sources/default.source.txt`（只含 单词\\|翻译）',
+    '- 输出文件：`backend/src/main/resources/wordlists/default.txt`',
+    '',
+    '## 例句',
+    '',
+    '- 来源：[Tatoeba](https://tatoeba.org)',
+    `- 导出：\`${TATOEBA_URL}\``,
+    `- 导出文件 SHA-256：\`${tatoebaSha}\``,
+    '- 许可证：[CC BY 2.0 FR](https://creativecommons.org/licenses/by/2.0/fr/)',
+    '- 署名：例句版权归 Tatoeba 及其贡献者所有。',
+    '',
+    '> 合规说明：该 per-language 导出只含 `句子ID / 语言 / 文本`，**不含逐句作者与逐句许可证**；',
+    '> Tatoeba 的句子由贡献者逐条授权（CC BY 2.0 FR 与 CC0 混存）。下表记录每个词实际使用的',
+    '> 句子 ID，以便逐条回溯核验。若需要更强的合规保证，应改用带 `username` / `license` 列的',
+    '> 导出，或只取 CC0 子集。',
+    '',
+    '| # | 单词 | Tatoeba 句子 ID | 句子 |',
+    '| --- | --- | --- | --- |',
+  ]
+  for (let i = 0; i < originalRows.length; i++) {
+    attribution.push(
+      `| ${i + 1} | ${originalRows[i].word} | ${sentenceIds[i] || '-'} | ${examples[i] || '-'} |`,
+    )
+  }
+  attribution.push('', '## 音标', '')
+  attribution.push('- 来源：[ECDICT](https://github.com/skywind3000/ECDICT)')
+  attribution.push(`- 导出：\`${ECDICT_URL}\``)
+  attribution.push(csv ? `- 导出文件 SHA-256：\`${ecdictSha}\`` : '- 导出：未获取（音标列为空）')
+  attribution.push('- 许可证：MIT')
+  attribution.push('')
+  writeTextLfNoBom(opts.attribution, attribution)
+  console.log(`  已写入 ${opts.attribution}（逐条溯源 ${sentenceIds.filter(Boolean).length} 条）`)
 
   selfCheck(originalRows, lines, { sample: opts.sample })
 }

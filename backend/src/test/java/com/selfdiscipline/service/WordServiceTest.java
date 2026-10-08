@@ -207,7 +207,17 @@ class WordServiceTest {
         long withExample = persisted.stream()
                 .filter(w -> w.getExample() != null && !w.getExample().isBlank())
                 .count();
-        assertTrue(withExample > 0, "默认词库必须带例句，否则 Bug 4 的修复没有生效");
+        long withPhonetic = persisted.stream()
+                .filter(w -> w.getPhonetic() != null && !w.getPhonetic().isBlank())
+                .count();
+        // 用等值断言而不是 > 0：只要求"至少有 1 条"的话，守不住 108/108 覆盖这个卖点。
+        assertEquals(persisted.size(), withExample, "默认词库的每一条都必须带例句");
+        assertEquals(persisted.size(), withPhonetic, "默认词库的每一条都必须带音标");
+        // 音标在数据里存裸串，定界符由视图层添加；两边都加会渲染成 //...//。
+        assertTrue(
+                persisted.stream().noneMatch(w -> w.getPhonetic() != null
+                        && (w.getPhonetic().startsWith("/") || w.getPhonetic().endsWith("/"))),
+                "音标数据不应自带 / 定界符");
         assertTrue(
                 persisted.stream().allMatch(w -> w.getSectionIndex() != null && w.getSectionIndex() > 0),
                 "分区序号必须被赋值");

@@ -1,112 +1,116 @@
 # 默认词库：单词|中文翻译|例句|音标
-# 例句来源：Tatoeba (https://tatoeba.org)，许可证 CC BY 2.0 FR
-# 音标来源：ECDICT (https://github.com/skywind3000/ECDICT)，许可证 MIT
-# 生成脚本：tools/build-default-wordlist.mjs（可重复运行以复现同样结果）
-abandon|放弃|I will never abandon you.|/ə'bændən/
-ability|能力|Tom has a lot of ability.|/ə'biliti/
-able|能够的|Tom is able to swim well.|/'eibl/
-about|关于|We are worried about you.|/ə'baut/
-above|在...上方|He's above telling a lie.|/ə'bʌv/
-abroad|在国外|I have never been abroad.|/ə'brɒ:d/
-absence|缺席|Your absence destroys me.|/'æbsəns/
-absent|缺席的|He is absent from school.|/'æbsənt/
-absolute|绝对的|That's absolute nonsense.|/'æbsəlu:t/
-absorb|吸收|These towels absorb water.|/əb'sɒ:b/
-abstract|抽象的|He was an abstract artist.|/'æbstrækt/
-absurd|荒谬的|That's absolutely absurd.|/əb'sə:d/
-abundant|丰富的|Spain is abundant in oranges.|/ə'bʌndənt/
-abuse|滥用|She showered abuse on me.|/ə'bju:s.ə'bju:z/
-academic|学术的|The academic year is over.|/.ækə'demik/
-accept|接受|Accept both good and bad.|/ək'sept/
-access|进入；通道|Bicycle access is limited.|/'ækses/
-accident|事故|An accident has happened.|/'æksidənt/
-accompany|陪伴|I'll accompany you there.|/ə'kʌmpəni/
-accomplish|完成|We didn't accomplish much.|/ə'kʌmpliʃ/
-according|根据|They sat according to age.|/ə'kɒ:diŋ/
-account|账户；说明|Here's my account number.|/ə'kaunt/
-accurate|准确的|My watch is very accurate.|/'ækjurət/
-accuse|指控|Don't accuse him of that.|/ə'kju:z/
-achieve|实现|I know they will achieve it.|/ə'tʃi:v/
-acknowledge|承认|I acknowledge my mistake.|/ək'nɒlidʒ/
-acquire|获得|It's very difficult to acquire.|/ə'kwaiə/
-across|横过|I walked across the park.|/ə'krɒs/
-act|行动；法案|You must act more wisely.|/ækt/
-action|行动|His action frightened us.|/'ækʃən/
-active|积极的|Cats are active at night.|/'æktiv/
-activity|活动|Reading is a good activity.|/æk'tiviti/
-actual|实际的|Sami did the actual work.|/'æktʃuəl/
-adapt|适应|I'm not willing to adapt.|/ə'dæpt/
-add|增加|Add a little more pepper.|/æd/
-addition|加法；添加|Let's learn addition below ten.|/ə'diʃən/
-additional|额外的|We need additional staff.|/ə'diʃənəl/
-address|地址；致辞|Let me know your address.|/ə'dres/
-adequate|足够的|That's far from adequate.|/'ædikwət/
-adjust|调整|You can adjust this seat.|/ə'dʒʌst/
-administration|管理|Tom is in administration now.|/əd.mini'streiʃən/
-admire|钦佩|I admire your brave deed.|/əd'maiə/
-admit|承认；准许进入|I admit that he is right.|/əd'mit/
-adopt|采用；收养|They wanted to adopt you.|/ə'dɒpt/
-adult|成人|He treats me as an adult.|/'ædʌlt/
-advance|前进；进步|Pay your rent in advance.|/əd'vɑ:ns/
-advanced|高级的|Leon is an advanced user.|/əd'vɑ:nst/
-advantage|优势|He has a small advantage.|/əd'vɑ:ntidʒ/
-adventure|冒险|He was full of adventure.|/əd'ventʃə/
-advertise|做广告|We'd be crazy not to advertise.|/'ædvətaiz/
-advice|建议|He disregarded my advice.|/əd'vais/
-advise|忠告|I advise you not to sing.|/əd'vaiz/
-affect|影响|It didn't just affect me.|/ə'fekt/
-afford|负担得起|I can't afford to buy it.|/ə'fɒ:d/
-afraid|害怕的|I'm afraid she will fail.|/ə'freid/
-after|在...之后|You managed it after all.|/'ɑ:ftə/
-afternoon|下午|We had the afternoon off.|/'ɑ:ftə'nu:n/
-again|再次|I'll never do this again.|/ə'gein/
-against|反对|My idea went against his.|/ə'geinst/
-age|年龄|Your son has come of age.|/eidʒ/
-agency|机构|I work in a travel agency.|/'eidʒənsi/
-agenda|议程|Tom looked at the agenda.|/ə'dʒendə/
-agent|代理人|Let's ask a travel agent.|/'eidʒənt/
-aggressive|侵略性的；积极进取的|I tried to be aggressive.|/ə'gresiv/
-ago|…之前|That was only a year ago.|/ə'gəu/
-agree|同意|I agree to your proposal.|/ə'gri:/
-agreement|协议|Tom nodded his agreement.|/ə'gri:mənt/
-agriculture|农业|Tom works in agriculture.|/'ægrikʌltʃə/
-ahead|在前|Go ahead with your story.|/ə'hed/
-aid|援助|She needed financial aid.|/eid/
-aim|目标；瞄准|My aim is to be a doctor.|/eim/
-air|空气|We would die without air.|/eə/
-airline|航空公司|The airline lost my bags.|/'eəlain/
-airport|机场|I'm going to the airport.|/'eəpɒ:t/
-alarm|警报|I see no cause for alarm.|/ə'lɑ:m/
-album|相册；专辑|My aunt gave me an album.|/'ælbəm/
-alcohol|酒精|This car runs on alcohol.|/'ælkəhɒl/
-alive|活着的|Caring means being alive.|/ə'laiv/
-all|全部|I'm not convinced at all.|/ɒ:l/
-allow|允许|I allow myself no sweets.|/ə'lau/
-almost|几乎|It is almost ten o'clock.|/'ɒ:lməust/
-alone|独自的|I don't want to go alone.|/ə'ləun/
-along|沿着|My cat and dog get along.|/ə'lɒŋ/
-already|已经|It's six o'clock already.|/ɒ:l'redi/
-also|也|He can also speak French.|/'ɒ:lsəu/
-alternative|替代的；二选一的|We've got no alternative.|/ɒ:l'tə:nətiv/
-although|虽然|Although he is poor, he is happy.|/ɒ:l'ðou/
-always|总是|One can always find time.|/'ɒ:lweiz/
-amazing|惊人的|It's going to be amazing.|/ə'meiziŋ/
-ambition|雄心|I think ambition is good.|/æm'biʃən/
-amount|数量|This amount includes tax.|/ə'maunt/
-amuse|使娱乐|Her anecdotes amuse us all.|/ə'mju:z/
-analysis|分析|Your analysis is correct.|/ə'næləsis/
-analyze|分析|Let's analyze the machine.|/'ænəlaiz/
-ancient|古代的|This building is ancient.|/'einʃənt/
-and|和|Speak slowly and clearly.|/ænd/
-anger|愤怒|I read anger in her face.|/'æŋgə/
-angle|角度|This table is at an angle.|/'æŋgl/
-animal|动物|A cow is a useful animal.|/'æniməl/
-announce|宣布|Let me announce the results.|/ə'nauns/
-annual|年度的|He has an annual examination.|/'ænjuəl/
-another|另一个|I feel like another beer.|/ə'nʌðə/
-answer|回答；答案|You must answer honestly.|/'ɑ:nsə/
-anxiety|焦虑|Tom suffers from anxiety.|/æŋ'zaiəti/
-any|任何|There isn't any solution.|/'eni/
-anyone|任何人|Anyone can make mistakes.|/'eniwʌn/
-anything|任何东西|I could not see anything.|/'eniθiŋ/
-anyway|无论如何|Let's get started anyway.|/'eniwei/
+# 原始词表：tools/wordlist-sources/default.source.txt（只含 单词|翻译）
+# 例句来源：Tatoeba https://tatoeba.org ，许可证 CC BY 2.0 FR
+#   导出 https://downloads.tatoeba.org/exports/per_language/eng/eng_sentences.tsv.bz2
+#   导出文件 SHA-256 5f7ebf552bd3925dfd33236ccb6a210c5ba02b365e4a39964fb658e1209e87d9
+# 音标来源：ECDICT https://github.com/skywind3000/ECDICT ，许可证 MIT（导出文件 SHA-256 1a6947e04785db63613a92e14903cdae7954f7e84860b10e68e5c7cbb3f9c3cf）
+# 逐条溯源（单词 → Tatoeba 句子 ID）与署名细节见 tools/wordlist-sources/default.attribution.md
+# 生成脚本：tools/build-default-wordlist.mjs
+abandon|放弃|I will never abandon you.|ə'bændən
+ability|能力|Tom has a lot of ability.|ə'biliti
+able|能够的|Tom is able to swim well.|'eibl
+about|关于|We are worried about you.|ə'baut
+above|在...上方|He's above telling a lie.|ə'bʌv
+abroad|在国外|I have never been abroad.|ə'brɒ:d
+absence|缺席|Your absence destroys me.|'æbsəns
+absent|缺席的|He is absent from school.|'æbsənt
+absolute|绝对的|That's absolute nonsense.|'æbsəlu:t
+absorb|吸收|These towels absorb water.|əb'sɒ:b
+abstract|抽象的|He was an abstract artist.|'æbstrækt
+absurd|荒谬的|That's absolutely absurd.|əb'sə:d
+abundant|丰富的|Spain is abundant in oranges.|ə'bʌndənt
+abuse|滥用|She showered abuse on me.|ə'bju:s.ə'bju:z
+academic|学术的|The academic year is over.|.ækə'demik
+accept|接受|Accept both good and bad.|ək'sept
+access|进入；通道|Bicycle access is limited.|'ækses
+accident|事故|An accident has happened.|'æksidənt
+accompany|陪伴|I'll accompany you there.|ə'kʌmpəni
+accomplish|完成|We didn't accomplish much.|ə'kʌmpliʃ
+according|根据|They sat according to age.|ə'kɒ:diŋ
+account|账户；说明|Here's my account number.|ə'kaunt
+accurate|准确的|My watch is very accurate.|'ækjurət
+accuse|指控|Don't accuse him of that.|ə'kju:z
+achieve|实现|I know they will achieve it.|ə'tʃi:v
+acknowledge|承认|I acknowledge my mistake.|ək'nɒlidʒ
+acquire|获得|It's very difficult to acquire.|ə'kwaiə
+across|横过|I walked across the park.|ə'krɒs
+act|行动；法案|You must act more wisely.|ækt
+action|行动|His action frightened us.|'ækʃən
+active|积极的|Cats are active at night.|'æktiv
+activity|活动|Reading is a good activity.|æk'tiviti
+actual|实际的|Sami did the actual work.|'æktʃuəl
+adapt|适应|I'm not willing to adapt.|ə'dæpt
+add|增加|Add a little more pepper.|æd
+addition|加法；添加|Let's learn addition below ten.|ə'diʃən
+additional|额外的|We need additional staff.|ə'diʃənəl
+address|地址；致辞|Let me know your address.|ə'dres
+adequate|足够的|That's far from adequate.|'ædikwət
+adjust|调整|You can adjust this seat.|ə'dʒʌst
+administration|管理|Tom is in administration now.|əd.mini'streiʃən
+admire|钦佩|I admire your brave deed.|əd'maiə
+admit|承认；准许进入|I admit that he is right.|əd'mit
+adopt|采用；收养|They wanted to adopt you.|ə'dɒpt
+adult|成人|He treats me as an adult.|'ædʌlt
+advance|前进；进步|Pay your rent in advance.|əd'vɑ:ns
+advanced|高级的|Leon is an advanced user.|əd'vɑ:nst
+advantage|优势|He has a small advantage.|əd'vɑ:ntidʒ
+adventure|冒险|He was full of adventure.|əd'ventʃə
+advertise|做广告|We'd be crazy not to advertise.|'ædvətaiz
+advice|建议|He disregarded my advice.|əd'vais
+advise|忠告|I advise you not to sing.|əd'vaiz
+affect|影响|It didn't just affect me.|ə'fekt
+afford|负担得起|I can't afford to buy it.|ə'fɒ:d
+afraid|害怕的|I'm afraid she will fail.|ə'freid
+after|在...之后|You managed it after all.|'ɑ:ftə
+afternoon|下午|We had the afternoon off.|'ɑ:ftə'nu:n
+again|再次|I'll never do this again.|ə'gein
+against|反对|My idea went against his.|ə'geinst
+age|年龄|Your son has come of age.|eidʒ
+agency|机构|I work in a travel agency.|'eidʒənsi
+agenda|议程|Tom looked at the agenda.|ə'dʒendə
+agent|代理人|Let's ask a travel agent.|'eidʒənt
+aggressive|侵略性的；积极进取的|I tried to be aggressive.|ə'gresiv
+ago|…之前|That was only a year ago.|ə'gəu
+agree|同意|I agree to your proposal.|ə'gri:
+agreement|协议|Tom nodded his agreement.|ə'gri:mənt
+agriculture|农业|Tom works in agriculture.|'ægrikʌltʃə
+ahead|在前|Go ahead with your story.|ə'hed
+aid|援助|She needed financial aid.|eid
+aim|目标；瞄准|My aim is to be a doctor.|eim
+air|空气|We would die without air.|eə
+airline|航空公司|The airline lost my bags.|'eəlain
+airport|机场|I'm going to the airport.|'eəpɒ:t
+alarm|警报|I see no cause for alarm.|ə'lɑ:m
+album|相册；专辑|My aunt gave me an album.|'ælbəm
+alcohol|酒精|This car runs on alcohol.|'ælkəhɒl
+alive|活着的|Caring means being alive.|ə'laiv
+all|全部|I'm not convinced at all.|ɒ:l
+allow|允许|I allow myself no sweets.|ə'lau
+almost|几乎|It is almost ten o'clock.|'ɒ:lməust
+alone|独自的|I don't want to go alone.|ə'ləun
+along|沿着|My cat and dog get along.|ə'lɒŋ
+already|已经|It's six o'clock already.|ɒ:l'redi
+also|也|He can also speak French.|'ɒ:lsəu
+alternative|替代的；二选一的|We've got no alternative.|ɒ:l'tə:nətiv
+although|虽然|Although he is poor, he is happy.|ɒ:l'ðou
+always|总是|One can always find time.|'ɒ:lweiz
+amazing|惊人的|It's going to be amazing.|ə'meiziŋ
+ambition|雄心|I think ambition is good.|æm'biʃən
+amount|数量|This amount includes tax.|ə'maunt
+amuse|使娱乐|Her anecdotes amuse us all.|ə'mju:z
+analysis|分析|Your analysis is correct.|ə'næləsis
+analyze|分析|Let's analyze the machine.|'ænəlaiz
+ancient|古代的|This building is ancient.|'einʃənt
+and|和|Speak slowly and clearly.|ænd
+anger|愤怒|I read anger in her face.|'æŋgə
+angle|角度|This table is at an angle.|'æŋgl
+animal|动物|A cow is a useful animal.|'æniməl
+announce|宣布|Let me announce the results.|ə'nauns
+annual|年度的|He has an annual examination.|'ænjuəl
+another|另一个|I feel like another beer.|ə'nʌðə
+answer|回答；答案|You must answer honestly.|'ɑ:nsə
+anxiety|焦虑|Tom suffers from anxiety.|æŋ'zaiəti
+any|任何|There isn't any solution.|'eni
+anyone|任何人|Anyone can make mistakes.|'eniwʌn
+anything|任何东西|I could not see anything.|'eniθiŋ
+anyway|无论如何|Let's get started anyway.|'eniwei
