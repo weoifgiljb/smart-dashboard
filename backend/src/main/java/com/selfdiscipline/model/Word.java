@@ -13,6 +13,8 @@ public class Word {
     private String word;
     private String translation;
     private String example;
+    // 音标（如 /əˈbæn.dən/），可选；导入词库时由第三/四列提供
+    private String phonetic;
     private String image;
     private String difficulty;
     private Integer reviewCount;
@@ -73,6 +75,14 @@ public class Word {
 
     public void setExample(String example) {
         this.example = example;
+    }
+
+    public String getPhonetic() {
+        return phonetic;
+    }
+
+    public void setPhonetic(String phonetic) {
+        this.phonetic = phonetic;
     }
 
     public String getImage() {

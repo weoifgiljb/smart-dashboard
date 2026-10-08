@@ -77,9 +77,27 @@ jobs:
           name: backend-jar
           path: backend/target/*.jar
 
+  wordlist-data:
+    name: Default Wordlist Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # 离线校验：确认后端加载的 default.txt 与已提交的原始词表
+      # tools/wordlist-sources/default.source.txt 一致（词序、翻译、字段数、
+      # 例句/音标覆盖率），不下载任何数据源。数据源漂移请走生成脚本而非手改。
+      - name: Verify bundled wordlist
+        run: node tools/build-default-wordlist.mjs --check
+
   deploy:
     name: Deploy to Server
-    needs: [frontend, backend]
+    needs: [frontend, backend, wordlist-data]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
     env:

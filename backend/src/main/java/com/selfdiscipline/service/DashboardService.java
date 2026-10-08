@@ -130,21 +130,18 @@ public class DashboardService {
             activities.add(activity);
         }
 
+        // 只把"真实复习过"的单词放进时间轴：同样不能回退到 createTime，
+        // 否则导入词书当天会一次性生成一整串"学习单词"记录（Issue #3 Bug 5）。
         List<Word> recentWords = wordRepository.findByUserIdOrderByCreateTimeDesc(userId).stream()
-                .filter(word -> {
-                    LocalDateTime when = word.getLastReviewTime() != null ? word.getLastReviewTime() : word.getCreateTime();
-                    if (when == null) {
-                        return false;
-                    }
-                    return !when.toLocalDate().isBefore(sevenDaysAgo);
-                })
+                .filter(word -> word.getLastReviewTime() != null
+                        && !word.getLastReviewTime().toLocalDate().isBefore(sevenDaysAgo))
                 .limit(10)
                 .collect(Collectors.toList());
         for (Word word : recentWords) {
             Map<String, Object> activity = new HashMap<>();
             activity.put("type", "word");
             activity.put("title", "学习单词: " + (word.getWord() == null ? "" : word.getWord()));
-            LocalDateTime when = word.getLastReviewTime() != null ? word.getLastReviewTime() : word.getCreateTime();
+            LocalDateTime when = word.getLastReviewTime();
             activity.put("date", when.toLocalDate().toString());
             activity.put("time", when.toString());
             activities.add(activity);

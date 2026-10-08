@@ -86,19 +86,16 @@ public class CalendarService {
                             .put("pomodoro", result.get(dateKey).getOrDefault("pomodoro", 0) + 1);
                 });
 
-        // 背单词数据（按最后复习时间或创建时间）
+        // 背单词数据：只计真实复习过的单词，按"最后复习时间"归日。
+        // 注意：这里绝不能回退到 createTime。刚导入词书时所有单词都没有复习记录，
+        // 一旦回退，整本书会被算成"当天已学习"（Issue #3 Bug 5：导入 108 词的词书
+        // 后一题未做，首页热力就凭空 +108）。
         List<Word> words = wordRepository.findByUserIdOrderByCreateTimeDesc(userId);
         words.stream()
-                .map(w -> {
-                    LocalDate d = w.getLastReviewTime() != null
-                            ? w.getLastReviewTime().toLocalDate()
-                            : (w.getCreateTime() != null ? w.getCreateTime().toLocalDate() : null);
-                    return new Object[]{w, d};
-                })
-                .filter(arr -> arr[1] != null)
-                .filter(arr -> within((LocalDate) arr[1], startInclusive, endInclusive))
-                .forEach(arr -> {
-                    LocalDate d = (LocalDate) arr[1];
+                .filter(w -> w.getLastReviewTime() != null)
+                .map(w -> w.getLastReviewTime().toLocalDate())
+                .filter(d -> within(d, startInclusive, endInclusive))
+                .forEach(d -> {
                     String dateKey = d.format(DAY_KEY);
                     result.computeIfAbsent(dateKey, k -> new HashMap<>())
                             .put("word", result.get(dateKey).getOrDefault("word", 0) + 1);
@@ -161,15 +158,13 @@ public class CalendarService {
             m.put("endTime", safeIso(p.getEndTime()));
             return m;
         }).collect(Collectors.toList()));
-        // Words
+        // Words：与热力口径保持一致，只认复习时间（Issue #3 Bug 5）。
+        // 这里曾有一份与 getCalendarData 完全相同的 createTime 回退，导致"热力已修好、
+        // 但点开日历当天抽屉仍写着'学习了 N 个单词'"——导入词书并不等于学过。
         List<Word> words = wordRepository.findByUserIdOrderByCreateTimeDesc(userId)
                 .stream()
-                .filter(w -> {
-                    LocalDate d = w.getLastReviewTime() != null
-                            ? w.getLastReviewTime().toLocalDate()
-                            : (w.getCreateTime() != null ? w.getCreateTime().toLocalDate() : null);
-                    return d != null && date.equals(d);
-                })
+                .filter(w -> w.getLastReviewTime() != null
+                        && date.equals(w.getLastReviewTime().toLocalDate()))
                 .collect(Collectors.toList());
         res.put("words", words.stream().map(w -> {
             Map<String, Object> m = new HashMap<>();

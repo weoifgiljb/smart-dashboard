@@ -72,7 +72,19 @@ const handleLogin = async () => {
       ElMessage.success('欢迎回来！')
       router.push(safeRedirect(route.query.redirect))
     } catch (error) {
-      if (!isAxiosError(error)) ElMessage.error('登录失败，请检查用户名或密码')
+      // request.ts 的响应拦截器在 401（凭据错误）分支会提前 return，不会弹出提示，
+      // 因此这里必须自己补上登录失败的反馈；其余情况（网络错误、5xx 等）拦截器
+      // 已经提示过了，这里保持沉默以免出现重复弹窗。
+      if (isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          const data = error.response.data as { message?: unknown } | undefined
+          const message =
+            typeof data?.message === 'string' && data.message ? data.message : '用户名或密码错误'
+          ElMessage.error(message)
+        }
+      } else {
+        ElMessage.error('登录失败，请重试')
+      }
     } finally {
       loading.value = false
     }

@@ -1,0 +1,78 @@
+name: Refresh Default Wordlist
+
+# 词库数据必须从 downloads.tatoeba.org 重新生成，而生成者本地（或某些受限网络环境）
+# 未必能访问该域名。CI runner 的出网不受此限，因此把"重新生成"做成一个任务：
+#   - 手动触发（workflow_dispatch）：默认会把结果提交并推送回当前分支
+#   - 改动生成脚本 / 源词表 / 本文件时自动触发：只上传 artifact，不写回仓库
+#
+# 之所以支持写回：GitHub 的 artifact 下载会重定向到 Azure Blob，某些受限网络环境
+# 取不到；走 git 推送则与仓库同一条通道。自动触发不写回，避免 CI 悄悄改动数据。
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: "把重新生成的数据提交并推送回当前分支"
+        type: boolean
+        default: true
+  push:
+    # 只在默认分支上自动跑：上游导出约 200MB，特性分支的每次推送都重下一遍太浪费。
+    # 需要为某个分支刷新时用 workflow_dispatch 手动触发。
+    branches: [master, main]
+    paths:
+      - "tools/build-default-wordlist.mjs"
+      - "tools/wordlist-sources/default.source.txt"
+      - ".github/workflows/wordlist-refresh.yml"
+
+# 同一 ref 上并发触发时只保留最新一次，避免重复下载与相互覆盖
+concurrency:
+  group: wordlist-refresh-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    name: Regenerate wordlist
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Python (仅用于解压 .bz2)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # 会下载 Tatoeba detailed 导出（含贡献者列）与 ECDICT，然后重新挑选例句与音标。
+      # 缺少贡献者时脚本会直接失败，以保证 CC BY 署名完整。
+      - name: Regenerate wordlist
+        run: node tools/build-default-wordlist.mjs --python python3 --sample 10
+
+      - name: Upload regenerated data
+        uses: actions/upload-artifact@v4
+        with:
+          name: wordlist-refreshed
+          if-no-files-found: error
+          path: |
+            backend/src/main/resources/wordlists/default.txt
+            tools/wordlist-sources/default.attribution.md
+
+      - name: Commit and push (manual dispatch only)
+        if: github.event_name == 'workflow_dispatch' && inputs.commit
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/src/main/resources/wordlists/default.txt tools/wordlist-sources/default.attribution.md
+          if git diff --cached --quiet; then
+            echo "数据无变化，无需提交"
+            exit 0
+          fi
+          git commit -m "chore(wordlist): refresh generated wordlist data"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

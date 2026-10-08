@@ -40,6 +40,16 @@ Thumbs.db
 backend/env.bat
 **/env.bat
 
+# Local self-contained runtime (portable MongoDB, Maven, local m2 repo, logs, data)
+.runtime/
+
+# Playwright：运行产物不应入库（历史提交里混入过 test-results 的失败快照）
+test-results/
+test-results-*/
+playwright-report/
+blob-report/
+playwright/.cache/
+
 
 
 
