@@ -18,8 +18,8 @@ absolute|绝对的|That's absolute nonsense.|'æbsəlu:t
 absorb|吸收|These towels absorb water.|əb'sɒ:b
 abstract|抽象的|He was an abstract artist.|'æbstrækt
 absurd|荒谬的|That's absolutely absurd.|əb'sə:d
-abundant|丰富的|Spain is abundant in oranges.|ə'bʌndənt
-abuse|滥用|She showered abuse on me.|ə'bju:s.ə'bju:z
+abundant|丰富的|The tree is abundant in fruit.|ə'bʌndənt
+abuse|滥用|Tom is used to the abuse.|ə'bju:s.ə'bju:z
 academic|学术的|The academic year is over.|.ækə'demik
 accept|接受|Accept both good and bad.|ək'sept
 access|进入；通道|Bicycle access is limited.|'ækses
@@ -54,7 +54,7 @@ adult|成人|He treats me as an adult.|'ædʌlt
 advance|前进；进步|Pay your rent in advance.|əd'vɑ:ns
 advanced|高级的|Leon is an advanced user.|əd'vɑ:nst
 advantage|优势|He has a small advantage.|əd'vɑ:ntidʒ
-adventure|冒险|He was full of adventure.|əd'ventʃə
+adventure|冒险|It would be an adventure.|əd'ventʃə
 advertise|做广告|We'd be crazy not to advertise.|'ædvətaiz
 advice|建议|He disregarded my advice.|əd'vais
 advise|忠告|I advise you not to sing.|əd'vaiz
@@ -64,7 +64,7 @@ afraid|害怕的|I'm afraid she will fail.|ə'freid
 after|在...之后|You managed it after all.|'ɑ:ftə
 afternoon|下午|We had the afternoon off.|'ɑ:ftə'nu:n
 again|再次|I'll never do this again.|ə'gein
-against|反对|My idea went against his.|ə'geinst
+against|反对|I did it against my will.|ə'geinst
 age|年龄|Your son has come of age.|eidʒ
 agency|机构|I work in a travel agency.|'eidʒənsi
 agenda|议程|Tom looked at the agenda.|ə'dʒendə
@@ -99,10 +99,10 @@ ambition|雄心|I think ambition is good.|æm'biʃən
 amount|数量|This amount includes tax.|ə'maunt
 amuse|使娱乐|Her anecdotes amuse us all.|ə'mju:z
 analysis|分析|Your analysis is correct.|ə'næləsis
-analyze|分析|Let's analyze the machine.|'ænəlaiz
+analyze|分析|It's difficult to analyze.|'ænəlaiz
 ancient|古代的|This building is ancient.|'einʃənt
 and|和|Speak slowly and clearly.|ænd
-anger|愤怒|I read anger in her face.|'æŋgə
+anger|愤怒|Anger showed on his face.|'æŋgə
 angle|角度|This table is at an angle.|'æŋgl
 animal|动物|A cow is a useful animal.|'æniməl
 announce|宣布|Let me announce the results.|ə'nauns

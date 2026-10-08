@@ -13,8 +13,9 @@
 - 署名：例句版权归 Tatoeba 及其贡献者所有；下表逐句列出贡献者与句子页面链接。
 
 > 合规说明：这里使用 detailed 导出（含 `贡献者` 列）正是为了满足 CC BY 2.0 FR 的署名要求 ——
-> 仅写"来源 Tatoeba"无法署名到人。生成脚本在缺少贡献者时会直接报错退出，
-> 因此本文件与 `default.txt` 必然是同一次生成、且逐句可归属的。
+> 仅写"来源 Tatoeba"无法署名到人。挑选例句时会跳过作者已注销的句子（导出中记为 `\N`），
+> 生成时若仍出现无可归属的句子会直接报错退出，`--check` 也会据此判失败，
+> 因此本文件与 `default.txt` 必然是同一次生成、且逐句都有可署名贡献者。
 > 注：Tatoeba 句子由贡献者逐条授权，除 CC BY 2.0 FR 外亦存在 CC0 条目；
 > 如需更严格的许可筛选，可改用 CC0 子集导出后重新生成。
 
@@ -32,8 +33,8 @@
 | 10 | absorb | [8567254](https://tatoeba.org/en/sentences/show/8567254) | Amastan | These towels absorb water. |
 | 11 | abstract | [12661323](https://tatoeba.org/en/sentences/show/12661323) | Wassnen | He was an abstract artist. |
 | 12 | absurd | [5744560](https://tatoeba.org/en/sentences/show/5744560) | CM | That's absolutely absurd. |
-| 13 | abundant | [51810](https://tatoeba.org/en/sentences/show/51810) | \N | Spain is abundant in oranges. |
-| 14 | abuse | [314182](https://tatoeba.org/en/sentences/show/314182) | \N | She showered abuse on me. |
+| 13 | abundant | [43788](https://tatoeba.org/en/sentences/show/43788) | Luornu | The tree is abundant in fruit. |
+| 14 | abuse | [5746785](https://tatoeba.org/en/sentences/show/5746785) | CM | Tom is used to the abuse. |
 | 15 | academic | [8905588](https://tatoeba.org/en/sentences/show/8905588) | Mario8286 | The academic year is over. |
 | 16 | accept | [412021](https://tatoeba.org/en/sentences/show/412021) | Scott | Accept both good and bad. |
 | 17 | access | [4495441](https://tatoeba.org/en/sentences/show/4495441) | CK | Bicycle access is limited. |
@@ -68,7 +69,7 @@
 | 46 | advance | [319625](https://tatoeba.org/en/sentences/show/319625) | CK | Pay your rent in advance. |
 | 47 | advanced | [11639495](https://tatoeba.org/en/sentences/show/11639495) | Amastan | Leon is an advanced user. |
 | 48 | advantage | [1737373](https://tatoeba.org/en/sentences/show/1737373) | Spamster | He has a small advantage. |
-| 49 | adventure | [303718](https://tatoeba.org/en/sentences/show/303718) | \N | He was full of adventure. |
+| 49 | adventure | [5744862](https://tatoeba.org/en/sentences/show/5744862) | CM | It would be an adventure. |
 | 50 | advertise | [5541977](https://tatoeba.org/en/sentences/show/5541977) | CK | We'd be crazy not to advertise. |
 | 51 | advice | [303761](https://tatoeba.org/en/sentences/show/303761) | CK | He disregarded my advice. |
 | 52 | advise | [7113463](https://tatoeba.org/en/sentences/show/7113463) | CM | I advise you not to sing. |
@@ -78,7 +79,7 @@
 | 56 | after | [30218](https://tatoeba.org/en/sentences/show/30218) | CK | You managed it after all. |
 | 57 | afternoon | [240079](https://tatoeba.org/en/sentences/show/240079) | CK | We had the afternoon off. |
 | 58 | again | [28379](https://tatoeba.org/en/sentences/show/28379) | CK | I'll never do this again. |
-| 59 | against | [250878](https://tatoeba.org/en/sentences/show/250878) | \N | My idea went against his. |
+| 59 | against | [258257](https://tatoeba.org/en/sentences/show/258257) | CK | I did it against my will. |
 | 60 | age | [17004](https://tatoeba.org/en/sentences/show/17004) | CM | Your son has come of age. |
 | 61 | agency | [4753790](https://tatoeba.org/en/sentences/show/4753790) | garborg | I work in a travel agency. |
 | 62 | agenda | [3721296](https://tatoeba.org/en/sentences/show/3721296) | CM | Tom looked at the agenda. |
@@ -113,10 +114,10 @@
 | 91 | amount | [59922](https://tatoeba.org/en/sentences/show/59922) | CK | This amount includes tax. |
 | 92 | amuse | [309077](https://tatoeba.org/en/sentences/show/309077) | Luornu | Her anecdotes amuse us all. |
 | 93 | analysis | [6325189](https://tatoeba.org/en/sentences/show/6325189) | Adelpa | Your analysis is correct. |
-| 94 | analyze | [48807](https://tatoeba.org/en/sentences/show/48807) | \N | Let's analyze the machine. |
+| 94 | analyze | [5851631](https://tatoeba.org/en/sentences/show/5851631) | CK | It's difficult to analyze. |
 | 95 | ancient | [3258280](https://tatoeba.org/en/sentences/show/3258280) | CM | This building is ancient. |
 | 96 | and | [30129](https://tatoeba.org/en/sentences/show/30129) | CK | Speak slowly and clearly. |
-| 97 | anger | [261264](https://tatoeba.org/en/sentences/show/261264) | \N | I read anger in her face. |
+| 97 | anger | [285818](https://tatoeba.org/en/sentences/show/285818) | CM | Anger showed on his face. |
 | 98 | angle | [60867](https://tatoeba.org/en/sentences/show/60867) | MTC | This table is at an angle. |
 | 99 | animal | [19488](https://tatoeba.org/en/sentences/show/19488) | CM | A cow is a useful animal. |
 | 100 | announce | [12168757](https://tatoeba.org/en/sentences/show/12168757) | CK | Let me announce the results. |
