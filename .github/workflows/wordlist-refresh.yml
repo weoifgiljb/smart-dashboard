@@ -2,16 +2,26 @@ name: Refresh Default Wordlist
 
 # 词库数据必须从 downloads.tatoeba.org 重新生成，而生成者本地（或某些受限网络环境）
 # 未必能访问该域名。CI runner 的出网不受此限，因此把"重新生成"做成一个任务：
-#   - 手动触发（workflow_dispatch）
-#   - 或改动生成脚本 / 源词表 / 本文件时自动触发
-# 产物以 artifact 上传，由维护者下载后提交到仓库（不自动 commit，避免绕过评审）。
+#   - 手动触发（workflow_dispatch）：默认会把结果提交并推送回当前分支
+#   - 改动生成脚本 / 源词表 / 本文件时自动触发：只上传 artifact，不写回仓库
+#
+# 之所以支持写回：GitHub 的 artifact 下载会重定向到 Azure Blob，某些受限网络环境
+# 取不到；走 git 推送则与仓库同一条通道。自动触发不写回，避免 CI 悄悄改动数据。
 on:
   workflow_dispatch:
+    inputs:
+      commit:
+        description: "把重新生成的数据提交并推送回当前分支"
+        type: boolean
+        default: true
   push:
     paths:
       - "tools/build-default-wordlist.mjs"
       - "tools/wordlist-sources/default.source.txt"
       - ".github/workflows/wordlist-refresh.yml"
+
+permissions:
+  contents: write
 
 jobs:
   refresh:
@@ -44,3 +54,17 @@ jobs:
           path: |
             backend/src/main/resources/wordlists/default.txt
             tools/wordlist-sources/default.attribution.md
+
+      - name: Commit and push (manual dispatch only)
+        if: github.event_name == 'workflow_dispatch' && inputs.commit
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/src/main/resources/wordlists/default.txt tools/wordlist-sources/default.attribution.md
+          if git diff --cached --quiet; then
+            echo "数据无变化，无需提交"
+            exit 0
+          fi
+          git commit -m "chore(wordlist): refresh generated wordlist data"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
