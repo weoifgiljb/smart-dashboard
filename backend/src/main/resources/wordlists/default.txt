@@ -1,10 +1,10 @@
 # 默认词库：单词|中文翻译|例句|音标
 # 原始词表：tools/wordlist-sources/default.source.txt（只含 单词|翻译）
 # 例句来源：Tatoeba https://tatoeba.org ，许可证 CC BY 2.0 FR
-#   导出 https://downloads.tatoeba.org/exports/per_language/eng/eng_sentences.tsv.bz2
-#   导出文件 SHA-256 5f7ebf552bd3925dfd33236ccb6a210c5ba02b365e4a39964fb658e1209e87d9
+#   导出 https://downloads.tatoeba.org/exports/per_language/eng/eng_sentences_detailed.tsv.bz2
+#   导出文件 SHA-256 d2c8fc271db70967cbf6e74069b34f394eccccca4a61fc84039e0f0549016ee8
 # 音标来源：ECDICT https://github.com/skywind3000/ECDICT ，许可证 MIT（导出文件 SHA-256 1a6947e04785db63613a92e14903cdae7954f7e84860b10e68e5c7cbb3f9c3cf）
-# 逐条溯源（单词 → Tatoeba 句子 ID）与署名细节见 tools/wordlist-sources/default.attribution.md
+# 逐句署名（单词 → 句子 ID → 贡献者）见 tools/wordlist-sources/default.attribution.md
 # 生成脚本：tools/build-default-wordlist.mjs
 abandon|放弃|I will never abandon you.|ə'bændən
 ability|能力|Tom has a lot of ability.|ə'biliti
