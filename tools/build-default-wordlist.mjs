@@ -297,6 +297,19 @@ function hasProperNoun(sentence) {
   })
 }
 
+/**
+ * Tatoeba 导出里表示"作者账号已注销 / 值为 NULL"的占位符（字面量 `\N`）。
+ * 这类句子无法署名到人，不算可归属 —— 早期版本只判空串和 `-`，于是把 `\N`
+ * 当成了贡献者，`--check` 报出 108/108 的假绿灯。
+ */
+const AUTHOR_PLACEHOLDER_RE = /^(\\N|null|NULL|N\/A|-)$/i
+
+/** 该贡献者是否可用于 CC BY 署名（非空、且不是占位符）。 */
+function isAttributableAuthor(value) {
+  const a = String(value ?? '').trim()
+  return a !== '' && !AUTHOR_PLACEHOLDER_RE.test(a)
+}
+
 /** 构造「词形」正则：仅允许常见屈折后缀，且后缀不跨越词干。 */
 function wordRegex(word) {
   const w = word.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -360,6 +373,9 @@ async function pickExamples(words, tsvPath) {
     const sentence = rawText.replace(/[\r\n]+/g, ' ').trim()
     if (!sentence) continue
     if (!isAcceptable(sentence)) continue
+    // 无法署名到人的句子（作者已注销 / \N 占位符）不进候选，
+    // 于是那些词会自动改选有作者的句子，覆盖率不受影响。
+    if (!isAttributableAuthor(author)) continue
     let hit = false
     for (let i = 0; i < regexes.length; i++) {
       if (!regexes[i].test(sentence)) continue
@@ -594,12 +610,14 @@ function checkAttribution(originalRows, attributionPath) {
       problems.push(`署名表第 ${i + 1} 行单词不一致：原始「${originalRows[i].word}」vs 署名表「${rows[i][2]}」`)
     }
     if (!rows[i][3] || rows[i][3] === '-') missingId++
-    if (!rows[i][4] || rows[i][4] === '-') missingAuthor++
+    // 注意：不能只判空串与 '-'，`\N`（作者已注销/NULL 的占位符）是 truthy，
+    // 早期版本因此报出 108/108 的假绿灯。
+    if (!isAttributableAuthor(rows[i][4])) missingAuthor++
   }
   if (missingId) problems.push(`署名表有 ${missingId} 条缺少句子 ID`)
   if (missingAuthor) problems.push(`署名表有 ${missingAuthor} 条缺少贡献者（CC BY 署名不完整）`)
 
-  const withAuthor = rows.filter((r) => r[4] && r[4] !== '-').length
+  const withAuthor = rows.filter((r) => isAttributableAuthor(r[4])).length
   console.log(`署名文件: ${attributionPath}`)
   console.log(`署名表行数            : ${rows.length}`)
   console.log(`带贡献者的行数        : ${withAuthor}/${rows.length}`)
@@ -656,7 +674,7 @@ async function main() {
   const { examples, sentenceIds, authors, scanned } = await pickExamples(words, tsv)
   console.log(`  扫描英文句子 ${scanned} 行，命中例句 ${examples.filter(Boolean).length}/${words.length}`)
   // CC BY 2.0 FR 要求逐句署名：缺贡献者就直接失败，绝不把不完整的署名静默提交。
-  const noAuthor = sentenceIds.filter((id, i) => id && !authors[i])
+  const noAuthor = sentenceIds.filter((id, i) => id && !isAttributableAuthor(authors[i]))
   if (noAuthor.length) {
     throw new Error(
       `有 ${noAuthor.length} 条例句缺少贡献者（句子 ID：${noAuthor.slice(0, 5).join(', ')}` +
@@ -664,7 +682,9 @@ async function main() {
         '若不打算满足 CC BY 署名要求，请改用 CC0 子集导出。',
     )
   }
-  console.log(`  贡献者覆盖 ${authors.filter(Boolean).length}/${sentenceIds.filter(Boolean).length}`)
+  console.log(
+    `  贡献者覆盖 ${authors.filter(isAttributableAuthor).length}/${sentenceIds.filter(Boolean).length}`,
+  )
 
   // 3. 音标
   console.log('\n[3/4] 从 ECDICT 读取音标')
@@ -720,8 +740,9 @@ async function main() {
     '- 署名：例句版权归 Tatoeba 及其贡献者所有；下表逐句列出贡献者与句子页面链接。',
     '',
     '> 合规说明：这里使用 detailed 导出（含 `贡献者` 列）正是为了满足 CC BY 2.0 FR 的署名要求 ——',
-    '> 仅写"来源 Tatoeba"无法署名到人。生成脚本在缺少贡献者时会直接报错退出，',
-    '> 因此本文件与 `default.txt` 必然是同一次生成、且逐句可归属的。',
+    '> 仅写"来源 Tatoeba"无法署名到人。挑选例句时会跳过作者已注销的句子（导出中记为 `\\N`），',
+    '> 生成时若仍出现无可归属的句子会直接报错退出，`--check` 也会据此判失败，',
+    '> 因此本文件与 `default.txt` 必然是同一次生成、且逐句都有可署名贡献者。',
     '> 注：Tatoeba 句子由贡献者逐条授权，除 CC BY 2.0 FR 外亦存在 CC0 条目；',
     '> 如需更严格的许可筛选，可改用 CC0 子集导出后重新生成。',
     '',
@@ -744,7 +765,7 @@ async function main() {
   writeTextLfNoBom(opts.attribution, attribution)
   console.log(
     `  已写入 ${opts.attribution}（逐句署名：${sentenceIds.filter(Boolean).length} 条句子、` +
-      `${authors.filter(Boolean).length} 位贡献者）`,
+      `${new Set(authors.filter(isAttributableAuthor)).size} 位贡献者）`,
   )
 
   selfCheck(originalRows, lines, { sample: opts.sample })

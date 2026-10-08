@@ -15,10 +15,18 @@ on:
         type: boolean
         default: true
   push:
+    # 只在默认分支上自动跑：上游导出约 200MB，特性分支的每次推送都重下一遍太浪费。
+    # 需要为某个分支刷新时用 workflow_dispatch 手动触发。
+    branches: [master, main]
     paths:
       - "tools/build-default-wordlist.mjs"
       - "tools/wordlist-sources/default.source.txt"
       - ".github/workflows/wordlist-refresh.yml"
+
+# 同一 ref 上并发触发时只保留最新一次，避免重复下载与相互覆盖
+concurrency:
+  group: wordlist-refresh-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: write
