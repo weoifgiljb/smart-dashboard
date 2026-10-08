@@ -22,6 +22,7 @@
  *   node tools/build-default-wordlist.mjs --check          # 只校验已有输出文件，不重新生成
  *   node tools/build-default-wordlist.mjs --out <path>     # 自定义输出路径
  *   node tools/build-default-wordlist.mjs --input <path>   # 自定义原始词库（两列格式）
+ *   node tools/build-default-wordlist.mjs --attribution <path>  # 自定义署名/溯源文件路径
  *   node tools/build-default-wordlist.mjs --cache <dir>    # 下载/解压缓存目录（默认 .runtime/dl）
  *   node tools/build-default-wordlist.mjs --python <exe>   # 用于解压 .bz2 的 Python 解释器
  *   node tools/build-default-wordlist.mjs --sample 20      # 抽样打印条数
@@ -91,6 +92,7 @@ function parseArgs(argv) {
     }
     if (a === '--input') opts.input = path.resolve(next())
     else if (a === '--out') opts.out = path.resolve(next())
+    else if (a === '--attribution') opts.attribution = path.resolve(next())
     else if (a === '--cache') opts.cache = path.resolve(next())
     else if (a === '--python') opts.python = next()
     else if (a === '--check') opts.check = true
@@ -566,6 +568,44 @@ function selfCheck(originalRows, outLines, { sample = 18, quiet = false } = {}) 
   return { problems, withEx, withPh, total: parsed.length }
 }
 
+/**
+ * 校验署名文件的完整性：每条词都要有句子 ID 与贡献者。
+ * 这使 CC BY 2.0 FR 的署名要求可以在**离线**的 CI 里被守住 —— 少一条贡献者就失败。
+ */
+function checkAttribution(originalRows, attributionPath) {
+  const problems = []
+  if (!fs.existsSync(attributionPath)) {
+    problems.push(`署名文件不存在：${attributionPath}`)
+    return problems
+  }
+  const rows = readTextUtf8(attributionPath)
+    .split(/\r?\n/)
+    .filter((l) => /^\|\s*\d+\s*\|/.test(l))
+    .map((l) => l.split('|').map((c) => c.trim()))
+  // split('|') 的形状：['', '#', '单词', '句子ID', '贡献者', '句子', '']
+  if (rows.length !== originalRows.length) {
+    problems.push(`署名表行数 ${rows.length} 与词表 ${originalRows.length} 不一致`)
+  }
+  const n = Math.min(rows.length, originalRows.length)
+  let missingId = 0
+  let missingAuthor = 0
+  for (let i = 0; i < n; i++) {
+    if (rows[i][2] !== originalRows[i].word) {
+      problems.push(`署名表第 ${i + 1} 行单词不一致：原始「${originalRows[i].word}」vs 署名表「${rows[i][2]}」`)
+    }
+    if (!rows[i][3] || rows[i][3] === '-') missingId++
+    if (!rows[i][4] || rows[i][4] === '-') missingAuthor++
+  }
+  if (missingId) problems.push(`署名表有 ${missingId} 条缺少句子 ID`)
+  if (missingAuthor) problems.push(`署名表有 ${missingAuthor} 条缺少贡献者（CC BY 署名不完整）`)
+
+  const withAuthor = rows.filter((r) => r[4] && r[4] !== '-').length
+  console.log(`署名文件: ${attributionPath}`)
+  console.log(`署名表行数            : ${rows.length}`)
+  console.log(`带贡献者的行数        : ${withAuthor}/${rows.length}`)
+  return problems
+}
+
 // ── 主流程 ─────────────────────────────────────────────────────────────────
 async function main() {
   const opts = parseArgs(process.argv.slice(2))
@@ -577,7 +617,15 @@ async function main() {
     const header = outLines.filter((l) => l.startsWith('#')).length
     console.log(`校验文件: ${opts.out}（含 ${header} 行注释）`)
     const res = selfCheck(originalRows, outLines, { sample: opts.sample })
-    process.exit(res.problems.length ? 1 : 0)
+    const attributionProblems = checkAttribution(originalRows, opts.attribution)
+    const all = [...res.problems, ...attributionProblems]
+    if (attributionProblems.length) {
+      console.log('署名异常项            :')
+      for (const p of attributionProblems) console.log(`  - ${p}`)
+    } else {
+      console.log('署名异常项            : 无')
+    }
+    process.exit(all.length ? 1 : 0)
   }
 
   console.log('原始词库 :', opts.input)
@@ -694,7 +742,10 @@ async function main() {
   attribution.push('- 许可证：MIT')
   attribution.push('')
   writeTextLfNoBom(opts.attribution, attribution)
-  console.log(`  已写入 ${opts.attribution}（逐条溯源 ${sentenceIds.filter(Boolean).length} 条）`)
+  console.log(
+    `  已写入 ${opts.attribution}（逐句署名：${sentenceIds.filter(Boolean).length} 条句子、` +
+      `${authors.filter(Boolean).length} 位贡献者）`,
+  )
 
   selfCheck(originalRows, lines, { sample: opts.sample })
 }
