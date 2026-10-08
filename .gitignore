@@ -40,6 +40,9 @@ Thumbs.db
 backend/env.bat
 **/env.bat
 
+# Local self-contained runtime (portable MongoDB, Maven, local m2 repo, logs, data)
+.runtime/
+
 
 
 
