@@ -1,0 +1,46 @@
+name: Refresh Default Wordlist
+
+# 词库数据必须从 downloads.tatoeba.org 重新生成，而生成者本地（或某些受限网络环境）
+# 未必能访问该域名。CI runner 的出网不受此限，因此把"重新生成"做成一个任务：
+#   - 手动触发（workflow_dispatch）
+#   - 或改动生成脚本 / 源词表 / 本文件时自动触发
+# 产物以 artifact 上传，由维护者下载后提交到仓库（不自动 commit，避免绕过评审）。
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "tools/build-default-wordlist.mjs"
+      - "tools/wordlist-sources/default.source.txt"
+      - ".github/workflows/wordlist-refresh.yml"
+
+jobs:
+  refresh:
+    name: Regenerate wordlist
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Python (仅用于解压 .bz2)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # 会下载 Tatoeba detailed 导出（含贡献者列）与 ECDICT，然后重新挑选例句与音标。
+      # 缺少贡献者时脚本会直接失败，以保证 CC BY 署名完整。
+      - name: Regenerate wordlist
+        run: node tools/build-default-wordlist.mjs --python python3 --sample 10
+
+      - name: Upload regenerated data
+        uses: actions/upload-artifact@v4
+        with:
+          name: wordlist-refreshed
+          if-no-files-found: error
+          path: |
+            backend/src/main/resources/wordlists/default.txt
+            tools/wordlist-sources/default.attribution.md

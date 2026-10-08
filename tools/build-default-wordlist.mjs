@@ -5,8 +5,11 @@
  * 数据来源与署名
  * ---------------------------------------------------------------------------
  * 例句：Tatoeba (https://tatoeba.org) — 许可证 CC BY 2.0 FR
- *       下载：https://downloads.tatoeba.org/exports/per_language/eng/eng_sentences.tsv.bz2
- *       TSV 三列：句子ID \t 语言 \t 句子文本（en = 英文）
+ *       下载：https://downloads.tatoeba.org/exports/per_language/eng/eng_sentences_detailed.tsv.bz2
+ *       TSV 列：句子ID \t 语言 \t 句子文本 \t 贡献者 \t 添加时间 \t 修改时间
+ *       这里刻意用 detailed 导出而不是只有三列的 sentences 导出：CC BY 2.0 FR 要求署名，
+ *       仅写"来源 Tatoeba"不足以满足，必须能逐句归属到具体贡献者，所以需要"贡献者"列。
+ *       脚本会在缺少贡献者时直接报错退出，避免不完整的署名被静默提交。
  *       （注意：本脚本刻意不使用 dictionaryapi.dev / Wiktionary 的例句，
  *         它们返回的是未经筛选的历史文献引证，不适合学习场景。）
  * 音标：ECDICT (https://github.com/skywind3000/ECDICT) — 许可证 MIT
@@ -48,11 +51,15 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PROJECT_ROOT = path.resolve(__dirname, '..')
 
 // ── 常量 ────────────────────────────────────────────────────────────────────
-const TATOEBA_URL = 'https://downloads.tatoeba.org/exports/per_language/eng/eng_sentences.tsv.bz2'
+// 用 detailed 导出（含"贡献者"列）以满足 CC BY 2.0 FR 的逐句署名要求。
+const TATOEBA_URL = 'https://downloads.tatoeba.org/exports/per_language/eng/eng_sentences_detailed.tsv.bz2'
 const ECDICT_URL = 'https://raw.githubusercontent.com/skywind3000/ECDICT/master/ecdict.csv'
-const TATOEBA_BZ2 = 'eng_sentences.tsv.bz2'
-const TATOEBA_TSV = 'eng_sentences.tsv'
+const TATOEBA_BZ2 = 'eng_sentences_detailed.tsv.bz2'
+const TATOEBA_TSV = 'eng_sentences_detailed.tsv'
 const ECDICT_CSV = 'ecdict.csv'
+
+/** Tatoeba 句子页面地址，用于逐句署名与人工核验。 */
+const tatoebaSentenceUrl = (id) => `https://tatoeba.org/en/sentences/show/${id}`
 
 const MIN_LEN = 25
 const MAX_LEN = 70
@@ -307,15 +314,15 @@ function isAcceptable(sentence) {
 }
 
 /**
- * 从 Tatoeba TSV 中为每个单词挑选最适合学习的一句。
+ * 从 Tatoeba 详细导出 TSV 中为每个单词挑选最适合学习的一句。
  * 策略：按「是否原形命中 → 句子长度」排序取最优；同一批结果内保证不重复。
- * 同时保留句子 ID，用于在署名文件里逐条溯源（Tatoeba 句子是逐条授权的）。
+ * 同时保留句子 ID 与贡献者，用于在署名文件里逐句归属（CC BY 2.0 FR 要求署名）。
  */
 async function pickExamples(words, tsvPath) {
   const lower = words.map((w) => w.toLowerCase())
   const regexes = lower.map((w) => wordRegex(w))
   const exact = lower.map((w) => new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'))
-  const best = new Array(words.length).fill(null) // { id, sentence, score }
+  const best = new Array(words.length).fill(null) // { id, author, sentence, score }
 
   // score 越大越好
   const scoreOf = (sentence, i) => {
@@ -330,17 +337,25 @@ async function pickExamples(words, tsvPath) {
 
   const rl = readline.createInterface({ input: fs.createReadStream(tsvPath, 'utf8'), crlfDelay: Infinity })
   let scanned = 0
+  let layoutLogged = false
   for await (const line of rl) {
     if (!line) continue
     scanned++
-    // TSV: 句子ID \t 语言 \t 句子文本 —— 只处理英文行
-    const firstTab = line.indexOf('\t')
-    if (firstTab < 0) continue
-    const secondTab = line.indexOf('\t', firstTab + 1)
-    if (secondTab < 0) continue
-    if (line.slice(firstTab + 1, secondTab).trim() !== 'eng') continue
-    const sentenceId = line.slice(0, firstTab).trim()
-    const sentence = line.slice(secondTab + 1).replace(/[\r\n]+/g, ' ').trim()
+    // detailed 导出：句子ID \t 语言 \t 文本 \t 贡献者 \t 添加时间 \t 修改时间
+    // 文本理论上不含 Tab；万一列数超出预期，按"末三列 = 贡献者/添加/修改"回推文本，
+    // 以免把被截断的句子写进词库。
+    const parts = line.split('\t')
+    if (parts.length < 3) continue
+    if (parts[1].trim() !== 'eng') continue
+    const sentenceId = parts[0].trim()
+    const authorCol = parts.length >= 6 ? parts[parts.length - 3] : parts[3]
+    const rawText = parts.length >= 6 ? parts.slice(2, parts.length - 3).join('\t') : parts[2]
+    const author = (authorCol || '').trim()
+    if (!layoutLogged) {
+      layoutLogged = true
+      console.log(`  检测到 TSV 列数 ${parts.length}（detailed 导出，含贡献者列）`)
+    }
+    const sentence = rawText.replace(/[\r\n]+/g, ' ').trim()
     if (!sentence) continue
     if (!isAcceptable(sentence)) continue
     let hit = false
@@ -348,7 +363,7 @@ async function pickExamples(words, tsvPath) {
       if (!regexes[i].test(sentence)) continue
       hit = true
       const s = scoreOf(sentence, i)
-      if (!best[i] || s > best[i].score) best[i] = { id: sentenceId, sentence, score: s }
+      if (!best[i] || s > best[i].score) best[i] = { id: sentenceId, author, sentence, score: s }
     }
     if (!hit) continue
   }
@@ -370,6 +385,7 @@ async function pickExamples(words, tsvPath) {
   return {
     examples: best.map((b) => (b ? b.sentence : '')),
     sentenceIds: best.map((b) => (b ? b.id : '')),
+    authors: best.map((b) => (b ? b.author : '')),
     scanned,
     usedSentences: used.size,
   }
@@ -589,8 +605,18 @@ async function main() {
   // 2. 例句
   console.log('\n[2/4] 从 Tatoeba 挑选例句')
   const words = originalRows.map((r) => r.word)
-  const { examples, sentenceIds, scanned } = await pickExamples(words, tsv)
+  const { examples, sentenceIds, authors, scanned } = await pickExamples(words, tsv)
   console.log(`  扫描英文句子 ${scanned} 行，命中例句 ${examples.filter(Boolean).length}/${words.length}`)
+  // CC BY 2.0 FR 要求逐句署名：缺贡献者就直接失败，绝不把不完整的署名静默提交。
+  const noAuthor = sentenceIds.filter((id, i) => id && !authors[i])
+  if (noAuthor.length) {
+    throw new Error(
+      `有 ${noAuthor.length} 条例句缺少贡献者（句子 ID：${noAuthor.slice(0, 5).join(', ')}` +
+        `${noAuthor.length > 5 ? ' …' : ''}）。请确认使用的是 detailed 导出（含贡献者列）；` +
+        '若不打算满足 CC BY 署名要求，请改用 CC0 子集导出。',
+    )
+  }
+  console.log(`  贡献者覆盖 ${authors.filter(Boolean).length}/${sentenceIds.filter(Boolean).length}`)
 
   // 3. 音标
   console.log('\n[3/4] 从 ECDICT 读取音标')
@@ -618,7 +644,7 @@ async function main() {
     csv
       ? `# 音标来源：ECDICT https://github.com/skywind3000/ECDICT ，许可证 MIT（导出文件 SHA-256 ${ecdictSha}）`
       : '# 音标：未获取（ECDICT 下载失败），本文件音标列为空',
-    '# 逐条溯源（单词 → Tatoeba 句子 ID）与署名细节见 tools/wordlist-sources/default.attribution.md',
+    '# 逐句署名（单词 → 句子 ID → 贡献者）见 tools/wordlist-sources/default.attribution.md',
     '# 生成脚本：tools/build-default-wordlist.mjs',
   ]
   for (let i = 0; i < originalRows.length; i++) {
@@ -628,8 +654,8 @@ async function main() {
   writeTextLfNoBom(opts.out, lines)
   console.log(`  已写入 ${opts.out}（UTF-8 / LF / 无 BOM，${lines.length} 行）`)
 
-  // 署名与逐条溯源：CC BY 要求可归属，per-language 导出本身不含作者列，
-  // 所以把每个词选中的句子 ID 落盘，便于逐句回溯。
+  // 署名与逐句归属：CC BY 2.0 FR 要求署名，因此逐句记录 句子 ID 与贡献者，
+  // 并给出句子页面链接便于核验。
   const attribution = [
     '# default.txt 数据来源与署名',
     '',
@@ -643,19 +669,22 @@ async function main() {
     `- 导出：\`${TATOEBA_URL}\``,
     `- 导出文件 SHA-256：\`${tatoebaSha}\``,
     '- 许可证：[CC BY 2.0 FR](https://creativecommons.org/licenses/by/2.0/fr/)',
-    '- 署名：例句版权归 Tatoeba 及其贡献者所有。',
+    '- 署名：例句版权归 Tatoeba 及其贡献者所有；下表逐句列出贡献者与句子页面链接。',
     '',
-    '> 合规说明：该 per-language 导出只含 `句子ID / 语言 / 文本`，**不含逐句作者与逐句许可证**；',
-    '> Tatoeba 的句子由贡献者逐条授权（CC BY 2.0 FR 与 CC0 混存）。下表记录每个词实际使用的',
-    '> 句子 ID，以便逐条回溯核验。若需要更强的合规保证，应改用带 `username` / `license` 列的',
-    '> 导出，或只取 CC0 子集。',
+    '> 合规说明：这里使用 detailed 导出（含 `贡献者` 列）正是为了满足 CC BY 2.0 FR 的署名要求 ——',
+    '> 仅写"来源 Tatoeba"无法署名到人。生成脚本在缺少贡献者时会直接报错退出，',
+    '> 因此本文件与 `default.txt` 必然是同一次生成、且逐句可归属的。',
+    '> 注：Tatoeba 句子由贡献者逐条授权，除 CC BY 2.0 FR 外亦存在 CC0 条目；',
+    '> 如需更严格的许可筛选，可改用 CC0 子集导出后重新生成。',
     '',
-    '| # | 单词 | Tatoeba 句子 ID | 句子 |',
-    '| --- | --- | --- | --- |',
+    '| # | 单词 | 句子 ID | 贡献者 | 句子 |',
+    '| --- | --- | --- | --- | --- |',
   ]
   for (let i = 0; i < originalRows.length; i++) {
+    const sid = sentenceIds[i] || ''
+    const link = sid ? `[${sid}](${tatoebaSentenceUrl(sid)})` : '-'
     attribution.push(
-      `| ${i + 1} | ${originalRows[i].word} | ${sentenceIds[i] || '-'} | ${examples[i] || '-'} |`,
+      `| ${i + 1} | ${originalRows[i].word} | ${link} | ${authors[i] || '-'} | ${examples[i] || '-'} |`,
     )
   }
   attribution.push('', '## 音标', '')
