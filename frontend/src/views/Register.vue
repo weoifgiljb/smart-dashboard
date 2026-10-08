@@ -111,6 +111,10 @@ const handleRegister = async () => {
       ElMessage.success('注册成功，欢迎加入！')
       router.push('/')
     } catch (error) {
+      // 这里是有意保持沉默：注册失败走 409/400（如「用户名已存在」），不属于拦截器
+      // 提前 return 的 401 凭据分支，服务端文案已由 request.ts 弹出；此处只兜底
+      // 非 axios 的意外错误，避免同一个失败弹两次。
+      // 契约由 frontend/tests/requestErrorFeedback.spec.ts 锁定。
       if (!isAxiosError(error)) ElMessage.error('注册失败，请重试')
     } finally {
       loading.value = false
