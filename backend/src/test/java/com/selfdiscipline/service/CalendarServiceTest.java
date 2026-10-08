@@ -75,6 +75,25 @@ class CalendarServiceTest {
     }
 
     @Test
+    void importedButNeverReviewedWordsDoNotCountTowardHeat() {
+        // Issue #3 Bug 5：导入词书后一题未做，当天热力必须为 0
+        //（修复前这里会因为回退到 createTime 而算出整本书的单词数）。
+        when(checkInRepository.findByUserIdOrderByCheckInDateDesc("u1")).thenReturn(List.of());
+        when(pomodoroRepository.findByUserIdOrderByStartTimeDesc("u1")).thenReturn(List.of());
+        when(taskRepository.findByOwnerUserId("u1")).thenReturn(List.of());
+
+        Word imported = new Word();
+        imported.setWord("abandon");
+        imported.setCreateTime(today.atTime(10, 0)); // 今天导入
+        // lastReviewTime 保持 null：从未复习
+        when(wordRepository.findByUserIdOrderByCreateTimeDesc("u1")).thenReturn(List.of(imported));
+
+        Map<String, Map<String, Integer>> data = calendarService.getCalendarData("alice", today, today);
+
+        assertNull(data.get("2026-09-20"));
+    }
+
+    @Test
     void swapsInvertedRange() {
         stubSources(today, today.minusDays(10));
 
@@ -171,10 +190,15 @@ class CalendarServiceTest {
         when(pomodoroRepository.findByUserIdOrderByStartTimeDesc("u1"))
                 .thenReturn(List.of(p1, p2, oldP));
 
+        // 单词热力只认"复习时间"，createTime 不再参与统计（Issue #3 Bug 5）。
+        // 这里故意让两个时间戳交叉，使 aggregatesCountsForTheSameDay 同时验证
+        // "按复习日归集、忽略导入日"。
         Word todayWord = new Word();
-        todayWord.setCreateTime(inRange.atTime(10, 0));
+        todayWord.setCreateTime(outOfRange.atTime(10, 0));
+        todayWord.setLastReviewTime(inRange.atTime(10, 0));
         Word oldWord = new Word();
-        oldWord.setCreateTime(outOfRange.atTime(10, 0));
+        oldWord.setCreateTime(inRange.atTime(10, 0));
+        oldWord.setLastReviewTime(outOfRange.atTime(10, 0));
         when(wordRepository.findByUserIdOrderByCreateTimeDesc("u1"))
                 .thenReturn(List.of(todayWord, oldWord));
 

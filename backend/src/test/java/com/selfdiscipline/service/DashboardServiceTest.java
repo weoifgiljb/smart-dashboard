@@ -275,6 +275,25 @@ class DashboardServiceTest {
     }
 
     @Test
+    void recentActivitiesSkipImportedButNeverReviewedWords() {
+        // Issue #3 Bug 5：导入词书当天不应生成一整串"学习单词"时间轴记录。
+        stubUser();
+        Word imported = new Word();
+        imported.setWord("abandon");
+        imported.setCreateTime(LocalDateTime.now()); // 今天导入
+        // lastReviewTime 为 null：从未复习
+
+        when(checkInRepository.findByUserIdOrderByCheckInDateDesc("u1")).thenReturn(List.of());
+        when(pomodoroRepository.findByUserIdOrderByStartTimeDesc("u1")).thenReturn(List.of());
+        when(wordRepository.findByUserIdOrderByCreateTimeDesc("u1")).thenReturn(List.of(imported));
+        when(diaryRepository.findByUserIdOrderByDiaryDateDesc("u1")).thenReturn(List.of());
+
+        List<Map<String, Object>> activities = dashboardService.getRecentActivities("alice");
+
+        assertTrue(activities.stream().noneMatch(a -> "word".equals(a.get("type"))));
+    }
+
+    @Test
     void recentActivitiesUsesDiaryDateWhenTimestampsMissing() {
         stubUser();
         when(checkInRepository.findByUserIdOrderByCheckInDateDesc("u1")).thenReturn(List.of());
