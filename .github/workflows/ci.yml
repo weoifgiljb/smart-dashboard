@@ -106,19 +106,37 @@ jobs:
       SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
 
     steps:
+      # 未配置部署 secrets 时，让这个 job 变成"跳过"而不是"失败"：
+      # 否则每次 master 推送都会因 appleboy 的 "missing server host" 报红，
+      # 让真正的代码检查淹没在噪音里。三个 secrets 配齐后无需改动本文件，
+      # 部署会自动开始执行。
+      - name: Check deploy secrets
+        id: guard
+        run: |
+          if [ -n "$SERVER_HOST" ] && [ -n "$SERVER_USER" ] && [ -n "$SERVER_SSH_KEY" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "部署 secrets 已配置，继续部署。"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Deploy skipped::未配置 SERVER_HOST / SERVER_USER / SERVER_SSH_KEY，已跳过部署。这是配置缺失，不是代码问题。"
+          fi
+
       - name: Download Frontend Artifact
+        if: steps.guard.outputs.enabled == 'true'
         uses: actions/download-artifact@v4
         with:
           name: frontend-dist
           path: dist
 
       - name: Download Backend Artifact
+        if: steps.guard.outputs.enabled == 'true'
         uses: actions/download-artifact@v4
         with:
           name: backend-jar
           path: target
 
       - name: Deploy to Server via SSH
+        if: steps.guard.outputs.enabled == 'true'
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ env.SERVER_HOST }}
@@ -137,6 +155,7 @@ jobs:
             mkdir -p /opt/smart-dashboard/backend
 
       - name: Copy Files via SCP
+        if: steps.guard.outputs.enabled == 'true'
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ env.SERVER_HOST }}
@@ -146,6 +165,7 @@ jobs:
           target: "/tmp/smart-dashboard-deploy"
 
       - name: Finalize Deployment
+        if: steps.guard.outputs.enabled == 'true'
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ env.SERVER_HOST }}
