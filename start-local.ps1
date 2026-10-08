@@ -47,6 +47,37 @@ function Test-Port([int]$Port) {
     return $false
 }
 
+# JDK 21 是硬性要求。优先用 JAVA_HOME；未设置时依次回退到 PATH 上的 java.exe
+# 与常见安装目录，找不到再抛出可照做的错误。
+function Resolve-JavaHome {
+    if ($env:JAVA_HOME) {
+        $candidate = Join-Path $env:JAVA_HOME 'bin\java.exe'
+        if (Test-Path $candidate) { return $env:JAVA_HOME }
+        Write-Warning "[java]     JAVA_HOME 下没有 bin\java.exe：$env:JAVA_HOME"
+    }
+    $onPath = Get-Command java.exe -ErrorAction SilentlyContinue
+    if ($onPath -and $onPath.Source) {
+        $home = Split-Path (Split-Path $onPath.Source -Parent) -Parent
+        if ($home -and (Test-Path (Join-Path $home 'bin\java.exe'))) { return $home }
+    }
+    $roots = @(
+        (Join-Path $env:ProgramFiles 'Microsoft'),
+        (Join-Path $env:ProgramFiles 'Eclipse Adoptium'),
+        (Join-Path $env:ProgramFiles 'Java'),
+        (Join-Path $env:ProgramFiles 'Amazon Corretto'),
+        (Join-Path $env:ProgramFiles 'Zulu')
+    )
+    foreach ($root in $roots) {
+        if (-not (Test-Path $root)) { continue }
+        $found = Get-ChildItem $root -Directory -ErrorAction SilentlyContinue |
+            Where-Object { Test-Path (Join-Path $_.FullName 'bin\java.exe') } |
+            Sort-Object Name -Descending |
+            Select-Object -First 1
+        if ($found) { return $found.FullName }
+    }
+    return $null
+}
+
 function Get-JwtSecret {
     if (Test-Path $JwtFile) {
         $value = ((Get-Content $JwtFile -Raw).Trim() -replace '^JWT_SECRET=', '')
@@ -85,10 +116,24 @@ if (-not $SkipBackend) {
     if (Test-Port 8080) {
         Write-Host '[backend]  port 8080 already in use - assuming the backend is already running'
     } else {
+        # JDK 21 是硬性要求。JAVA_HOME 缺失时给出一条能照着做的错误，
+        # 而不是让 "$env:JAVA_HOME\bin\java" 抛出一句看不懂的路径错误。
+        $javaHome = Resolve-JavaHome
+        if (-not $javaHome) {
+            throw @'
+找不到可用的 JDK。请先安装 JDK 21，然后设置 JAVA_HOME，例如：
+  setx JAVA_HOME "C:\Program Files\Microsoft\jdk-21.0.12.101-hotspot"
+设置后请重开一个终端再运行本脚本。
+'@
+        }
+        $env:JAVA_HOME = $javaHome
+        $JavaExe = Join-Path $javaHome 'bin\java.exe'
+        Write-Host "[backend]  JAVA_HOME = $javaHome"
+
         if ($Rebuild -or -not (Test-Path $Jar)) {
             if (-not (Test-Path $MavenH)) { throw "Bundled Maven not found at $MavenH" }
             Write-Host '[backend]  building jar with bundled Maven (this can take a while)'
-            & "$env:JAVA_HOME\bin\java" `
+            & $JavaExe `
                 -classpath "$MavenH\boot\plexus-classworlds-2.8.0.jar" `
                 "-Dclassworlds.conf=$MavenH\bin\m2.conf" `
                 "-Dmaven.home=$MavenH" `
@@ -117,7 +162,7 @@ if (-not $SkipBackend) {
 
         Write-Host '[backend]  starting Spring Boot on http://localhost:8080'
         $backendArgs = @('-jar', "`"$Jar`"", '--server.port=8080')
-        $proc = Start-Process -FilePath "$env:JAVA_HOME\bin\java" -ArgumentList $backendArgs `
+        $proc = Start-Process -FilePath $JavaExe -ArgumentList $backendArgs `
             -RedirectStandardOutput (Join-Path $Logs 'backend.log') `
             -RedirectStandardError  (Join-Path $Logs 'backend.err.log') `
             -WindowStyle Hidden -PassThru
