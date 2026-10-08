@@ -28,6 +28,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -91,6 +92,28 @@ class CalendarServiceTest {
         Map<String, Map<String, Integer>> data = calendarService.getCalendarData("alice", today, today);
 
         assertNull(data.get("2026-09-20"));
+    }
+
+    @Test
+    void dayDetailsExcludeImportedButNeverReviewedWords() {
+        // Issue #3 Bug 5 的另一半：热力修好后，日详情这条路径（GET /api/calendar/day
+        // → 日历抽屉「学习了 N 个单词」）曾被漏掉，仍然把"导入"显示成"学过"。
+        when(checkInRepository.findByUserIdOrderByCheckInDateDesc("u1")).thenReturn(List.of());
+        when(pomodoroRepository.findByUserIdOrderByStartTimeDesc("u1")).thenReturn(List.of());
+        when(taskRepository.findByOwnerUserId("u1")).thenReturn(List.of());
+        when(diaryRepository.findByUserIdOrderByDiaryDateDesc("u1")).thenReturn(List.of());
+
+        Word imported = new Word();
+        imported.setId("w1");
+        imported.setWord("abandon");
+        imported.setCreateTime(today.atTime(10, 0)); // 今天导入，但从未复习
+        when(wordRepository.findByUserIdOrderByCreateTimeDesc("u1")).thenReturn(List.of(imported));
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> words =
+                (List<Map<String, Object>>) calendarService.getDayDetails("alice", today).get("words");
+
+        assertTrue(words.isEmpty(), "从未复习的单词不应出现在日详情的单词列表里");
     }
 
     @Test

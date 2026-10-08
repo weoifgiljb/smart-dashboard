@@ -158,15 +158,13 @@ public class CalendarService {
             m.put("endTime", safeIso(p.getEndTime()));
             return m;
         }).collect(Collectors.toList()));
-        // Words
+        // Words：与热力口径保持一致，只认复习时间（Issue #3 Bug 5）。
+        // 这里曾有一份与 getCalendarData 完全相同的 createTime 回退，导致"热力已修好、
+        // 但点开日历当天抽屉仍写着'学习了 N 个单词'"——导入词书并不等于学过。
         List<Word> words = wordRepository.findByUserIdOrderByCreateTimeDesc(userId)
                 .stream()
-                .filter(w -> {
-                    LocalDate d = w.getLastReviewTime() != null
-                            ? w.getLastReviewTime().toLocalDate()
-                            : (w.getCreateTime() != null ? w.getCreateTime().toLocalDate() : null);
-                    return d != null && date.equals(d);
-                })
+                .filter(w -> w.getLastReviewTime() != null
+                        && date.equals(w.getLastReviewTime().toLocalDate()))
                 .collect(Collectors.toList());
         res.put("words", words.stream().map(w -> {
             Map<String, Object> m = new HashMap<>();
